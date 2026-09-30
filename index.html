@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campiper — Domina DaVinci Resolve desde Cero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 60% — dominante */
+    --dark: #1E1E24;
+    --dark-alt: #26262E;
+    --dark-line: #34343E;
+
+    /* 30% — secundario */
+    --blue: #4A90E2;
+    --blue-deep: #335E92;
+    --blue-soft: #3E77B8;
+
+    /* 10% — acento */
+    --orange: #FF6B35;
+    --orange-deep: #E0552A;
+
+    /* texto */
+    --text-light: #F5F5F7;
+    --text-muted: #A9ADBB;
+    --text-on-orange: #1E1E24;
+
+    --font-head: 'Poppins', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 999px;
+
+    --maxw: 1180px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--dark);
+    color: var(--text-light);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3{
+    font-family: var(--font-head);
+    margin: 0;
+    color: var(--text-light);
+    letter-spacing: -0.01em;
+  }
+  p{ margin:0; }
+  a{ text-decoration:none; color: inherit; }
+  img,svg{ display:block; max-width:100%; }
+  button{ font-family: var(--font-body); border:none; cursor:pointer; }
+  ul{ margin:0; padding:0; list-style:none; }
+
+  .wrap{
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  :focus-visible{
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* ---------- NAV ---------- */
+  .nav{
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(30,30,36,0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--dark-line);
+  }
+  .nav .wrap{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    height: 76px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family: var(--font-head);
+    font-weight:700;
+    font-size: 1.3rem;
+  }
+  .brand-mark{
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: conic-gradient(from 210deg, var(--blue), var(--orange), var(--blue));
+    flex-shrink:0;
+  }
+  .nav-links{
+    display:flex;
+    gap: 36px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight:500;
+  }
+  .nav-links a:hover{ color: var(--text-light); }
+  .nav-cta{
+    background: var(--orange);
+    color: var(--text-on-orange);
+    font-weight: 800;
+    padding: 12px 22px;
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .nav-cta:hover{ background: var(--orange-deep); transform: translateY(-1px); }
+
+  @media (max-width: 760px){
+    .nav-links{ display:none; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding: 72px 0 96px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute;
+    top:-160px; right:-160px;
+    width: 480px; height: 480px;
+    background: radial-gradient(circle, rgba(74,144,226,0.28), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+    align-items: center;
+    position: relative;
+  }
+  .hero-media{
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: linear-gradient(155deg, #202028, #17171c 60%);
+    border: 1px solid var(--dark-line);
+    aspect-ratio: 4/3;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .scope-lines{
+    position:absolute;
+    inset: 0;
+    opacity: 0.55;
+  }
+  .wheels{
+    position:relative;
+    display:flex;
+    gap: 26px;
+    z-index:2;
+  }
+  .wheel{
+    width: 88px; height: 88px;
+    border-radius:50%;
+    position:relative;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .wheel::after{
+    content:"";
+    position:absolute;
+    top:50%; left:50%;
+    width:6px; height:6px;
+    border-radius:50%;
+    background: var(--text-light);
+    transform: translate(-50%,-50%);
+  }
+  .wheel.shadows{ background: radial-gradient(circle at 60% 40%, #3a3f52, #1c1e26 70%); }
+  .wheel.mids{ background: radial-gradient(circle at 55% 45%, var(--blue-soft), #24314a 70%); }
+  .wheel.highs{ background: radial-gradient(circle at 55% 35%, #e8ecf5, #7f8aa8 70%); }
+  .play-btn{
+    position:absolute;
+    z-index:3;
+    width: 66px; height: 66px;
+    border-radius:50%;
+    background: rgba(255,107,53,0.94);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 8px 24px rgba(255,107,53,0.35);
+  }
+  .play-btn svg{ width:22px; height:22px; }
+  .media-tag{
+    position:absolute;
+    bottom: 18px; left: 18px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: rgba(30,30,36,0.7);
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--dark-line);
+  }
+
+  .hero-info{
+    background: linear-gradient(165deg, var(--blue), var(--blue-deep));
+    border-radius: var(--radius-lg);
+    padding: 40px;
+  }
+  .level-badge{
+    display:inline-block;
+    background: var(--orange);
+    color: var(--text-on-orange);
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    margin-bottom: 18px;
+  }
+  .hero-info h1{
+    font-size: 2.1rem;
+    line-height: 1.2;
+    margin-bottom: 14px;
+  }
+  .hero-info .sub{
+    color: rgba(245,245,247,0.85);
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+  .rating-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 26px;
+    font-size: 0.92rem;
+    color: rgba(245,245,247,0.9);
+  }
+  .stars{ color: var(--orange); font-size: 1rem; letter-spacing: 2px; }
+  .price-row{
+    display:flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .price-now{
+    font-family: var(--font-head);
+    font-weight:700;
+    font-size: 2rem;
+  }
+  .price-old{
+    font-size: 1rem;
+    color: rgba(245,245,247,0.55);
+    text-decoration: line-through;
+  }
+  .btn-primary{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background: var(--orange);
+    color: var(--text-on-orange);
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 16px 30px;
+    border-radius: var(--radius-pill);
+    width: 100%;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn-primary:hover{ background: var(--orange-deep); transform: translateY(-1px); }
+  .hero-note{
+    margin-top:16px;
+    font-size: 0.82rem;
+    color: rgba(245,245,247,0.65);
+    text-align:center;
+  }
+
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- SECTION HEADINGS ---------- */
+  .section{ padding: 88px 0; }
+  .section-head{
+    max-width: 620px;
+    margin-bottom: 48px;
+  }
+  .section-head h2{ font-size: 2rem; margin-bottom: 12px; }
+  .section-head p{ color: var(--text-muted); font-size: 1.05rem; }
+
+  /* ---------- VALUE BLOCK ---------- */
+  .value-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .value-card{
+    background: var(--blue);
+    border-radius: var(--radius-md);
+    padding: 30px 28px;
+  }
+  .value-icon{
+    width: 44px; height:44px;
+    border-radius: var(--radius-sm);
+    background: rgba(30,30,36,0.22);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom: 20px;
+  }
+  .value-icon svg{ width:22px; height:22px; stroke: var(--text-light); }
+  .value-card h3{ font-size: 1.15rem; margin-bottom: 10px; }
+  .value-card p{ color: rgba(245,245,247,0.85); font-size: 0.95rem; }
+
+  @media (max-width: 900px){
+    .value-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- HARDWARE ---------- */
+  .hardware-box{
+    background: linear-gradient(160deg, var(--blue-deep), #24344a);
+    border-radius: var(--radius-lg);
+    padding: 44px;
+    display:grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 40px;
+  }
+  .hardware-intro h2{ font-size: 1.7rem; margin-bottom: 14px; }
+  .hardware-intro p{ color: rgba(245,245,247,0.82); font-size: 0.98rem; margin-bottom: 20px; }
+  .hardware-check{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    background: rgba(255,107,53,0.14);
+    border: 1px solid rgba(255,107,53,0.4);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: 0.86rem;
+    color: rgba(245,245,247,0.9);
+  }
+  .hardware-check strong{ color: var(--orange); }
+  .spec-list{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .spec-item{
+    background: rgba(30,30,36,0.35);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+  }
+  .spec-item .label{
+    font-size: 0.78rem;
+    color: rgba(245,245,247,0.6);
+    margin-bottom: 6px;
+  }
+  .spec-item .value{
+    font-family: var(--font-head);
+    font-weight:600;
+    font-size: 0.98rem;
+  }
+
+  @media (max-width: 900px){
+    .hardware-box{ grid-template-columns: 1fr; padding: 32px; }
+    .spec-list{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- CURRICULUM / ACCORDION ---------- */
+  .accordion{
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+  .module{
+    background: var(--dark-alt);
+    border: 1px solid var(--dark-line);
+    border-radius: var(--radius-md);
+    overflow:hidden;
+  }
+  .module-head{
+    width:100%;
+    background: var(--blue);
+    padding: 20px 26px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    text-align:left;
+    color: var(--text-light);
+  }
+  .module-head .m-title{ display:flex; align-items:center; gap: 14px; }
+  .module-num{
+    font-family: var(--font-head);
+    font-weight:700;
+    font-size: 0.85rem;
+    background: rgba(30,30,36,0.28);
+    width: 30px; height:30px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .module-head h3{ font-size: 1.05rem; }
+  .module-head .m-meta{ font-size: 0.82rem; color: rgba(245,245,247,0.8); }
+  .chevron{
+    width: 18px; height: 18px;
+    transition: transform .25s ease;
+    flex-shrink:0;
+  }
+  .module.open .chevron{ transform: rotate(180deg); }
+  .module-body{
+    max-height: 0;
+    overflow:hidden;
+    transition: max-height .3s ease;
+  }
+  .module-body-inner{
+    padding: 6px 26px 22px;
+  }
+  .lesson{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--dark-line);
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+  .lesson:last-child{ border-bottom:none; }
+  .lesson svg{ width:16px; height:16px; flex-shrink:0; color: var(--blue); }
+
+  /* ---------- PRICING ---------- */
+  .pricing-card{
+    background: linear-gradient(170deg, var(--dark-alt), #201f26);
+    border: 1px solid var(--dark-line);
+    border-radius: var(--radius-lg);
+    padding: 56px;
+    max-width: 620px;
+    margin: 0 auto;
+    text-align:center;
+  }
+  .pricing-card .level-badge{ margin-bottom: 20px; }
+  .pricing-card h2{ font-size: 1.9rem; margin-bottom: 10px; }
+  .pricing-card .sub{ color: var(--text-muted); margin-bottom: 32px; font-size: 1rem; }
+  .timer{
+    display:flex;
+    justify-content:center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .timer-box{
+    background: rgba(255,107,53,0.12);
+    border: 1px solid rgba(255,107,53,0.4);
+    border-radius: var(--radius-sm);
+    padding: 12px 4px;
+    width: 68px;
+  }
+  .timer-box .num{
+    font-family: var(--font-head);
+    font-weight:700;
+    font-size: 1.4rem;
+    color: var(--orange);
+  }
+  .timer-box .unit{
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .pricing-card .price-row{ justify-content:center; margin-bottom: 8px; }
+  .pricing-card .price-now{ font-size: 2.6rem; }
+  .pricing-guarantee{
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 600px){
+    .pricing-card{ padding: 36px 24px; }
+    .timer-box{ width: 58px; }
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top: 1px solid var(--dark-line);
+    padding: 40px 0 120px;
+  }
+  footer .wrap{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap: 16px;
+  }
+  footer .brand{ font-size: 1.05rem; }
+  footer .foot-note{ color: var(--text-muted); font-size: 0.85rem; }
+
+  /* ---------- FLOATING CTA ---------- */
+  .floating-cta{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 60;
+    background: var(--orange);
+    color: var(--text-on-orange);
+    font-weight: 800;
+    font-size: 0.92rem;
+    padding: 16px 26px;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 10px 30px rgba(255,107,53,0.4);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .floating-cta:hover{ background: var(--orange-deep); transform: translateY(-2px); }
+
+  @media (max-width: 600px){
+    .floating-cta{ left: 16px; right:16px; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="wrap">
+      <div class="brand"><span class="brand-mark"></span>Campiper</div>
+      <nav class="nav-links">
+        <a href="#temario">Temario</a>
+        <a href="#requisitos">Requisitos</a>
+        <a href="#precios">Precio</a>
+      </nav>
+      <a href="#precios" class="nav-cta">Inscríbete ahora</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-media">
+        <svg class="scope-lines" viewBox="0 0 400 300" preserveAspectRatio="none">
+          <polyline points="0,220 30,180 60,230 90,140 120,200 150,110 180,190 210,150 240,210 270,120 300,180 330,160 360,200 400,150"
+            fill="none" stroke="#4A90E2" stroke-width="2" opacity="0.5"/>
+          <polyline points="0,240 30,210 60,250 90,190 120,230 150,170 180,220 210,190 240,235 270,180 300,215 330,200 360,225 400,195"
+            fill="none" stroke="#FF6B35" stroke-width="1.4" opacity="0.35"/>
+        </svg>
+        <div class="wheels">
+          <div class="wheel shadows"></div>
+          <div class="wheel mids"></div>
+          <div class="wheel highs"></div>
+        </div>
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7-11-7z" fill="#1E1E24"/></svg>
+        </div>
+        <span class="media-tag">Tráiler del curso · 2:14</span>
+      </div>
+
+      <div class="hero-info">
+        <span class="level-badge">Nivel Principiante</span>
+        <h1>Domina DaVinci Resolve desde cero</h1>
+        <p class="sub">Edita, corrige color y entrega tus primeros videos con el mismo software que usan estudios profesionales — explicado para quien nunca ha editado antes.</p>
+        <div class="rating-row">
+          <span class="stars">★★★★★</span>
+          <span>4.8 · +2.340 estudiantes matriculados</span>
+        </div>
+        <div class="price-row">
+          <span class="price-now">$149.000</span>
+          <span class="price-old">$299.000</span>
+        </div>
+        <a href="#precios" class="btn-primary">Comenzar mi curso</a>
+        <p class="hero-note">Acceso inmediato · Aprende a tu propio ritmo</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>¿Por qué aprender con Campiper?</h2>
+        <p>Pensado para que avances sin presión, sin horarios fijos y sin perder el progreso que ya hiciste.</p>
+      </div>
+      <div class="value-grid">
+        <div class="value-card">
+          <div class="value-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7-11-7z"/></svg>
+          </div>
+          <h3>100% grabado</h3>
+          <p>Todas las clases están disponibles desde el primer día. Sin clases en vivo que te obliguen a conectarte a una hora fija.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          </div>
+          <h3>Acceso de por vida</h3>
+          <p>Vuelve a las lecciones cuando lo necesites, incluso años después de terminar el curso, sin costos adicionales.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 1 8 8"/><path d="M4 12v6h6"/></svg>
+          </div>
+          <h3>Aprende a tu ritmo</h3>
+          <p>Sin fechas de entrega. Avanzas módulo por módulo según el tiempo que tengas disponible cada semana.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="requisitos">
+    <div class="wrap">
+      <div class="hardware-box">
+        <div class="hardware-intro">
+          <h2>Requisitos técnicos mínimos de tu computador</h2>
+          <p>DaVinci Resolve necesita cierto nivel de hardware para trabajar sin trabas. Revisa esto antes de inscribirte, así evitas frustraciones durante las clases.</p>
+          <div class="hardware-check">
+            <span>⚠</span>
+            <span><strong>Antes de inscribirte:</strong> confirma que tu equipo cumple al menos con los valores mínimos de la lista para que el programa fluya correctamente.</span>
+          </div>
+        </div>
+        <div class="spec-list">
+          <div class="spec-item">
+            <div class="label">Procesador</div>
+            <div class="value">Intel i5 8va gen. o AMD Ryzen 5+</div>
+          </div>
+          <div class="spec-item">
+            <div class="label">Memoria RAM</div>
+            <div class="value">16 GB mínimo (32 GB recomendado)</div>
+          </div>
+          <div class="spec-item">
+            <div class="label">Tarjeta gráfica</div>
+            <div class="value">4 GB VRAM con soporte OpenCL/CUDA/Metal</div>
+          </div>
+          <div class="spec-item">
+            <div class="label">Almacenamiento</div>
+            <div class="value">SSD con 100 GB libres</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="temario">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Temario del curso</h2>
+        <p>Cinco módulos progresivos que te llevan desde instalar el programa hasta entregar tu primer proyecto terminado.</p>
+      </div>
+      <div class="accordion" id="accordion"></div>
+    </div>
+  </section>
+
+  <section class="section" id="precios">
+    <div class="wrap">
+      <div class="pricing-card">
+        <span class="level-badge">Nivel Principiante</span>
+        <h2>Inscríbete antes de que termine la oferta</h2>
+        <p class="sub">Pago único · Acceso inmediato y de por vida</p>
+        <div class="timer" id="timer">
+          <div class="timer-box"><div class="num" id="t-hours">23</div><div class="unit">horas</div></div>
+          <div class="timer-box"><div class="num" id="t-mins">59</div><div class="unit">min</div></div>
+          <div class="timer-box"><div class="num" id="t-secs">59</div><div class="unit">seg</div></div>
+        </div>
+        <div class="price-row">
+          <span class="price-now">$149.000</span>
+          <span class="price-old">$299.000</span>
+        </div>
+        <a href="#precios" class="btn-primary">Comenzar mi curso ahora</a>
+        <p class="pricing-guarantee">Pago seguro · Garantía de satisfacción de 14 días</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="brand"><span class="brand-mark"></span>Campiper</div>
+      <p class="foot-note">Mockup visual — contenido de referencia, no representa un curso publicado.</p>
+    </div>
+  </footer>
+
+  <a href="#precios" class="floating-cta">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E1E24" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Inscríbete ahora
+  </a>
+
+  <script>
+    const modules = [
+      {
+        title: "Primeros pasos en DaVinci Resolve",
+        meta: "3 lecciones · 28 min",
+        lessons: [
+          "Instalación y configuración inicial",
+          "Conociendo la interfaz: Media, Cut, Edit, Fusion, Color, Fairlight y Deliver",
+          "Organización de tu primer proyecto"
+        ]
+      },
+      {
+        title: "Edición básica de video",
+        meta: "3 lecciones · 35 min",
+        lessons: [
+          "Cortes, transiciones y línea de tiempo",
+          "Trabajando con múltiples pistas",
+          "Ajustes de velocidad y duración de clips"
+        ]
+      },
+      {
+        title: "Introducción al color grading",
+        meta: "3 lecciones · 41 min",
+        lessons: [
+          "La rueda de color primaria",
+          "Corrección de color vs. estilización",
+          "Uso de scopes: waveform y vectorscopio"
+        ]
+      },
+      {
+        title: "Audio y entrega final",
+        meta: "3 lecciones · 30 min",
+        lessons: [
+          "Mezcla básica de audio en Fairlight",
+          "Formatos y ajustes de exportación",
+          "Optimización del video para redes sociales"
+        ]
+      },
+      {
+        title: "Proyecto final",
+        meta: "2 lecciones · 22 min",
+        lessons: [
+          "Aplicando todo lo aprendido en un proyecto propio",
+          "Retroalimentación, buenas prácticas y certificado"
+        ]
+      }
+    ];
+
+    const accordion = document.getElementById('accordion');
+    modules.forEach((mod, i) => {
+      const item = document.createElement('div');
+      item.className = 'module';
+
+      const head = document.createElement('button');
+      head.className = 'module-head';
+      head.innerHTML = `
+        <span class="m-title">
+          <span class="module-num">${i + 1}</span>
+          <h3>${mod.title}</h3>
+        </span>
+        <span style="display:flex; align-items:center; gap:14px;">
+          <span class="m-meta">${mod.meta}</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="#F5F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </span>`;
+
+      const body = document.createElement('div');
+      body.className = 'module-body';
+      const inner = document.createElement('div');
+      inner.className = 'module-body-inner';
+      mod.lessons.forEach(lesson => {
+        const row = document.createElement('div');
+        row.className = 'lesson';
+        row.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7-11-7z"/></svg><span>${lesson}</span>`;
+        inner.appendChild(row);
+      });
+      body.appendChild(inner);
+
+      head.addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        item.classList.toggle('open');
+        body.style.maxHeight = isOpen ? '0px' : inner.scrollHeight + 'px';
+      });
+
+      item.appendChild(head);
+      item.appendChild(body);
+      accordion.appendChild(item);
+    });
+    accordion.firstElementChild.classList.add('open');
+    const firstBody = accordion.firstElementChild.querySelector('.module-body');
+    firstBody.style.maxHeight = firstBody.firstElementChild.scrollHeight + 'px';
+
+    // Countdown timer (demo, cuenta atrás desde 23:59:59)
+    let totalSeconds = 23 * 3600 + 59 * 60 + 59;
+    const hEl = document.getElementById('t-hours');
+    const mEl = document.getElementById('t-mins');
+    const sEl = document.getElementById('t-secs');
+    function pad(n){ return n.toString().padStart(2, '0'); }
+    setInterval(() => {
+      if (totalSeconds <= 0) { totalSeconds = 23 * 3600 + 59 * 60 + 59; }
+      totalSeconds--;
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      hEl.textContent = pad(h);
+      mEl.textContent = pad(m);
+      sEl.textContent = pad(s);
+    }, 1000);
+  </script>
+
+</body>
+</html>
