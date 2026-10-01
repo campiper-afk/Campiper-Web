@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Cursos - Campiper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { head: ['Poppins', 'sans-serif'], body: ['Inter', 'sans-serif'] },
+          colors: {
+            dark: '#1E1E24', darkAlt: '#26262E', darkLine: '#34343E',
+            bluePrimary: '#4A90E2', orangePrimary: '#FF6B35', orangeDeep: '#E0552A',
+            textLight: '#F5F5F7', textMuted: '#A9ADBB',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-body bg-dark text-textLight antialiased min-h-screen flex flex-col">
+
+  <!-- Menú de navegación (Versión Logueado) -->
+  <header class="bg-darkAlt/90 backdrop-blur-md border-b border-darkLine sticky top-0 z-50">
+    <div class="max-w-[1180px] mx-auto px-8 h-[76px] flex items-center justify-between">
+      <div class="font-head font-bold text-xl flex items-center gap-2">
+        <span class="w-8 h-8 rounded-full bg-gradient-to-tr from-bluePrimary via-orangePrimary to-bluePrimary"></span>
+        Campiper
+      </div>
+      <nav class="hidden md:flex gap-8 font-medium text-sm text-textMuted">
+        <a href="mis-cursos.html" class="text-orangePrimary font-semibold">Mis Cursos</a>
+        <a href="#" class="hover:text-textLight transition-colors">Comunidad</a>
+        <a href="#" class="hover:text-textLight transition-colors">Soporte</a>
+      </nav>
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-darkLine border border-darkLine flex items-center justify-center font-head font-bold text-sm">JP</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1180px] mx-auto px-8 py-12 w-full flex-grow">
+    
+    <!-- Bienvenida -->
+    <header class="mb-10">
+      <h1 class="font-head text-3xl md:text-4xl font-bold mb-2">Hola, Jean Paul 👋</h1>
+      <p class="text-textMuted text-lg">Aquí tienes tu progreso. ¡Sigue así!</p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Columna Principal: Curso Activo -->
+      <div class="lg:col-span-2">
+        <h2 class="font-head text-xl font-bold mb-6">En progreso</h2>
+        
+        <div class="bg-darkAlt border border-darkLine rounded-[20px] overflow-hidden flex flex-col sm:flex-row transition-transform hover:-translate-y-1">
+          <!-- Imagen del curso -->
+          <div class="sm:w-2/5 h-48 sm:h-auto relative bg-[#17171c]">
+            <img src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="DaVinci Resolve" class="w-full h-full object-cover opacity-80">
+          </div>
+          
+          <!-- Info y Progreso -->
+          <div class="p-6 sm:p-8 flex flex-col justify-center w-full">
+            <span class="text-bluePrimary font-semibold text-xs tracking-wider uppercase mb-2">Edición de Video</span>
+            <h3 class="font-head text-2xl font-bold mb-4 leading-tight">Domina DaVinci Resolve</h3>
+            
+            <!-- Barra de progreso -->
+            <div class="mb-6">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-textMuted">Módulo 2 en curso</span>
+                <span class="font-bold text-orangePrimary">45%</span>
+              </div>
+              <div class="w-full h-2 bg-darkLine rounded-full overflow-hidden">
+                <div class="h-full bg-orangePrimary rounded-full w-[45%]"></div>
+              </div>
+            </div>
+            
+            <!-- Botón hacia la lección -->
+            <a href="leccion.html" class="bg-orangePrimary text-dark font-extrabold py-3 px-6 rounded-full text-center hover:bg-orangeDeep transition-colors mt-auto">
+              Continuar aprendizaje
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Lateral: Recursos -->
+      <div class="space-y-6">
+        <h2 class="font-head text-xl font-bold mb-6">Recursos del curso</h2>
+        
+        <!-- Archivos descargables -->
+        <div class="bg-darkAlt border border-darkLine rounded-[20px] p-6">
+          <ul class="space-y-4">
+            <li class="flex items-center justify-between pb-4 border-b border-darkLine">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-bluePrimary/20 text-bluePrimary flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Clips de práctica</p>
+                  <p class="text-xs text-textMuted">ZIP · 1.2 GB</p>
+                </div>
+              </div>
+              <button class="text-textMuted hover:text-textLight"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+            </li>
+            <li class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-bluePrimary/20 text-bluePrimary flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Atajos de teclado</p>
+                  <p class="text-xs text-textMuted">PDF · 2 MB</p>
+                </div>
+              </div>
+              <button class="text-textMuted hover:text-textLight"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Certificado Bloqueado -->
+        <div class="bg-[#1E1E24] border border-darkLine border-dashed rounded-[20px] p-6 flex flex-col items-center text-center opacity-75">
+          <div class="w-12 h-12 rounded-full bg-darkLine flex items-center justify-center text-textMuted mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3 class="font-head font-bold text-sm mb-1">Certificado de finalización</h3>
+          <p class="text-xs text-textMuted">Completa el 100% del curso para desbloquear tu certificado oficial.</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
