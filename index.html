@@ -528,10 +528,10 @@
     <div class="wrap">
       <div class="brand"><span class="brand-mark"></span>Campiper</div>
       <nav class="nav-links">
-        <a href="#temario">Temario</a>
         <a href="#requisitos">Requisitos</a>
         <a href="catalogo.html">Contenido</a>
         <a href="#precios">Precio</a>
+        <a href="mis-cursos.html">Mis cursos</a>
       </nav>
       <a href="#precios" class="nav-cta">Inscríbete ahora</a>
     </div>
@@ -640,16 +640,6 @@
     </div>
   </section>
 
-  <section class="section" id="temario">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Temario del curso</h2>
-        <p>Cinco módulos progresivos que te llevan desde instalar el programa hasta entregar tu primer proyecto terminado.</p>
-      </div>
-      <div class="accordion" id="accordion"></div>
-    </div>
-  </section>
-
   <section class="section" id="precios">
     <div class="wrap">
       <div class="pricing-card">
@@ -682,97 +672,6 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E1E24" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     Inscríbete ahora
   </a>
-
-  <script>
-    const modules = [
-      {
-        title: "Primeros pasos en DaVinci Resolve",
-        meta: "3 lecciones · 28 min",
-        lessons: [
-          "Instalación y configuración inicial",
-          "Conociendo la interfaz: Media, Cut, Edit, Fusion, Color, Fairlight y Deliver",
-          "Organización de tu primer proyecto"
-        ]
-      },
-      {
-        title: "Edición básica de video",
-        meta: "3 lecciones · 35 min",
-        lessons: [
-          "Cortes, transiciones y línea de tiempo",
-          "Trabajando con múltiples pistas",
-          "Ajustes de velocidad y duración de clips"
-        ]
-      },
-      {
-        title: "Introducción al color grading",
-        meta: "3 lecciones · 41 min",
-        lessons: [
-          "La rueda de color primaria",
-          "Corrección de color vs. estilización",
-          "Uso de scopes: waveform y vectorscopio"
-        ]
-      },
-      {
-        title: "Audio y entrega final",
-        meta: "3 lecciones · 30 min",
-        lessons: [
-          "Mezcla básica de audio en Fairlight",
-          "Formatos y ajustes de exportación",
-          "Optimización del video para redes sociales"
-        ]
-      },
-      {
-        title: "Proyecto final",
-        meta: "2 lecciones · 22 min",
-        lessons: [
-          "Aplicando todo lo aprendido en un proyecto propio",
-          "Retroalimentación, buenas prácticas y certificado"
-        ]
-      }
-    ];
-
-    const accordion = document.getElementById('accordion');
-    modules.forEach((mod, i) => {
-      const item = document.createElement('div');
-      item.className = 'module';
-
-      const head = document.createElement('button');
-      head.className = 'module-head';
-      head.innerHTML = `
-        <span class="m-title">
-          <span class="module-num">${i + 1}</span>
-          <h3>${mod.title}</h3>
-        </span>
-        <span style="display:flex; align-items:center; gap:14px;">
-          <span class="m-meta">${mod.meta}</span>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="#F5F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </span>`;
-
-      const body = document.createElement('div');
-      body.className = 'module-body';
-      const inner = document.createElement('div');
-      inner.className = 'module-body-inner';
-      mod.lessons.forEach(lesson => {
-        const row = document.createElement('div');
-        row.className = 'lesson';
-        row.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7-11-7z"/></svg><span>${lesson}</span>`;
-        inner.appendChild(row);
-      });
-      body.appendChild(inner);
-
-      head.addEventListener('click', () => {
-        const isOpen = item.classList.contains('open');
-        item.classList.toggle('open');
-        body.style.maxHeight = isOpen ? '0px' : inner.scrollHeight + 'px';
-      });
-
-      item.appendChild(head);
-      item.appendChild(body);
-      accordion.appendChild(item);
-    });
-    accordion.firstElementChild.classList.add('open');
-    const firstBody = accordion.firstElementChild.querySelector('.module-body');
-    firstBody.style.maxHeight = firstBody.firstElementChild.scrollHeight + 'px';
 
     // Countdown timer (demo, cuenta atrás desde 23:59:59)
     let totalSeconds = 23 * 3600 + 59 * 60 + 59;
