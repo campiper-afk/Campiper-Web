@@ -516,10 +516,25 @@
     transition: transform .15s ease, background .15s ease;
   }
   .floating-cta:hover{ background: var(--orange-deep); transform: translateY(-2px); }
-
-  @media (max-width: 600px){
-    .floating-cta{ left: 16px; right:16px; justify-content:center; }
+  
+@media (max-width: 600px){
+  .floating-cta { left: 16px; right:16px; justify-content:center; }
+  
+  /* Hacer que el menú baje a una segunda línea en celulares */
+  .nav .wrap {
+    flex-wrap: wrap;
   }
+  .nav-links {
+    display: flex !important; /* Fuerza a que aparezcan las opciones */
+    width: 100%; /* Obliga al menú a ocupar todo el ancho */
+    justify-content: center; /* Centra los botones */
+    flex-wrap: wrap; /* Evita que los botones se aplasten si son muchos */
+    gap: 15px;
+    order: 3; /* Lo manda debajo del logo y el botón principal */
+    margin-top: 15px;
+  }
+}
+
 </style>
 </head>
 <body>
