@@ -7,52 +7,51 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { head: ['Poppins', 'sans-serif'], body: ['Inter', 'sans-serif'] },
-          colors: {
-            dark: '#1E1E24', darkAlt: '#26262E', darkLine: '#34343E',
-            bluePrimary: '#4A90E2', orangePrimary: '#FF6B35', orangeDeep: '#E0552A',
-            textLight: '#F5F5F7', textMuted: '#A9ADBB',
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="font-body bg-dark text-textLight antialiased min-h-screen">
+<body class="pagina-leccion">
 
-  <div class="max-w-[1000px] mx-auto p-8 pt-12">
-    
+  <header class="nav">
+    <div class="wrap">
+      <div class="brand"><span class="brand-mark"></span>Campiper</div>
+      <nav class="nav-links">
+        <a href="#requisitos">Requisitos</a>
+        <a href="catalogo.html">Contenido</a>
+        <a href="#precios">Precio</a>
+        <a href="mis-cursos.html">Mis cursos</a>
+      </nav>
+      <a href="#precios" class="nav-cta">Inscríbete ahora</a>
+    </div>
+  </header>
+
+  <div class="leccion-contenedor">
+
     <!-- El botón que pediste: Volver a Mis Cursos -->
-    <a href="mis-cursos.html" class="text-orangePrimary font-semibold text-sm hover:text-orangeDeep flex items-center gap-2 mb-8 transition-colors">
+    <a href="mis-cursos.html" class="link-volver">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver a Mis Cursos
     </a>
 
     <!-- Reproductor de Video (Simulado) -->
-    <div class="w-full aspect-video bg-black rounded-[20px] overflow-hidden border border-darkLine mb-8 relative flex items-center justify-center group cursor-pointer shadow-lg">
-      <img src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Pantalla de DaVinci Resolve" class="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-300">
-      
+    <div class="video-reproductor">
+      <img src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Pantalla de DaVinci Resolve" class="video-imagen">
+
       <!-- Botón de Play -->
-      <div class="absolute w-20 h-20 bg-orangePrimary rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,107,53,0.5)] group-hover:scale-110 transition-transform duration-300">
-        <svg class="w-10 h-10 text-dark ml-2" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3v18l15-9L5 3z"/></svg>
+      <div class="video-play">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3v18l15-9L5 3z"/></svg>
       </div>
     </div>
 
     <!-- Contenido de la Lección -->
-    <div class="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-darkLine pb-8 mb-8">
+    <div class="leccion-cabecera">
       <div>
-        <span class="text-bluePrimary font-semibold text-xs tracking-wider uppercase mb-2 block">Módulo 2 • Lección 1</span>
-        <h1 class="font-head text-3xl font-bold mb-4">Cortes, transiciones y uso de la línea de tiempo</h1>
-        <p class="text-textMuted text-lg max-w-2xl">Aprende a navegar por el panel de edición (Edit Page) de DaVinci Resolve. Veremos cómo importar tus clips, hacer los primeros cortes de precisión y añadir transiciones básicas para darle fluidez a tu video.</p>
+        <span class="etiqueta-azul">Módulo 2 • Lección 1</span>
+        <h1 class="titulo-pagina">Cortes, transiciones y uso de la línea de tiempo</h1>
+        <p class="leccion-descripcion">Aprende a navegar por el panel de edición (Edit Page) de DaVinci Resolve. Veremos cómo importar tus clips, hacer los primeros cortes de precisión y añadir transiciones básicas para darle fluidez a tu video.</p>
       </div>
-      
+
       <!-- Botón Siguiente Lección -->
-      <button class="bg-darkAlt border border-darkLine text-textLight font-semibold py-3 px-6 rounded-full hover:bg-darkLine transition-colors flex items-center gap-2 whitespace-nowrap">
+      <button class="boton-siguiente">
         Siguiente lección
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
@@ -60,14 +59,14 @@
 
     <!-- Material adicional de esta clase -->
     <div>
-      <h3 class="font-head text-xl font-bold mb-4">Material de la clase</h3>
-      <div class="inline-flex items-center gap-3 bg-darkAlt border border-darkLine rounded-xl p-4 pr-6 hover:border-textMuted cursor-pointer transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-orangePrimary/20 text-orangePrimary flex items-center justify-center">
+      <h3 class="material-titulo">Material de la clase</h3>
+      <div class="caja fila-icono material-archivo">
+        <div class="icono-caja icono-caja-naranja">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         </div>
         <div>
-          <p class="font-semibold text-sm">Clips del ejercicio práctico</p>
-          <p class="text-xs text-textMuted">Descargar ZIP (350 MB)</p>
+          <p class="archivo-nombre">Clips del ejercicio práctico</p>
+          <p class="archivo-detalle">Descargar ZIP (350 MB)</p>
         </div>
       </div>
     </div>
