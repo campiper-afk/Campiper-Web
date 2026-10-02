@@ -7,131 +7,51 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { head: ['Poppins', 'sans-serif'], body: ['Inter', 'sans-serif'] },
-          colors: {
-            dark: '#1E1E24', darkAlt: '#26262E', darkLine: '#34343E',
-            bluePrimary: '#4A90E2', orangePrimary: '#FF6B35', orangeDeep: '#E0552A',
-            textLight: '#F5F5F7', textMuted: '#A9ADBB',
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
 </head>
-<body class="font-body bg-dark text-textLight antialiased min-h-screen">
+<body class="pagina-detalle">
 
-  <div class="max-w-[800px] mx-auto p-8 pt-12">
+  <div class="detalle-contenedor">
     <!-- Botón de regreso -->
-    <a href="catalogo.html" class="text-orangePrimary font-semibold text-sm hover:text-orangeDeep flex items-center gap-2 mb-8 transition-colors">
+    <a href="catalogo.html" class="link-volver">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver al contenido del curso
     </a>
-    
+
     <!-- Encabezado dinámico del módulo -->
-    <span id="mod-etiqueta" class="inline-block bg-orangePrimary text-dark font-head font-bold text-xs px-3 py-1.5 rounded-full mb-4">Cargando...</span>
-    <h1 id="mod-titulo" class="font-head text-3xl md:text-4xl font-bold mb-4">Cargando módulo...</h1>
-    <p id="mod-desc" class="text-textMuted text-lg mb-10 leading-relaxed"></p>
-    
+    <span id="mod-etiqueta" class="insignia insignia-detalle">Cargando...</span>
+    <h1 id="mod-titulo" class="titulo-pagina">Cargando módulo...</h1>
+    <p id="mod-desc" class="detalle-descripcion"></p>
+
     <!-- Lista de lecciones dinámica -->
-    <div class="bg-darkAlt border border-darkLine rounded-[20px] p-6 md:p-8 mb-10">
-      <h2 class="font-head text-xl font-bold mb-6">Lecciones de este módulo</h2>
-      <ul id="lesson-list" class="space-y-4 text-textMuted">
+    <div class="caja panel-lecciones">
+      <h2 class="titulo-seccion">Lecciones de este módulo</h2>
+      <ul id="lesson-list" class="lista-lecciones">
          <!-- Las lecciones se inyectan aquí con JS -->
       </ul>
     </div>
-    
+
     <!-- Instructor y Compra (Fijos para todo el curso) -->
-    <div class="grid md:grid-cols-2 gap-6">
-       <div class="bg-darkAlt border border-darkLine rounded-[20px] p-6 flex flex-col justify-center">
-          <h3 class="font-head font-bold text-lg mb-2">Instructor</h3>
-          <p class="text-textMuted text-sm mb-4">Aprende de la mano de un experto en postproducción audiovisual.</p>
-          <div class="flex items-center gap-3">
-             <div class="w-12 h-12 rounded-full bg-bluePrimary flex items-center justify-center font-head font-bold text-dark">JP</div>
-             <span class="font-semibold text-textLight">Jean Paul G.</span>
+    <div class="detalle-columnas">
+       <div class="caja instructor-tarjeta">
+          <h3 class="instructor-titulo">Instructor</h3>
+          <p class="instructor-texto">Aprende de la mano de un experto en postproducción audiovisual.</p>
+          <div class="fila-icono">
+             <div class="instructor-avatar">JP</div>
+             <span class="instructor-nombre">Jean Paul G.</span>
           </div>
        </div>
-       
-       <div class="bg-darkAlt border border-darkLine rounded-[20px] p-6 text-center border-t-4 border-t-orangePrimary">
-          <p class="text-textMuted text-sm mb-2">Precio del curso completo</p>
-          <p class="font-head text-3xl font-bold text-textLight mb-6">$149.000</p>
-          <button class="bg-orangePrimary text-dark font-extrabold py-3 px-6 rounded-full w-full hover:bg-orangeDeep transition-transform hover:-translate-y-1">
+
+       <div class="caja compra-tarjeta">
+          <p class="compra-etiqueta">Precio del curso completo</p>
+          <p class="compra-precio">$149.000</p>
+          <button class="boton-comprar">
             Comprar curso completo
           </button>
        </div>
     </div>
   </div>
 
-  <script>
-    // Base de datos de los 4 módulos extraída de tu diseño
-    const modulosData = {
-      "1": {
-        etiqueta: "Primer Módulo",
-        titulo: "Primeros pasos en DaVinci Resolve",
-        descripcion: "Este módulo introductorio establece las bases para comenzar a utilizar el software, guiándote a través del proceso de instalación y su configuración inicial.",
-        lecciones: [
-          "Instalación y configuración inicial",
-          "Conociendo la interfaz: Media, Cut, Edit y Deliver",
-          "Organización de tu primer proyecto y atajos de teclado"
-        ]
-      },
-      "2": {
-        etiqueta: "Segundo Módulo",
-        titulo: "Edición básica de video",
-        descripcion: "En esta sección aprenderás a dominar la edición básica manejando cortes, transiciones y la línea de tiempo.",
-        lecciones: [
-          "Cortes, transiciones y uso de la línea de tiempo",
-          "Trabajando con múltiples pistas de video",
-          "Ajustes de velocidad y duración de clips"
-        ]
-      },
-      "3": {
-        etiqueta: "Tercer Módulo",
-        titulo: "Introducción al color grading",
-        descripcion: "Explora la rueda de color primaria para distinguir entre corrección de color y estilización, dominando también el uso de scopes como el waveform.",
-        lecciones: [
-          "La rueda de color primaria y nodos básicos",
-          "Corrección de color vs. estilización (LUTs)",
-          "Uso de scopes: waveform y vectorscopio"
-        ]
-      },
-      "4": {
-        etiqueta: "Cuarto Módulo",
-        titulo: "Audio y entrega final",
-        descripcion: "Aplica la mezcla básica de audio en Fairlight y configura los ajustes de exportación para optimizar tus videos en redes sociales.",
-        lecciones: [
-          "Mezcla básica de audio y reducción de ruido en Fairlight",
-          "Formatos y ajustes de exportación (Render)",
-          "Optimización del video para YouTube, Instagram y TikTok"
-        ]
-      }
-    };
-
-    // 1. Leer el número de módulo desde la URL (ej: ?mod=2)
-    const parametros = new URLSearchParams(window.location.search);
-    const modId = parametros.get('mod') || "1"; // Si no hay número, carga el 1 por defecto
-
-    // 2. Buscar la información de ese módulo en nuestra base de datos
-    const datos = modulosData[modId];
-
-    // 3. Inyectar la información en el HTML
-    if(datos) {
-      document.getElementById('mod-etiqueta').textContent = datos.etiqueta;
-      document.getElementById('mod-titulo').textContent = datos.titulo;
-      document.getElementById('mod-desc').textContent = datos.descripcion;
-
-      const lista = document.getElementById('lesson-list');
-      datos.lecciones.forEach(leccion => {
-        const li = document.createElement('li');
-        li.className = "flex items-start gap-3";
-        li.innerHTML = `<svg class="w-5 h-5 text-bluePrimary mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg><span>${leccion}</span>`;
-        lista.appendChild(li);
-      });
-    }
-  </script>
 </body>
 </html>
