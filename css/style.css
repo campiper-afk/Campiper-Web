@@ -1262,3 +1262,277 @@ footer .foot-note {
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
+
+/* ===================== 7. REGISTRO.HTML (registro, inicio de sesión y recuperar contraseña) ===================== */
+ 
+.pagina-auth{
+  --error: #FF8A80;
+  min-height: 100vh;
+  padding: 32px;
+  line-height: 1.5;
+}
+/* El atributo hidden debe ganar siempre dentro de esta página */
+.pagina-auth [hidden]{ display: none !important; }
+ 
+.auth-contenedor{ max-width: var(--maxw); margin: 0 auto; }
+.auth-grid{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+}
+@media (min-width: 900px){
+  .auth-grid{ grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; }
+}
+ 
+/* ---------- Panel azul ---------- */
+.auth-aside{
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  background: linear-gradient(165deg, var(--blue-soft), var(--blue-deep));
+  border-radius: var(--radius-lg);
+}
+.auth-aside .brand{ margin-bottom: 32px; }
+.auth-aside-titulo{
+  font-size: 2rem;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+.auth-aside-texto{
+  color: rgba(245,245,247,0.92);
+  font-size: 1rem;
+  max-width: 28rem;
+}
+.auth-beneficios{
+  display: none;
+  margin-top: auto;
+  padding-top: 40px;
+}
+@media (min-width: 900px){
+  .auth-beneficios{ display: block; }
+}
+.auth-beneficios li{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+.auth-beneficios li + li{ margin-top: 14px; }
+.auth-check{
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(30,30,36,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+ 
+/* ---------- Tarjeta ---------- */
+.auth-card{
+  width: 100%;
+  max-width: 540px;
+  padding: 40px;
+  margin: 0 auto;
+}
+@media (max-width: 600px){
+  .pagina-auth{ padding: 20px; }
+  .auth-aside{ padding: 28px 24px; }
+  .auth-aside-titulo{ font-size: 1.6rem; }
+  .auth-card{ padding: 28px 22px; }
+}
+ 
+/* Pestañas */
+.auth-tabs{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 32px;
+  background: var(--dark);
+  border: 1px solid var(--dark-line);
+  border-radius: var(--radius-pill);
+}
+.auth-tab{
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color .2s ease, color .2s ease;
+}
+.auth-tab:hover{ color: var(--text-light); }
+.auth-tab.active{
+  background: var(--orange);
+  color: var(--text-on-orange);
+  font-weight: 800;
+}
+ 
+.auth-titulo{
+  font-size: 1.5rem;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.auth-texto{
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+}
+ 
+/* ---------- Campos ---------- */
+.campo{ margin-bottom: 18px; }
+.campo label{
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.campo-fila{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.campo-fila label{ margin-bottom: 0; }
+ 
+.campo input{
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--dark);
+  border: 1px solid var(--dark-line);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.campo input::placeholder{ color: #747889; }
+.campo input:hover{ border-color: #4A4A57; }
+.campo input:focus{
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.25);
+}
+.campo input[aria-invalid="true"]{ border-color: var(--error); }
+.campo input[aria-invalid="true"]:focus{ box-shadow: 0 0 0 3px rgba(255,138,128,0.25); }
+ 
+.campo-clave{ position: relative; }
+.campo-clave input{ padding-right: 96px; }
+.campo-ver{
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.campo-ver:hover{ color: var(--text-light); }
+ 
+.campo-ayuda{
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.campo-error{
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--error);
+}
+.campo-error:empty{ display: none; }
+ 
+/* Enlaces tipo texto (botones sin fondo) */
+.auth-link{
+  color: var(--blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.auth-link:hover{ text-decoration: underline; }
+ 
+/* ---------- Botones ---------- */
+.auth-enviar{ margin-top: 8px; }
+.auth-enviar:disabled{ opacity: 0.7; cursor: progress; }
+.auth-enviar:disabled:hover{ background: var(--orange); transform: none; }
+ 
+.auth-separador{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.auth-separador::before,
+.auth-separador::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--dark-line);
+}
+ 
+.btn-google{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 24px;
+  background: #fff;
+  color: var(--dark);
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  transition: background-color .15s ease, transform .15s ease;
+}
+.btn-google:hover{ background: #E6E8EF; transform: translateY(-1px); }
+.btn-google:disabled{ opacity: 0.7; cursor: progress; transform: none; }
+.btn-google svg{ width: 20px; height: 20px; flex-shrink: 0; }
+ 
+.auth-cambio{
+  margin-top: 28px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.auth-cambio .auth-link{ font-size: inherit; }
+ 
+/* Mensaje general bajo el botón */
+.auth-estado{
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: rgba(74,144,226,0.14);
+  border: 1px solid rgba(74,144,226,0.4);
+}
+ 
+/* "Volver a iniciar sesión" dentro de la tarjeta */
+.auth-volver{
+  width: fit-content;
+  margin-bottom: 24px;
+}
+ 
+/* Confirmación de "recuperar contraseña" */
+.auth-exito{
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  background: rgba(74,144,226,0.12);
+  border: 1px solid rgba(74,144,226,0.4);
+  border-radius: var(--radius-md);
+}
+.auth-exito-titulo{
+  font-family: var(--font-head);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.auth-exito-texto{
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.auth-exito-texto strong{ color: var(--text-light); }
