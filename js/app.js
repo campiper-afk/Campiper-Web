@@ -413,9 +413,9 @@ function initAuth() {
   document.querySelectorAll('[data-google]').forEach(boton => {
     boton.addEventListener('click', () => {
       // TODO (servidor): aquí se iniciaría el flujo de Google (OAuth).
-      boton.disabled = true;
-      boton.querySelector('.btn-google-texto').textContent = 'Conectando con Google…';
-      setTimeout(() => { window.location.href = PAGINA_DESTINO; }, 800);
+     // boton.disabled = true;
+     // boton.querySelector('.btn-google-texto').textContent = 'Conectando con Google…';
+     // setTimeout(() => { window.location.href = PAGINA_DESTINO; }, 800);
     });
   });
 
