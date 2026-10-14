@@ -1,7 +1,8 @@
-// Importar las funciones que necesitas de los SDKs
+// 1. Importar Firebase y los módulos de Autenticación
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-
-// Pega AQUÍ el objeto firebaseConfig que te dio Firebase
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
   authDomain: "campiper-7414d.firebaseapp.com",
@@ -12,6 +13,28 @@ const firebaseConfig = {
   measurementId: "G-JP0QHCRVM5"
 };
 
-// Inicializar Firebase
+// 3. Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-console.log("Firebase conectado correctamente 👍");
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// 4. Hacer que el botón de Google funcione
+const btnGoogle = document.querySelector('[data-google]'); // Busca tu botón en el HTML
+
+if (btnGoogle) {
+  btnGoogle.addEventListener('click', () => {
+    // Abre la ventana emergente de Google
+    signInWithPopup(auth, provider)
+      .then((resultado) => {
+        const usuario = resultado.user;
+        console.log("¡Éxito! Usuario logueado:", usuario.displayName);
+        alert("¡Bienvenido " + usuario.displayName + "! Google funciona perfecto.");
+        
+        // Más adelante, aquí pondremos el código para llevarlo a mis-cursos.html
+      })
+      .catch((error) => {
+        console.error("Error al iniciar sesión:", error.message);
+        alert("Hubo un error, mira la consola.");
+      });
+  });
+}
