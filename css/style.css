@@ -496,19 +496,89 @@ ul{ margin:0; padding:0; list-style:none; }
 }
 
 /* ---------- FOOTER ---------- */
-footer{
+footer {
   border-top: 1px solid var(--dark-line);
-  padding: 40px 0 120px;
+  padding: 60px 0 120px; /* Aumenté el padding superior para dar aire al nuevo recuadro */
 }
-footer .wrap{
-  display:flex;
+
+footer .footer-content {
+  display: flex;
   justify-content: space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 40px;
 }
-footer .brand{ font-size: 1.05rem; }
-footer .foot-note{ color: var(--text-muted); font-size: 0.85rem; }
+
+footer .brand-section {
+  max-width: 400px;
+}
+
+footer .brand { 
+  font-size: 1.15rem; 
+  margin-bottom: 12px;
+}
+
+footer .foot-note { 
+  color: var(--text-muted); 
+  font-size: 0.85rem; 
+}
+
+/* Estilos del Recuadro del ChatBot */
+.chatbot-box {
+  background: rgba(74, 144, 226, 0.05); /* Fondo azul muy sutil */
+  border: 1px solid rgba(74, 144, 226, 0.2); /* Borde azul tenue */
+  border-radius: var(--radius-md);
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.chatbot-info h4 {
+  font-size: 1.05rem;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.chatbot-info p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.btn-chatbot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--dark-alt);
+  color: var(--text-light);
+  border: 1px solid var(--dark-line);
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-chatbot svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--blue); /* Icono con acento azul */
+}
+
+.btn-chatbot:hover {
+  background: rgba(74, 144, 226, 0.1);
+  border-color: var(--blue);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+   .chatbot-box {
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+   }
+}
 
 /* ---------- FLOATING CTA ---------- */
 .floating-cta{
