@@ -1504,3 +1504,4 @@ footer .foot-note{ color: var(--text-muted); font-size: 0.85rem; }
   .nav-usuario .cursos-avatar,
   .nav-nombre{ display: none; }
 }
+   .nav-usuario{ outline: 2px solid red; }
