@@ -19,9 +19,18 @@
         <a href="#requisitos">Requisitos</a>
         <a href="catalogo.html">Contenido</a>
         <a href="#precios">Precio</a>
-        <a href="mis-cursos.html">Mis cursos</a>
       </nav>
-      <a href="registro.html" class="nav-cta">Iniciar sesión</a>
+      <div class="nav-sesion">
+        <!-- Visitante -->
+        <a href="registro.html" class="nav-cta" data-solo="visitante" hidden>Iniciar sesión</a>
+        <!-- Con sesión iniciada -->
+        <div class="nav-usuario" data-solo="usuario" hidden>
+          <div class="cursos-avatar" data-usuario-inicial></div>
+          <span class="nav-nombre" data-usuario-nombre></span>
+          <a href="mis-cursos.html" class="nav-cta">Mis cursos</a>
+          <button type="button" class="nav-salir" data-salir>Salir</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -149,31 +158,18 @@
     </div>
   </section>
 
- <footer>
-  <div class="wrap footer-content">
-    <div class="brand-section">
+  <footer>
+    <div class="wrap">
       <div class="brand"><span class="brand-mark"></span>Campiper</div>
       <p class="foot-note">Mockup visual — contenido de referencia, no representa un curso publicado.</p>
     </div>
-    
-    <!-- Nuevo recuadro para el ChatBot -->
-    <div class="chatbot-box">
-      <div class="chatbot-info">
-        <h4>¿Tienes dudas sobre el curso?</h4>
-        <p>Pregúntale a nuestro asistente inteligente.</p>
-      </div>
-      <a href="chatbot.html" class="btn-chatbot">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        Quiero más información
-      </a>
-    </div>
-  </div>
-</footer>
+  </footer>
 
-  <a href="registro.html" class="floating-cta">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E1E24" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  <a href="registro.html" class="floating-cta" data-solo="visitante" hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E1E24" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     Iniciar sesión
   </a>
   
+
 </body>
 </html>
