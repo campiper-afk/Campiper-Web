@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
 </head>
 <body class="pagina-leccion">
 
@@ -18,9 +19,18 @@
         <a href="#requisitos">Requisitos</a>
         <a href="catalogo.html">Contenido</a>
         <a href="#precios">Precio</a>
-        <a href="mis-cursos.html">Mis cursos</a>
       </nav>
-      <a href="#precios" class="nav-cta">Inscríbete ahora</a>
+      <div class="nav-sesion">
+        <!-- Visitante -->
+        <a href="registro.html" class="nav-cta" data-solo="visitante" hidden>Iniciar sesión</a>
+        <!-- Con sesión iniciada -->
+        <div class="nav-usuario" data-solo="usuario" hidden>
+          <div class="cursos-avatar" data-usuario-inicial></div>
+          <span class="nav-nombre" data-usuario-nombre></span>
+          <a href="mis-cursos.html" class="nav-cta">Mis cursos</a>
+          <button type="button" class="nav-salir" data-salir>Salir</button>
+        </div>
+      </div>
     </div>
   </header>
 
