@@ -8,8 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
 </head>
-<body class="pagina-cursos">
+<body class="pagina-cursos" data-requiere-sesion>
 
   <!-- Menú de navegación (Versión Logueado) -->
   <header class="cursos-header">
@@ -24,7 +25,8 @@
         <a href="#">Soporte</a>
       </nav>
       <div class="cursos-usuario">
-        <div class="cursos-avatar">JP</div>
+        <button type="button" class="nav-salir" data-salir>Salir</button>
+        <div class="cursos-avatar" data-usuario-inicial></div>
       </div>
     </div>
   </header>
@@ -39,7 +41,7 @@
 
     <!-- Bienvenida -->
     <header class="cursos-bienvenida">
-      <h1 class="titulo-pagina">Hola, Jean Paul 👋</h1>
+      <h1 class="titulo-pagina">Hola, <span data-usuario-nombre></span> 👋</h1>
       <p class="cursos-subtitulo">Aquí tienes tu progreso. ¡Sigue así!</p>
     </header>
 
