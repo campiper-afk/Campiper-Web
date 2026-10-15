@@ -93,9 +93,15 @@
         <!-- ============ CREAR CUENTA ============ -->
         <section class="auth-panel" id="panel-registro" role="tabpanel" aria-labelledby="tab-registro" hidden>
           <h2 class="auth-titulo">Crea tu cuenta</h2>
-          <p class="auth-texto">Solo necesitas un correo y una contraseña.</p>
+          <p class="auth-texto">Tu nombre, un correo y una contraseña.</p>
 
           <form id="form-registro" novalidate>
+            <div class="campo">
+              <label for="registro-nombre">Nombre</label>
+              <input type="text" id="registro-nombre" name="nombre" autocomplete="name" maxlength="40" placeholder="Tu nombre" aria-describedby="registro-nombre-error">
+              <p class="campo-error" id="registro-nombre-error"></p>
+            </div>
+
             <div class="campo">
               <label for="registro-email">Correo electrónico</label>
               <input type="email" id="registro-email" name="email" autocomplete="email" inputmode="email" placeholder="nombre@correo.com" aria-describedby="registro-email-error">
@@ -168,8 +174,6 @@
       </div>
     </div>
   </div>
-
-  <script type="module" src="js/firebase-config.js"></script>
 
 </body>
 </html>
