@@ -496,89 +496,19 @@ ul{ margin:0; padding:0; list-style:none; }
 }
 
 /* ---------- FOOTER ---------- */
-footer {
+footer{
   border-top: 1px solid var(--dark-line);
-  padding: 60px 0 120px; /* Aumenté el padding superior para dar aire al nuevo recuadro */
+  padding: 40px 0 120px;
 }
-
-footer .footer-content {
-  display: flex;
+footer .wrap{
+  display:flex;
   justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 40px;
+  align-items:center;
+  flex-wrap:wrap;
+  gap: 16px;
 }
-
-footer .brand-section {
-  max-width: 400px;
-}
-
-footer .brand { 
-  font-size: 1.15rem; 
-  margin-bottom: 12px;
-}
-
-footer .foot-note { 
-  color: var(--text-muted); 
-  font-size: 0.85rem; 
-}
-
-/* Estilos del Recuadro del ChatBot */
-.chatbot-box {
-  background: rgba(74, 144, 226, 0.05); /* Fondo azul muy sutil */
-  border: 1px solid rgba(74, 144, 226, 0.2); /* Borde azul tenue */
-  border-radius: var(--radius-md);
-  padding: 24px 32px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.chatbot-info h4 {
-  font-size: 1.05rem;
-  color: var(--text-light);
-  margin-bottom: 4px;
-}
-
-.chatbot-info p {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.btn-chatbot {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--dark-alt);
-  color: var(--text-light);
-  border: 1px solid var(--dark-line);
-  padding: 10px 20px;
-  border-radius: var(--radius-pill);
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.btn-chatbot svg {
-  width: 18px;
-  height: 18px;
-  stroke: var(--blue); /* Icono con acento azul */
-}
-
-.btn-chatbot:hover {
-  background: rgba(74, 144, 226, 0.1);
-  border-color: var(--blue);
-  transform: translateY(-2px);
-}
-
-@media (max-width: 768px) {
-   .chatbot-box {
-      flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
-   }
-}
+footer .brand{ font-size: 1.05rem; }
+footer .foot-note{ color: var(--text-muted); font-size: 0.85rem; }
 
 /* ---------- FLOATING CTA ---------- */
 .floating-cta{
@@ -1264,7 +1194,7 @@ footer .foot-note {
 }
 
 /* ===================== 7. REGISTRO.HTML (registro, inicio de sesión y recuperar contraseña) ===================== */
- 
+
 .pagina-auth{
   --error: #FF8A80;
   min-height: 100vh;
@@ -1273,7 +1203,7 @@ footer .foot-note {
 }
 /* El atributo hidden debe ganar siempre dentro de esta página */
 .pagina-auth [hidden]{ display: none !important; }
- 
+
 .auth-contenedor{ max-width: var(--maxw); margin: 0 auto; }
 .auth-grid{
   display: grid;
@@ -1283,7 +1213,7 @@ footer .foot-note {
 @media (min-width: 900px){
   .auth-grid{ grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; }
 }
- 
+
 /* ---------- Panel azul ---------- */
 .auth-aside{
   display: flex;
@@ -1328,7 +1258,7 @@ footer .foot-note {
   justify-content: center;
   flex-shrink: 0;
 }
- 
+
 /* ---------- Tarjeta ---------- */
 .auth-card{
   width: 100%;
@@ -1342,7 +1272,7 @@ footer .foot-note {
   .auth-aside-titulo{ font-size: 1.6rem; }
   .auth-card{ padding: 28px 22px; }
 }
- 
+
 /* Pestañas */
 .auth-tabs{
   display: grid;
@@ -1368,7 +1298,7 @@ footer .foot-note {
   color: var(--text-on-orange);
   font-weight: 800;
 }
- 
+
 .auth-titulo{
   font-size: 1.5rem;
   line-height: 1.25;
@@ -1379,7 +1309,7 @@ footer .foot-note {
   font-size: 0.95rem;
   margin-bottom: 28px;
 }
- 
+
 /* ---------- Campos ---------- */
 .campo{ margin-bottom: 18px; }
 .campo label{
@@ -1396,7 +1326,7 @@ footer .foot-note {
   margin-bottom: 8px;
 }
 .campo-fila label{ margin-bottom: 0; }
- 
+
 .campo input{
   width: 100%;
   padding: 14px 16px;
@@ -1417,7 +1347,7 @@ footer .foot-note {
 }
 .campo input[aria-invalid="true"]{ border-color: var(--error); }
 .campo input[aria-invalid="true"]:focus{ box-shadow: 0 0 0 3px rgba(255,138,128,0.25); }
- 
+
 .campo-clave{ position: relative; }
 .campo-clave input{ padding-right: 96px; }
 .campo-ver{
@@ -1432,7 +1362,7 @@ footer .foot-note {
   font-weight: 600;
 }
 .campo-ver:hover{ color: var(--text-light); }
- 
+
 .campo-ayuda{
   margin-top: 6px;
   font-size: 0.8rem;
@@ -1444,7 +1374,7 @@ footer .foot-note {
   color: var(--error);
 }
 .campo-error:empty{ display: none; }
- 
+
 /* Enlaces tipo texto (botones sin fondo) */
 .auth-link{
   color: var(--blue);
@@ -1452,12 +1382,12 @@ footer .foot-note {
   font-weight: 600;
 }
 .auth-link:hover{ text-decoration: underline; }
- 
+
 /* ---------- Botones ---------- */
 .auth-enviar{ margin-top: 8px; }
 .auth-enviar:disabled{ opacity: 0.7; cursor: progress; }
 .auth-enviar:disabled:hover{ background: var(--orange); transform: none; }
- 
+
 .auth-separador{
   display: flex;
   align-items: center;
@@ -1473,7 +1403,7 @@ footer .foot-note {
   height: 1px;
   background: var(--dark-line);
 }
- 
+
 .btn-google{
   display: flex;
   align-items: center;
@@ -1490,7 +1420,7 @@ footer .foot-note {
 .btn-google:hover{ background: #E6E8EF; transform: translateY(-1px); }
 .btn-google:disabled{ opacity: 0.7; cursor: progress; transform: none; }
 .btn-google svg{ width: 20px; height: 20px; flex-shrink: 0; }
- 
+
 .auth-cambio{
   margin-top: 28px;
   text-align: center;
@@ -1498,7 +1428,7 @@ footer .foot-note {
   font-size: 0.9rem;
 }
 .auth-cambio .auth-link{ font-size: inherit; }
- 
+
 /* Mensaje general bajo el botón */
 .auth-estado{
   margin-top: 16px;
@@ -1508,13 +1438,18 @@ footer .foot-note {
   background: rgba(74,144,226,0.14);
   border: 1px solid rgba(74,144,226,0.4);
 }
- 
+
+.auth-estado--error{
+  background: rgba(255,138,128,0.12);
+  border-color: rgba(255,138,128,0.5);
+}
+
 /* "Volver a iniciar sesión" dentro de la tarjeta */
 .auth-volver{
   width: fit-content;
   margin-bottom: 24px;
 }
- 
+
 /* Confirmación de "recuperar contraseña" */
 .auth-exito{
   display: flex;
@@ -1536,3 +1471,36 @@ footer .foot-note {
   overflow-wrap: anywhere;
 }
 .auth-exito-texto strong{ color: var(--text-light); }
+
+
+/* ===================== 8. HEADER SEGÚN LA SESIÓN ===================== */
+
+/* El atributo hidden siempre gana en los elementos que cambian con la sesión */
+[data-solo][hidden]{ display: none !important; }
+
+.nav-sesion{ display: flex; align-items: center; }
+.nav-usuario{ display: flex; align-items: center; gap: 12px; }
+.nav-nombre{
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.nav-salir{
+  padding: 10px 18px;
+  border: 1px solid var(--dark-line);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color .15s ease, border-color .15s ease;
+}
+.nav-salir:hover{ color: var(--text-light); border-color: var(--text-muted); }
+
+@media (max-width: 760px){
+  .nav-usuario .cursos-avatar,
+  .nav-nombre{ display: none; }
+}
