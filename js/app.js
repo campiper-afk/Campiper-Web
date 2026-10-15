@@ -3,6 +3,211 @@
    Cada función solo se ejecuta si encuentra sus elementos.
    ========================================================= */
 
+/* =========================================================
+   FIREBASE (Authentication + Firestore)
+
+   1. Pega aquí tu firebaseConfig:
+      Firebase > Configuración del proyecto > Tus apps > app web.
+   2. Mientras apiKey diga "PEGA_AQUI", el sitio funciona en
+      MODO DEMOSTRACIÓN (cuentas simuladas en este navegador).
+   3. Con la configuración real, el registro, el inicio de sesión,
+      Google y la recuperación de contraseña usan Firebase.
+   ========================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+  authDomain: "campiper-7414d.firebaseapp.com",
+  projectId: "campiper-7414d",
+  storageBucket: "campiper-7414d.firebasestorage.app",
+  messagingSenderId: "984212599762",
+  appId: "1:984212599762:web:0a0299a4350edcb2818e0b"
+};
+const FIREBASE_VERSION = '10.13.1';
+const FIREBASE_ACTIVO = !String(FIREBASE_CONFIG.apiKey).startsWith('PEGA');
+
+// Carga Firebase solo cuando hace falta (y una sola vez)
+let _firebase = null;
+function cargarFirebase() {
+  if (!_firebase) {
+    const base = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/';
+    _firebase = Promise.all([
+      import(base + 'firebase-app.js'),
+      import(base + 'firebase-auth.js'),
+      import(base + 'firebase-firestore.js')
+    ]).then(([appMod, authMod, fsMod]) => {
+      const app = appMod.initializeApp(FIREBASE_CONFIG);
+      return { auth: authMod.getAuth(app), db: fsMod.getFirestore(app), authMod: authMod, fsMod: fsMod };
+    }).catch(error => {
+      _firebase = null; // permite reintentar si falló la conexión
+      throw error;
+    });
+  }
+  return _firebase;
+}
+
+/* ---------- Sesión guardada en este navegador ----------
+   Sirve para pintar el header al instante. La fuente de verdad
+   es Firebase (o el modo demostración si no hay configuración). */
+const Sesion = {
+  CLAVE: 'campiper_sesion',
+  obtener() {
+    try { return JSON.parse(localStorage.getItem(this.CLAVE)); } catch (e) { return null; }
+  },
+  iniciar(usuario) {
+    try { localStorage.setItem(this.CLAVE, JSON.stringify(usuario)); } catch (e) {}
+  },
+  cerrar() {
+    try { localStorage.removeItem(this.CLAVE); } catch (e) {}
+  }
+};
+
+function nombreDesdeCorreo(correo) {
+  return String(correo || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, letra => letra.toUpperCase());
+}
+
+/* ---------- Cuentas ----------
+   Mismas funciones en los dos modos, para que el resto del código
+   no tenga que saber si usa Firebase o la demostración:
+   registrar(nombre, correo, clave) · entrar(correo, clave) · entrarConGoogle()
+   recuperar(correo) · salir() · alCambiar(callback) */
+function cuentasFirebase() {
+  const datosUsuario = u => ({ nombre: u.displayName || nombreDesdeCorreo(u.email), correo: u.email || '' });
+
+  // Guarda/actualiza el perfil en Firestore: users/{uid} (las reglas solo dejan a su dueño)
+  async function guardarPerfil(usuario, nombre, extra) {
+    try {
+      const { db, fsMod } = await cargarFirebase();
+      const datos = Object.assign({ nombre: nombre || '', correo: usuario.email || '' }, extra || {});
+      await fsMod.setDoc(fsMod.doc(db, 'users', usuario.uid), datos, { merge: true });
+    } catch (error) {
+      console.error('No se pudo guardar el perfil en Firestore:', error);
+    }
+  }
+
+  return {
+    async registrar(nombre, correo, clave) {
+      const { auth, authMod, fsMod } = await cargarFirebase();
+      const credencial = await authMod.createUserWithEmailAndPassword(auth, correo, clave);
+      await authMod.updateProfile(credencial.user, { displayName: nombre });
+      await guardarPerfil(credencial.user, nombre, { creadoEn: fsMod.serverTimestamp() });
+      Sesion.iniciar({ nombre: nombre, correo: correo });
+    },
+    async entrar(correo, clave) {
+      const { auth, authMod } = await cargarFirebase();
+      const credencial = await authMod.signInWithEmailAndPassword(auth, correo, clave);
+      Sesion.iniciar(datosUsuario(credencial.user));
+    },
+    async entrarConGoogle() {
+      const { auth, authMod } = await cargarFirebase();
+      const credencial = await authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider());
+      await guardarPerfil(credencial.user, credencial.user.displayName);
+      Sesion.iniciar(datosUsuario(credencial.user));
+    },
+    async recuperar(correo) {
+      const { auth, authMod } = await cargarFirebase();
+      try {
+        await authMod.sendPasswordResetEmail(auth, correo);
+      } catch (error) {
+        // No revelamos si el correo existe o no
+        if (error.code !== 'auth/user-not-found') throw error;
+      }
+    },
+    async salir() {
+      try {
+        const { auth, authMod } = await cargarFirebase();
+        await authMod.signOut(auth);
+      } finally {
+        Sesion.cerrar();
+      }
+    },
+    alCambiar(callback) {
+      cargarFirebase().then(({ auth, authMod }) => {
+        authMod.onAuthStateChanged(auth, usuario => callback(usuario ? datosUsuario(usuario) : null));
+      }).catch(() => callback(Sesion.obtener())); // sin conexión: usa la sesión guardada
+    }
+  };
+}
+
+function cuentasDemo() {
+  const CLAVE_USUARIOS = 'campiper_usuarios';
+  function leerUsuarios() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_USUARIOS)) || {}; } catch (e) { return {}; }
+  }
+  function guardarUsuario(correo, nombre) {
+    try {
+      const usuarios = leerUsuarios();
+      usuarios[correo] = { nombre: nombre };
+      localStorage.setItem(CLAVE_USUARIOS, JSON.stringify(usuarios));
+    } catch (e) {}
+  }
+
+  return {
+    async registrar(nombre, correo) {
+      guardarUsuario(correo, nombre);
+      Sesion.iniciar({ nombre: nombre, correo: correo });
+    },
+    async entrar(correo) {
+      const cuenta = leerUsuarios()[correo];
+      Sesion.iniciar({ nombre: cuenta ? cuenta.nombre : nombreDesdeCorreo(correo), correo: correo });
+    },
+    async entrarConGoogle() {
+      Sesion.iniciar({ nombre: 'Estudiante', correo: '' });
+    },
+    async recuperar() {},
+    async salir() {
+      Sesion.cerrar();
+    },
+    alCambiar(callback) {
+      callback(Sesion.obtener());
+    }
+  };
+}
+
+const Cuentas = FIREBASE_ACTIVO ? cuentasFirebase() : cuentasDemo();
+
+/* ---------- Header que cambia según la sesión ----------
+   [data-solo="visitante"]  -> solo se ve sin sesión (Iniciar sesión)
+   [data-solo="usuario"]    -> solo se ve con sesión (nombre, Mis cursos, Salir)
+   [data-usuario-nombre] / [data-usuario-inicial] -> datos del usuario
+   [data-salir]             -> cierra la sesión
+   <body data-requiere-sesion> -> sin sesión, manda a registro.html */
+function pintarSesion(usuario) {
+  document.querySelectorAll('[data-solo="visitante"]').forEach(el => { el.hidden = !!usuario; });
+  document.querySelectorAll('[data-solo="usuario"]').forEach(el => { el.hidden = !usuario; });
+
+  if (usuario) {
+    const nombre = (usuario.nombre || '').trim() || 'Estudiante';
+    const iniciales = nombre.split(/\s+/).slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('');
+    document.querySelectorAll('[data-usuario-nombre]').forEach(el => { el.textContent = nombre; });
+    document.querySelectorAll('[data-usuario-inicial]').forEach(el => { el.textContent = iniciales; });
+  }
+}
+
+function initSesion() {
+  const guardada = Sesion.obtener();
+  const requiereSesion = document.body.hasAttribute('data-requiere-sesion');
+
+  // Pinta enseguida con lo guardado, para que el header no parpadee.
+  // En páginas protegidas solo se pinta si ya hay sesión guardada.
+  if (!requiereSesion || guardada) pintarSesion(guardada);
+
+  // Y se corrige cuando Firebase responde con el estado real
+  Cuentas.alCambiar(usuario => {
+    if (usuario) Sesion.iniciar(usuario); else Sesion.cerrar();
+    if (requiereSesion && !usuario) {
+      window.location.replace('registro.html');
+      return;
+    }
+    pintarSesion(usuario);
+  });
+
+  document.querySelectorAll('[data-salir]').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      try { await Cuentas.salir(); } catch (e) { Sesion.cerrar(); }
+      window.location.href = 'index.html';
+    });
+  });
+}
+
 /* ---------- index.html: temporizador de la oferta ---------- */
 function initTemporizador() {
   if (!document.getElementById('t-hours')) return;
@@ -215,7 +420,6 @@ function initDetalle() {
 function initAuth() {
   if (!document.getElementById('auth-card')) return;
 
-  // Página a la que se va después de entrar (simulado, sin servidor)
   const PAGINA_DESTINO = 'mis-cursos.html';
   const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -283,7 +487,7 @@ function initAuth() {
     });
   });
 
-  /* ===== Validación ===== */
+  /* ===== Validación de los campos ===== */
   function mostrarError(input, mensaje) {
     input.setAttribute('aria-invalid', 'true');
     document.getElementById(input.id + '-error').textContent = mensaje;
@@ -293,6 +497,10 @@ function initAuth() {
     input.removeAttribute('aria-invalid');
     document.getElementById(input.id + '-error').textContent = '';
     return true;
+  }
+  function validarNombre(input) {
+    if (input.value.trim().length < 2) return mostrarError(input, 'Escribe tu nombre.');
+    return limpiarError(input);
   }
   function validarCorreo(input) {
     const valor = input.value.trim();
@@ -318,6 +526,7 @@ function initAuth() {
   // Todos los campos con su regla (se vuelve a validar mientras el usuario corrige)
   const loginEmail = document.getElementById('login-email');
   const loginClave = document.getElementById('login-clave');
+  const regNombre = document.getElementById('registro-nombre');
   const regEmail = document.getElementById('registro-email');
   const regClave = document.getElementById('registro-clave');
   const regConfirmar = document.getElementById('registro-confirmar');
@@ -326,6 +535,7 @@ function initAuth() {
   const reglas = new Map([
     [loginEmail, () => validarCorreo(loginEmail)],
     [loginClave, () => validarClaveLogin(loginClave)],
+    [regNombre, () => validarNombre(regNombre)],
     [regEmail, () => validarCorreo(regEmail)],
     [regClave, () => validarClaveNueva(regClave)],
     [regConfirmar, () => validarConfirmacion(regConfirmar, regClave)],
@@ -351,71 +561,135 @@ function initAuth() {
     return true;
   }
 
-  // Pone el botón en estado "cargando" y llama a la acción después de un momento
-  function simularEnvio(boton, textoCargando, accion) {
+  /* ===== Mensajes y botones ===== */
+  // Mensaje general bajo el botón (tipo 'error' lo pinta en rojo)
+  function mostrarEstado(el, mensaje, tipo) {
+    el.textContent = mensaje || '';
+    el.hidden = !mensaje;
+    el.classList.toggle('auth-estado--error', tipo === 'error');
+  }
+
+  // Traduce los errores de Firebase a mensajes claros en español
+  function mensajeDeError(error) {
+    const mensajes = {
+      'auth/email-already-in-use': 'Ese correo ya tiene una cuenta. Prueba iniciando sesión.',
+      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+      'auth/invalid-login-credentials': 'Correo o contraseña incorrectos.',
+      'auth/wrong-password': 'Correo o contraseña incorrectos.',
+      'auth/user-not-found': 'Correo o contraseña incorrectos.',
+      'auth/invalid-email': 'Revisa el correo: debe verse como nombre@correo.com.',
+      'auth/weak-password': 'La contraseña es muy débil. Usa al menos 8 caracteres.',
+      'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+      'auth/network-request-failed': 'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
+      'auth/popup-blocked': 'Tu navegador bloqueó la ventana de Google. Permite las ventanas emergentes e inténtalo de nuevo.',
+      'auth/operation-not-allowed': 'Este método de acceso no está activado en Firebase (Authentication > Método de acceso).',
+      'auth/unauthorized-domain': 'Este dominio no está autorizado en Firebase (Authentication > Configuración > Dominios autorizados).'
+    };
+    console.error(error);
+    return mensajes[error && error.code] || 'No pudimos completar la acción. Inténtalo de nuevo.';
+  }
+  // Cerrar la ventana de Google no es un error que haya que mostrar
+  function esCancelacion(error) {
+    return error && (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request');
+  }
+
+  function bloquear(boton, textoCargando) {
+    boton.dataset.textoOriginal = boton.textContent;
     boton.disabled = true;
     boton.textContent = textoCargando;
-    setTimeout(accion, 800);
+  }
+  function desbloquear(boton) {
+    boton.disabled = false;
+    boton.textContent = boton.dataset.textoOriginal;
   }
 
   /* ===== Iniciar sesión ===== */
   const formLogin = document.getElementById('form-login');
-  formLogin.addEventListener('submit', e => {
+  const estadoLogin = document.getElementById('login-estado');
+  formLogin.addEventListener('submit', async e => {
     e.preventDefault();
+    mostrarEstado(estadoLogin, '');
     if (!validarFormulario(formLogin, [loginEmail, loginClave])) return;
 
-    // TODO (servidor): aquí se enviaría loginEmail.value y loginClave.value al backend.
-    simularEnvio(formLogin.querySelector('.auth-enviar'), 'Entrando…', () => {
+    const boton = formLogin.querySelector('.auth-enviar');
+    bloquear(boton, 'Entrando…');
+    try {
+      await Cuentas.entrar(loginEmail.value.trim().toLowerCase(), loginClave.value);
       window.location.href = PAGINA_DESTINO;
-    });
+    } catch (error) {
+      desbloquear(boton);
+      mostrarEstado(estadoLogin, mensajeDeError(error), 'error');
+    }
   });
 
   /* ===== Crear cuenta ===== */
   const formRegistro = document.getElementById('form-registro');
-  formRegistro.addEventListener('submit', e => {
+  const estadoRegistro = document.getElementById('registro-estado');
+  formRegistro.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!validarFormulario(formRegistro, [regEmail, regClave, regConfirmar])) return;
+    mostrarEstado(estadoRegistro, '');
+    if (!validarFormulario(formRegistro, [regNombre, regEmail, regClave, regConfirmar])) return;
 
-    // TODO (servidor): aquí se crearía la cuenta con regEmail.value y regClave.value.
-    const estado = document.getElementById('registro-estado');
-    simularEnvio(formRegistro.querySelector('.auth-enviar'), 'Creando cuenta…', () => {
-      estado.textContent = 'Cuenta creada. Te llevamos a tus cursos…';
-      estado.hidden = false;
+    const boton = formRegistro.querySelector('.auth-enviar');
+    bloquear(boton, 'Creando cuenta…');
+    try {
+      await Cuentas.registrar(regNombre.value.trim(), regEmail.value.trim().toLowerCase(), regClave.value);
+      mostrarEstado(estadoRegistro, 'Cuenta creada. Te llevamos a tus cursos…');
       setTimeout(() => { window.location.href = PAGINA_DESTINO; }, 900);
-    });
+    } catch (error) {
+      desbloquear(boton);
+      mostrarEstado(estadoRegistro, mensajeDeError(error), 'error');
+    }
   });
 
   /* ===== Recuperar contraseña ===== */
   const formRecuperar = document.getElementById('form-recuperar');
   const recuperarOk = document.getElementById('recuperar-ok');
+  const estadoRecuperar = document.getElementById('recuperar-estado');
   const botonRecuperar = formRecuperar.querySelector('.auth-enviar');
 
   function reiniciarRecuperar() {
     formRecuperar.hidden = false;
     recuperarOk.hidden = true;
+    mostrarEstado(estadoRecuperar, '');
     botonRecuperar.disabled = false;
     botonRecuperar.textContent = 'Enviar enlace';
   }
 
-  formRecuperar.addEventListener('submit', e => {
+  formRecuperar.addEventListener('submit', async e => {
     e.preventDefault();
+    mostrarEstado(estadoRecuperar, '');
     if (!validarFormulario(formRecuperar, [recEmail])) return;
 
-    // TODO (servidor): aquí se pediría al backend que envíe el enlace de recuperación.
-    simularEnvio(botonRecuperar, 'Enviando…', () => {
+    bloquear(botonRecuperar, 'Enviando…');
+    try {
+      await Cuentas.recuperar(recEmail.value.trim().toLowerCase());
       document.getElementById('recuperar-ok-correo').textContent = recEmail.value.trim();
       formRecuperar.hidden = true;
       recuperarOk.hidden = false;
-    });
+    } catch (error) {
+      desbloquear(botonRecuperar);
+      mostrarEstado(estadoRecuperar, mensajeDeError(error), 'error');
+    }
   });
 
   /* ===== Entrar con Google ===== */
   document.querySelectorAll('[data-google]').forEach(boton => {
-    boton.addEventListener('click', () => {
-      // TODO (servidor): aquí se iniciaría el flujo de Google (OAuth).
-     // boton.disabled = true;
-     // boton.querySelector('.btn-google-texto').textContent = 'Conectando con Google…';
-     // setTimeout(() => { window.location.href = PAGINA_DESTINO; }, 800);
+    boton.addEventListener('click', async () => {
+      const texto = boton.querySelector('.btn-google-texto');
+      const estado = boton.closest('.auth-panel').querySelector('.auth-estado');
+      const textoOriginal = texto.textContent;
+      mostrarEstado(estado, '');
+      boton.disabled = true;
+      texto.textContent = 'Conectando con Google…';
+      try {
+        await Cuentas.entrarConGoogle();
+        window.location.href = PAGINA_DESTINO;
+      } catch (error) {
+        boton.disabled = false;
+        texto.textContent = textoOriginal;
+        if (!esCancelacion(error)) mostrarEstado(estado, mensajeDeError(error), 'error');
+      }
     });
   });
 
@@ -429,6 +703,7 @@ function initAuth() {
 
 /* ---------- Arranque ---------- */
 document.addEventListener('DOMContentLoaded', () => {
+  initSesion();
   initTemporizador();
   initCatalogo();
   initDetalle();
