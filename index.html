@@ -63,7 +63,7 @@
           <span>4.8 · +2.340 estudiantes matriculados</span>
         </div>
         <div class="price-row">
-          <span class="price-now">$149.000</span>
+          <span class="price-now" id="precio-dinamico">Cargando...</span>
           <span class="price-old">$299.000</span>
         </div>
         <a href="#precios" class="btn-primary">Comenzar mi curso</a>
@@ -170,6 +170,47 @@
     Iniciar sesión
   </a>
   
+<!-- SDK Modular de Firebase (Importado via CDN) -->
+<script type="module">
+  // 1. Importar las funciones de Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+  // 2. Tu configuración de Firebase (Pega TUS datos aquí)
+  const firebaseConfig = {
+     apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+     authDomain: "campiper-7414d.firebaseapp.com",
+     projectId: "campiper-7414d",
+     storageBucket: "campiper-7414d.firebasestorage.app",
+     messagingSenderId: "984212599762",
+     appId: "1:984212599762:web:0a0299a4350edcb2818e0b"
+  };
+
+  // 3. Inicializar Firebase y Firestore
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // 4. Función para leer el precio y mostrarlo en la web
+  async function cargarPrecio() {
+    try {
+      // Apuntar al documento específico en la base de datos
+      const docRef = doc(db, "cursos", "davinci-resolve");
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const datos = docSnap.data();
+        // Inyectar el precio en el HTML
+        document.getElementById("precio-dinamico").innerText = "$" + datos.precio_actual;
+      } else {
+        console.log("No se encontró el documento de precio.");
+      }
+    } catch (error) {
+      console.error("Error al obtener Firebase:", error);
+    }
+  }
+
+  // Ejecutar la función cuando cargue la página
+  cargarPrecio();
+</script>
 </body>
 </html>
