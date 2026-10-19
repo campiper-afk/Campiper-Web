@@ -232,87 +232,105 @@ function initTemporizador() {
 
 /* ---------- catalogo.html: tarjetas de módulos desde Firebase ---------- */
 async function initCatalogo() {
-  console.log("1. Iniciando carga del catálogo...");
   const gridContenedor = document.getElementById('course-grid');
-  
-  // Si no estamos en la página del catálogo, no hace nada
-  if (!gridContenedor) {
-    console.log("No estamos en catalogo.html, cancelando initCatalogo.");
-    return;
-  }
+  if (!gridContenedor) return;
 
-  // Mensaje temporal mientras carga
-  gridContenedor.innerHTML = '<p style="color: white; text-align: center;">Conectando con Firebase...</p>';
+  // 1. Definimos los botones de filtro AQUÍ para que no dé error
+  const botonesFiltro = document.querySelectorAll('.filter-btn');
 
-  try {
-    console.log("2. Llamando a cargarFirebase()...");
-    const { db, fsMod } = await cargarFirebase();
-    
-    console.log("3. Buscando la colección 'cursos'...");
-    const dbRef = fsMod.collection(db, "cursos");
-    const querySnapshot = await fsMod.getDocs(dbRef);
+  // 2. Función para crear las tarjetas HTML
+  function renderizarCursos(cursosFiltrados) {
+    gridContenedor.innerHTML = ''; // Limpiar grid
 
-    console.log("4. ¡Cursos encontrados!: ", querySnapshot.size);
-    gridContenedor.innerHTML = ''; // Limpiamos el texto de carga
-
-    if (querySnapshot.empty) {
-      gridContenedor.innerHTML = '<p style="color: white; text-align: center;">No hay cursos publicados todavía. Ve al Admin a crear uno.</p>';
+    if (cursosFiltrados.length === 0) {
+      gridContenedor.innerHTML = '<p class="catalogo-vacio" style="color:white; text-align:center;">No hay cursos disponibles en esta categoría.</p>';
       return;
     }
 
-    // Dibujamos cada curso que traiga Firebase
-    querySnapshot.forEach((doc) => {
-      const curso = doc.data();
-      const imgUrl = curso.imagen || "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
-      
-      const tarjetaHTML = `
-        <div class="tarjeta-curso caja">
-          <div class="tarjeta-imagen">
-            <img src="${imgUrl}" class="tarjeta-img" alt="Curso">
-            <span class="insignia insignia-tarjeta">${curso.nivel || 'Módulo'}</span>
-          </div>
-          <div class="tarjeta-contenido">
-            <h3 class="tarjeta-titulo">${curso.titulo || 'Sin Título'}</h3>
-            <p class="tarjeta-descripcion">${curso.descripcion || 'Sin descripción'}</p>
-            <div class="tarjeta-pie">
-              <span class="tarjeta-precio">${curso.precio || ''}</span>
-              <a href="detalle.html?mod=${doc.id}" class="tarjeta-link">Ver detalle</a>
-            </div>
+    cursosFiltrados.forEach(curso => {
+      const tarjeta = document.createElement('div');
+      tarjeta.className = "tarjeta-curso caja";
+
+      const imgUrl = curso.imagen ? curso.imagen : "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+
+      tarjeta.innerHTML = `
+        <div class="tarjeta-imagen">
+          <img src="${imgUrl}" alt="${curso.titulo}" class="tarjeta-img">
+          <span class="insignia insignia-tarjeta">${curso.nivel || 'Módulo'}</span>
+        </div>
+        <div class="tarjeta-contenido">
+          <h3 class="tarjeta-titulo">${curso.titulo || 'Sin título'}</h3>
+          <p class="tarjeta-descripcion">${curso.descripcion || 'Sin descripción'}</p>
+          <div class="tarjeta-pie">
+            <span class="tarjeta-precio">${curso.precio || ''}</span>
+            <a href="detalle.html?mod=${curso.id}" class="tarjeta-link">Ver detalle</a>
           </div>
         </div>
       `;
-      gridContenedor.innerHTML += tarjetaHTML;
+      gridContenedor.appendChild(tarjeta);
+    });
+  }
+
+  // 3. Lógica de filtrado
+  function configurarFiltros(cursosData) {
+    if (!botonesFiltro) return; 
+    botonesFiltro.forEach(boton => {
+      boton.addEventListener('click', (e) => {
+        botonesFiltro.forEach(btn => btn.classList.remove('active'));
+        const btnSeleccionado = e.target;
+        btnSeleccionado.classList.add('active');
+
+        const categoriaSeleccionada = btnSeleccionado.getAttribute('data-filter');
+
+        if (categoriaSeleccionada === 'todos' || !categoriaSeleccionada) {
+          renderizarCursos(cursosData);
+        } else {
+          const filtrados = cursosData.filter(curso => curso.categoria === categoriaSeleccionada);
+          renderizarCursos(filtrados);
+        }
+      });
+    });
+  }
+
+  // 4. CONEXIÓN CON FIREBASE
+  gridContenedor.innerHTML = '<p class="catalogo-vacio" style="color:white; text-align:center;">Cargando cursos desde la base de datos...</p>';
+  let cursosFirebase = [];
+
+  try {
+    const { db, fsMod } = await cargarFirebase();
+    
+    // Forma segura de llamar a la colección
+    const dbRef = fsMod.collection(db, "cursos");
+    const querySnapshot = await fsMod.getDocs(dbRef);
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      cursosFirebase.push({
+        id: doc.id,
+        titulo: data.titulo,
+        categoria: data.categoria || "edicion",
+        nivel: data.nivel,
+        precio: data.precio || "",
+        imagen: data.imagen,
+        descripcion: data.descripcion
+      });
     });
 
-    console.log("5. Catálogo dibujado exitosamente.");
+    // Si la base de datos de Firebase está vacía
+    if (cursosFirebase.length === 0) {
+      gridContenedor.innerHTML = '<p class="catalogo-vacio" style="color:white; text-align:center;">No hay cursos publicados todavía. Ve al Admin a crear uno.</p>';
+      return;
+    }
+
+    // Pintar los cursos reales y activar filtros
+    renderizarCursos(cursosFirebase);
+    configurarFiltros(cursosFirebase);
 
   } catch (error) {
-    console.error("ERROR CRÍTICO EN FIREBASE:", error);
-    gridContenedor.innerHTML = '<p style="color: red; text-align: center;">Hubo un error de conexión. Revisa la consola.</p>';
+    console.error("Error al cargar cursos de Firebase:", error);
+    gridContenedor.innerHTML = '<p class="catalogo-vacio" style="color:red; text-align:center;">Error de conexión. Revisa la consola.</p>';
   }
 }
-
-//logica de Filtrado
-  botonesFiltro.forEach(boton => {
-    boton.addEventListener('click', (e) => {
-      // Quitar clase active de todos
-      botonesFiltro.forEach(btn => btn.classList.remove('active'));
-
-      // Poner clase active al botón clickeado
-      const btnSeleccionado = e.target;
-      btnSeleccionado.classList.add('active');
-
-      // Filtrar array
-      const categoriaSeleccionada = btnSeleccionado.getAttribute('data-filter');
-
-      if (categoriaSeleccionada === 'todos') {
-        renderizarCursos(cursos);
-      } else {
-        const filtrados = cursos.filter(curso => curso.categoria === categoriaSeleccionada);
-        renderizarCursos(filtrados);
-      }
-    });
-  });
 
   // 4. Inicializar vista con todos los cursos
   renderizarCursos(cursos);
