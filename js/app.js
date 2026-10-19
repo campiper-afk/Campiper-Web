@@ -332,9 +332,6 @@ async function initCatalogo() {
   }
 }
 
-  // 4. Inicializar vista con todos los cursos
-  renderizarCursos(cursos);
-
 /* ---------- detalle.html: detalle de un módulo (?mod=N) ---------- */
 function initDetalle() {
   if (!document.getElementById('lesson-list')) return;
