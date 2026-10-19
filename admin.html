@@ -425,5 +425,36 @@
   });
 
 </script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // En una app real esto viene de Firebase. Aquí leemos el localStorage simulando a Ana.
+    const totalLecciones = 12;
+    let leccionesAna = JSON.parse(localStorage.getItem('davinci_completadas')) || [];
+    let porcentajeAna = Math.round((leccionesAna.length / totalLecciones) * 100);
+
+    // Seleccionamos la barra de la primera fila de la tabla
+    const primeraFila = document.querySelector('tbody tr:first-child');
+    const barraProgreso = primeraFila.querySelector('.progress-fill');
+    const textoProgreso = primeraFila.querySelector('.progress-text');
+    const etiquetaEstado = primeraFila.querySelector('.status');
+
+    // Inyectamos el cálculo matemático en la tabla del admin
+    barraProgreso.style.width = porcentajeAna + '%';
+    textoProgreso.innerText = porcentajeAna + '%';
+
+    // Actualizamos las etiquetas visuales (Verde si es 100%, Azul si es menos)
+    if (porcentajeAna === 100) {
+      barraProgreso.style.background = '#27c93f';
+      etiquetaEstado.className = 'status completed';
+      etiquetaEstado.innerText = 'Completado';
+    } else if (porcentajeAna > 0) {
+      etiquetaEstado.className = 'status active';
+      etiquetaEstado.innerText = 'Activo';
+    } else {
+      etiquetaEstado.className = 'status inactive';
+      etiquetaEstado.innerText = 'Inactivo';
+    }
+  });
+</script>
 </body>
 </html>
