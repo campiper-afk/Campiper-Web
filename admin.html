@@ -155,39 +155,81 @@
   <!-- Barra lateral (menú) -->
   <aside class="sidebar">
     <div class="brand">CamPiper Admin</div>
-    <a href="#" class="menu-item active">Gestión de Estudiantes</a>
-    <a href="#" class="menu-item">Ventas y Reportes</a>
+   <a href="#" id="btn-estudiantes" class="menu-item active" onclick="mostrarEstudiantes()">Gestión de Estudiantes</a>
+    <a href="#" id="btn-ventas" class="menu-item" onclick="mostrarVentas()">Ventas y Reportes</a>
     <a href="#" class="menu-item" onclick="cerrarSesion()">Cerrar Sesión</a>
   </aside>
 
-  <!-- Contenido principal (Tabla de estudiantes) -->
+  <!-- Contenido principal -->
   <main class="main-content">
-    <div class="admin-header">
-      <h1>Gestión de Estudiantes</h1>
-      <div class="table-actions">
-        <!-- Barra de búsqueda conectada a JavaScript -->
-        <input type="text" id="searchInput" placeholder="Buscar alumno por nombre o email..." onkeyup="filterTable()">
-        <button class="btn-primary">Exportar CSV</button>
+    
+    <!-- VISTA: ESTUDIANTES -->
+    <div id="vista-estudiantes">
+      <div class="admin-header">
+        <h1>Gestión de Estudiantes</h1>
+        <div class="table-actions">
+          <input type="text" id="searchInput" placeholder="Buscar alumno por nombre o email..." onkeyup="filterTable()">
+          <button class="btn-primary">Exportar CSV</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table id="studentsTable">
+          <thead>
+            <tr>
+              <th>Nombre del Estudiante</th>
+              <th>Fecha de Inscripción</th>
+              <th>Progreso</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="listaEstudiantes">
+            <!-- Aquí se inyectan los datos de Firebase -->
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- La Tabla -->
-    <div class="table-container">
-      <table id="studentsTable">
-        <thead>
-          <tr>
-            <th>Nombre del Estudiante</th>
-            <th>Fecha de Inscripción</th>
-            <th>Progreso</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-         
-        <tbody id="listaEstudiantes">
-      </table>
+    <!-- VISTA: VENTAS Y REPORTES (Oculta por defecto) -->
+    <div id="vista-ventas" style="display: none;">
+      <div class="admin-header">
+        <h1>Ventas y Reportes</h1>
+        <div class="table-actions">
+          <button class="btn-primary">Descargar Reporte Mensual</button>
+        </div>
+      </div>
+      
+      <!-- Tarjetas de resumen de ventas -->
+      <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+        <div class="table-container" style="padding: 20px; flex: 1;">
+          <h3 style="margin-top: 0; color: var(--text-muted);">Ingresos Totales</h3>
+          <h2 style="font-size: 2rem; color: var(--blue); margin: 10px 0;">$0</h2>
+        </div>
+        <div class="table-container" style="padding: 20px; flex: 1;">
+          <h3 style="margin-top: 0; color: var(--text-muted);">Cursos Vendidos</h3>
+          <h2 style="font-size: 2rem; color: var(--orange); margin: 10px 0;">0</h2>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Transacción ID</th>
+              <th>Cliente</th>
+              <th>Curso</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="listaVentas">
+            <tr><td colspan="6" style="text-align: center;">No hay ventas registradas aún.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
   </main>
 
 <script type="module">
@@ -286,6 +328,35 @@
         tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
       }       
     }
+  }
+  // --- LÓGICA DE NAVEGACIÓN DEL MENÚ ---
+  
+  // Guardamos los botones y las vistas en variables
+  const btnEstudiantes = document.getElementById('btn-estudiantes');
+  const btnVentas = document.getElementById('btn-ventas');
+  const vistaEstudiantes = document.getElementById('vista-estudiantes');
+  const vistaVentas = document.getElementById('vista-ventas');
+
+  // Función para mostrar la vista de Estudiantes
+  window.mostrarEstudiantes = function() {
+    // Cambiar vista
+    vistaEstudiantes.style.display = 'block';
+    vistaVentas.style.display = 'none';
+    
+    // Cambiar color del botón (clase active)
+    btnEstudiantes.classList.add('active');
+    btnVentas.classList.remove('active');
+  }
+
+  // Función para mostrar la vista de Ventas
+  window.mostrarVentas = function() {
+    // Cambiar vista
+    vistaEstudiantes.style.display = 'none';
+    vistaVentas.style.display = 'block';
+    
+    // Cambiar color del botón (clase active)
+    btnVentas.classList.add('active');
+    btnEstudiantes.classList.remove('active');
   }
 </script>
   
