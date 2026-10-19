@@ -244,37 +244,109 @@
             <td><span class="status inactive">Inactivo</span></td>
             <td><button class="btn-action">Ver Perfil</button></td>
           </tr>
-        </tbody>
+        <tbody id="listaEstudiantes">
       </table>
     </div>
   </main>
 
-  <script>
-    // Función para cerrar sesión y devolver al inicio
-    function cerrarSesion() {
-      sessionStorage.removeItem('campiper_admin_auth');
-      window.location.replace('index.html');
-    }
-    
-    // Función para que la barra de búsqueda funcione
-    function filterTable() {
-      const input = document.getElementById("searchInput");
-      const filter = input.value.toUpperCase();
-      const table = document.getElementById("studentsTable");
-      const tr = table.getElementsByTagName("tr");
+<script type="module">
+  // Extraemos la información de Firebase usando la misma configuración de app.js
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-      for (let i = 1; i < tr.length; i++) {
-        const td = tr[i].getElementsByTagName("td")[0]; 
-        if (td) {
-          const txtValue = td.textContent || td.innerText;
-          if (txtValue.toUpperCase().indexOf(filter) > -1) {
-            tr[i].style.display = "";
-          } else {
-            tr[i].style.display = "none";
-          }
-        }       
+  // Copiamos la configuración exacta que tienes en tu app.js
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+    authDomain: "campiper-7414d.firebaseapp.com",
+    projectId: "campiper-7414d",
+    storageBucket: "campiper-7414d.firebasestorage.app",
+    messagingSenderId: "984212599762",
+    appId: "1:984212599762:web:0a0299a4350edcb2818e0b"
+  };
+
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = getFirestore(app);
+
+  async function cargarEstudiantes() {
+    const tbody = document.getElementById('listaEstudiantes'); 
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando estudiantes de Firebase...</td></tr>';
+
+    try {
+      // Tu app.js guarda a las personas en la colección 'users'
+      const querySnapshot = await getDocs(collection(db, "users"));
+      tbody.innerHTML = '';
+
+      if (querySnapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay usuarios registrados aún.</td></tr>';
+        return;
       }
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const nombreReal = data.nombre || "Usuario";
+        const correoReal = data.correo || "Sin correo";
+        const iniciales = nombreReal.substring(0, 2).toUpperCase();
+
+        const filaHTML = `
+          <tr>
+            <td>
+              <div class="user-info">
+                <span class="user-avatar">${iniciales}</span>
+                <div>
+                  <div class="user-name">${nombreReal}</div>
+                  <div class="user-email">${correoReal}</div>
+                </div>
+              </div>
+            </td>
+            <td>Reciente</td>
+            <td>
+              <div class="progress-bar-container">
+                <div class="progress-fill" style="width: 0%;"></div>
+                <span class="progress-text">0%</span>
+              </div>
+            </td>
+            <td><span class="status active">Activo</span></td>
+            <td><button class="btn-action">Ver Perfil</button></td>
+          </tr>
+        `;
+        tbody.innerHTML += filaHTML;
+      });
+
+    } catch (error) {
+      console.error("Error al leer la base de datos:", error);
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar datos. Verifica las reglas de Firestore.</td></tr>';
     }
-  </script>
+  }
+
+  // Ejecutar cuando se cargue la página
+  document.addEventListener('DOMContentLoaded', () => {
+    const isAdmin = sessionStorage.getItem('campiper_admin_auth');
+    if (isAdmin === 'true') {
+       cargarEstudiantes();
+    }
+  });
+
+  // Funciones del Admin original (Para que los botones de cerrar sesión y buscar sigan funcionando)
+  window.cerrarSesion = function() {
+    sessionStorage.removeItem('campiper_admin_auth');
+    window.location.replace('index.html');
+  }
+
+  window.filterTable = function() {
+    const input = document.getElementById("searchInput");
+    const filter = input.value.toUpperCase();
+    const table = document.getElementById("studentsTable");
+    const tr = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < tr.length; i++) {
+      const td = tr[i].getElementsByTagName("td")[0]; 
+      if (td) {
+        const txtValue = td.textContent || td.innerText;
+        tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+      }       
+    }
+  }
+</script>
+  
 </body>
 </html>
