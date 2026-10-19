@@ -153,10 +153,11 @@
 <body>
 
   <!-- Barra lateral (menú) -->
-  <aside class="sidebar">
+<aside class="sidebar">
     <div class="brand">CamPiper Admin</div>
-   <a href="#" id="btn-estudiantes" class="menu-item active" onclick="mostrarEstudiantes()">Gestión de Estudiantes</a>
+    <a href="#" id="btn-estudiantes" class="menu-item active" onclick="mostrarEstudiantes()">Gestión de Estudiantes</a>
     <a href="#" id="btn-ventas" class="menu-item" onclick="mostrarVentas()">Ventas y Reportes</a>
+    <a href="#" id="btn-cursos" class="menu-item" onclick="mostrarCursos()">Gestión de Cursos</a>
     <a href="#" class="menu-item" onclick="cerrarSesion()">Cerrar Sesión</a>
   </aside>
 
@@ -210,6 +211,7 @@
           <h2 style="font-size: 2rem; color: var(--orange); margin: 10px 0;">0</h2>
         </div>
       </div>
+      
 
       <div class="table-container">
         <table>
@@ -228,11 +230,99 @@
           </tbody>
         </table>
       </div>
+      <!-- VISTA: GESTIÓN DE CURSOS (Oculta por defecto) -->
+    <div id="vista-cursos" style="display: none;">
+      <div class="admin-header">
+        <h1>Gestión de Cursos</h1>
+        <div class="table-actions">
+          <button class="btn-primary" onclick="abrirModalCurso()">+ Nuevo Curso</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID del Módulo</th>
+              <th>Título del Curso</th>
+              <th>Categoría</th>
+              <th>Nivel</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="listaCursosAdmin">
+            <!-- Aquí se inyectarán los cursos desde Firestore -->
+            <tr><td colspan="5" style="text-align: center;">Cargando cursos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Formulario sencillo para agregar/editar cursos -->
+      <div id="formularioCurso" class="table-container" style="display: none; padding: 20px; margin-top: 20px;">
+        <h3 id="tituloFormularioCurso" style="margin-top: 0;">Agregar Nuevo Curso</h3>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+          <input type="text" id="cursoId" placeholder="ID (ej. 1, 2, 3)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+          <input type="text" id="cursoTitulo" placeholder="Título del Curso" style="flex: 3; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+        </div>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+          <input type="text" id="cursoCategoria" placeholder="Categoría (ej. edicion)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+          <input type="text" id="cursoNivel" placeholder="Nivel (ej. Primer Modulo)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+        </div>
+
+        <input type="text" id="cursoImagen" placeholder="URL de la imagen (https://...)" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+        
+        <textarea id="cursoDescripcion" placeholder="Descripción breve del curso" rows="3" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;"></textarea>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-primary" onclick="guardarCurso()">Guardar en Firebase</button>
+          <button class="btn-action" onclick="cerrarModalCurso()">Cancelar</button>
+        </div>
+      </div>
+    </div>
     </div>
 
   </main>
 
 <script type="module">
+  
+  // --- LÓGICA DE NAVEGACIÓN DEL MENÚ ---
+  const btnEstudiantes = document.getElementById('btn-estudiantes');
+  const btnVentas = document.getElementById('btn-ventas');
+  const btnCursos = document.getElementById('btn-cursos');
+  
+  const vistaEstudiantes = document.getElementById('vista-estudiantes');
+  const vistaVentas = document.getElementById('vista-ventas');
+  const vistaCursos = document.getElementById('vista-cursos');
+
+  window.mostrarEstudiantes = function() {
+    vistaEstudiantes.style.display = 'block';
+    vistaVentas.style.display = 'none';
+    vistaCursos.style.display = 'none';
+    btnEstudiantes.classList.add('active');
+    btnVentas.classList.remove('active');
+    btnCursos.classList.remove('active');
+  }
+
+  window.mostrarVentas = function() {
+    vistaEstudiantes.style.display = 'none';
+    vistaVentas.style.display = 'block';
+    vistaCursos.style.display = 'none';
+    btnVentas.classList.add('active');
+    btnEstudiantes.classList.remove('active');
+    btnCursos.classList.remove('active');
+  }
+
+  window.mostrarCursos = function() {
+    vistaEstudiantes.style.display = 'none';
+    vistaVentas.style.display = 'none';
+    vistaCursos.style.display = 'block';
+    btnCursos.classList.add('active');
+    btnEstudiantes.classList.remove('active');
+    btnVentas.classList.remove('active');
+    cargarCursosAdmin(); // Carga los cursos de la base de datos
+  }
   // Extraemos la información de Firebase usando la misma configuración de app.js
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
   import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
