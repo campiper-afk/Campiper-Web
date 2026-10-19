@@ -127,6 +127,42 @@
       </div>
     </div>
   </main>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const totalLecciones = 12;
+    // Leer el historial de lecciones
+    let leccionesVistas = JSON.parse(localStorage.getItem('davinci_completadas')) || [];
+    let cantidad = leccionesVistas.length;
+    
+    // Ecuación principal del progreso
+    let porcentajeReal = Math.round((cantidad / totalLecciones) * 100);
 
+    // Seleccionar los elementos visuales de la barra
+    const barraDiv = document.getElementById('barra-davinci');
+    const porcentajeTexto = document.getElementById('porcentaje-davinci');
+    const textoNivel = document.getElementById('texto-progreso-davinci');
+
+    // Aplicar la matemática al diseño visual
+    barraDiv.style.width = porcentajeReal + '%';
+    porcentajeTexto.innerText = porcentajeReal + '%';
+    textoNivel.innerText = `Lecciones: ${cantidad} de ${totalLecciones}`;
+
+    // Si llegó al 100%, aplicamos los estilos de "Curso Finalizado" (Check Verde)
+    if (porcentajeReal === 100) {
+      document.getElementById('tarjeta-curso-davinci').classList.add('estado-finalizado');
+      document.querySelector('.overlay-completado').style.display = 'flex';
+      barraDiv.style.background = '#27c93f';
+      textoNivel.style.color = '#27c93f';
+      textoNivel.innerText = '¡Curso finalizado!';
+      
+      // Desbloquear certificado
+      const certZone = document.querySelector('.certificado-bloqueado');
+      if(certZone) {
+        certZone.className = 'certificado-desbloqueado';
+        certZone.innerHTML = `<h3 style="color:#27c93f;">Certificado Listo</h3><button>Descargar</button>`;
+      }
+    }
+  });
+</script>
 </body>
 </html>
