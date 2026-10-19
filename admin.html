@@ -97,7 +97,7 @@
   }
   #searchInput:focus { outline: none; border-color: var(--blue); }
   .btn-primary {
-    background: var(--orange); color: var(--text-on-orange); border: none;
+    background: var(--orange); color: var(--text-light); border: none;
     padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;
   }
 
@@ -140,20 +140,24 @@
   /* Etiquetas de Estado */
   .status { padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
   .status.active { background: rgba(74, 144, 226, 0.15); color: var(--blue); }
-  .status.completed { background: rgba(39, 201, 63, 0.15); color: #27c93f; }
-  .status.inactive { background: rgba(255, 107, 53, 0.15); color: var(--orange); }
-
+  
   .btn-action {
     background: transparent; border: 1px solid var(--dark-line);
     color: var(--text-light); padding: 6px 12px; border-radius: 6px; cursor: pointer;
   }
   .btn-action:hover { border-color: var(--blue); color: var(--blue); }
+  
+  /* Estilos para el formulario de cursos */
+  .input-curso {
+    padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); 
+    background: var(--dark-alt); color: white;
+  }
 </style>
 </head>
 <body>
 
   <!-- Barra lateral (menú) -->
-<aside class="sidebar">
+  <aside class="sidebar">
     <div class="brand">CamPiper Admin</div>
     <a href="#" id="btn-estudiantes" class="menu-item active" onclick="mostrarEstudiantes()">Gestión de Estudiantes</a>
     <a href="#" id="btn-ventas" class="menu-item" onclick="mostrarVentas()">Ventas y Reportes</a>
@@ -169,7 +173,7 @@
       <div class="admin-header">
         <h1>Gestión de Estudiantes</h1>
         <div class="table-actions">
-          <input type="text" id="searchInput" placeholder="Buscar alumno por nombre o email..." onkeyup="filterTable()">
+          <input type="text" id="searchInput" placeholder="Buscar alumno..." onkeyup="filterTable()">
           <button class="btn-primary">Exportar CSV</button>
         </div>
       </div>
@@ -191,7 +195,7 @@
       </div>
     </div>
 
-    <!-- VISTA: VENTAS Y REPORTES (Oculta por defecto) -->
+    <!-- VISTA: VENTAS Y REPORTES -->
     <div id="vista-ventas" style="display: none;">
       <div class="admin-header">
         <h1>Ventas y Reportes</h1>
@@ -200,7 +204,6 @@
         </div>
       </div>
       
-      <!-- Tarjetas de resumen de ventas -->
       <div style="display: flex; gap: 20px; margin-bottom: 30px;">
         <div class="table-container" style="padding: 20px; flex: 1;">
           <h3 style="margin-top: 0; color: var(--text-muted);">Ingresos Totales</h3>
@@ -211,7 +214,6 @@
           <h2 style="font-size: 2rem; color: var(--orange); margin: 10px 0;">0</h2>
         </div>
       </div>
-      
 
       <div class="table-container">
         <table>
@@ -230,7 +232,9 @@
           </tbody>
         </table>
       </div>
-      <!-- VISTA: GESTIÓN DE CURSOS (Oculta por defecto) -->
+    </div>
+
+    <!-- VISTA: GESTIÓN DE CURSOS -->
     <div id="vista-cursos" style="display: none;">
       <div class="admin-header">
         <h1>Gestión de Cursos</h1>
@@ -243,7 +247,7 @@
         <table>
           <thead>
             <tr>
-              <th>ID del Módulo</th>
+              <th>ID</th>
               <th>Título del Curso</th>
               <th>Categoría</th>
               <th>Nivel</th>
@@ -251,29 +255,28 @@
             </tr>
           </thead>
           <tbody id="listaCursosAdmin">
-            <!-- Aquí se inyectarán los cursos desde Firestore -->
             <tr><td colspan="5" style="text-align: center;">Cargando cursos...</td></tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Formulario sencillo para agregar/editar cursos -->
+      <!-- Formulario sencillo para agregar cursos -->
       <div id="formularioCurso" class="table-container" style="display: none; padding: 20px; margin-top: 20px;">
-        <h3 id="tituloFormularioCurso" style="margin-top: 0;">Agregar Nuevo Curso</h3>
+        <h3 style="margin-top: 0;">Agregar Nuevo Curso</h3>
         
         <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-          <input type="text" id="cursoId" placeholder="ID (ej. 1, 2, 3)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
-          <input type="text" id="cursoTitulo" placeholder="Título del Curso" style="flex: 3; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+          <input type="text" id="cursoId" class="input-curso" placeholder="ID (ej. 1, 2, 3)" style="flex: 1;">
+          <input type="text" id="cursoTitulo" class="input-curso" placeholder="Título del Curso" style="flex: 3;">
         </div>
         
         <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-          <input type="text" id="cursoCategoria" placeholder="Categoría (ej. edicion)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
-          <input type="text" id="cursoNivel" placeholder="Nivel (ej. Primer Modulo)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+          <input type="text" id="cursoCategoria" class="input-curso" placeholder="Categoría (ej. edicion)" style="flex: 1;">
+          <input type="text" id="cursoNivel" class="input-curso" placeholder="Nivel (ej. Primer Modulo)" style="flex: 1;">
         </div>
 
-        <input type="text" id="cursoImagen" placeholder="URL de la imagen (https://...)" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;">
+        <input type="text" id="cursoImagen" class="input-curso" placeholder="URL de la imagen (https://...)" style="width: 100%; margin-bottom: 15px; box-sizing: border-box;">
         
-        <textarea id="cursoDescripcion" placeholder="Descripción breve del curso" rows="3" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--dark-line); background: var(--dark-alt); color: white;"></textarea>
+        <textarea id="cursoDescripcion" class="input-curso" placeholder="Descripción breve del curso" rows="3" style="width: 100%; margin-bottom: 15px; box-sizing: border-box;"></textarea>
 
         <div style="display: flex; gap: 10px;">
           <button class="btn-primary" onclick="guardarCurso()">Guardar en Firebase</button>
@@ -281,53 +284,14 @@
         </div>
       </div>
     </div>
-    </div>
 
   </main>
 
 <script type="module">
-  
-  // --- LÓGICA DE NAVEGACIÓN DEL MENÚ ---
-  const btnEstudiantes = document.getElementById('btn-estudiantes');
-  const btnVentas = document.getElementById('btn-ventas');
-  const btnCursos = document.getElementById('btn-cursos');
-  
-  const vistaEstudiantes = document.getElementById('vista-estudiantes');
-  const vistaVentas = document.getElementById('vista-ventas');
-  const vistaCursos = document.getElementById('vista-cursos');
-
-  window.mostrarEstudiantes = function() {
-    vistaEstudiantes.style.display = 'block';
-    vistaVentas.style.display = 'none';
-    vistaCursos.style.display = 'none';
-    btnEstudiantes.classList.add('active');
-    btnVentas.classList.remove('active');
-    btnCursos.classList.remove('active');
-  }
-
-  window.mostrarVentas = function() {
-    vistaEstudiantes.style.display = 'none';
-    vistaVentas.style.display = 'block';
-    vistaCursos.style.display = 'none';
-    btnVentas.classList.add('active');
-    btnEstudiantes.classList.remove('active');
-    btnCursos.classList.remove('active');
-  }
-
-  window.mostrarCursos = function() {
-    vistaEstudiantes.style.display = 'none';
-    vistaVentas.style.display = 'none';
-    vistaCursos.style.display = 'block';
-    btnCursos.classList.add('active');
-    btnEstudiantes.classList.remove('active');
-    btnVentas.classList.remove('active');
-    cargarCursosAdmin(); // Carga los cursos de la base de datos
-  }
-  // Extraemos la información de Firebase usando la misma configuración de app.js
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  // IMPORTANTE: Aquí importamos las herramientas de Firestore
+  import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-  // Copiamos la configuración exacta que tienes en tu app.js
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
     authDomain: "campiper-7414d.firebaseapp.com",
@@ -340,115 +304,126 @@
   const app = initializeApp(FIREBASE_CONFIG);
   const db = getFirestore(app);
 
+  // --- 1. GESTIÓN DE ESTUDIANTES ---
   async function cargarEstudiantes() {
     const tbody = document.getElementById('listaEstudiantes'); 
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando estudiantes de Firebase...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando estudiantes...</td></tr>';
 
     try {
-      // Tu app.js guarda a las personas en la colección 'users'
       const querySnapshot = await getDocs(collection(db, "users"));
       tbody.innerHTML = '';
-
       if (querySnapshot.empty) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay usuarios registrados aún.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay usuarios.</td></tr>';
         return;
       }
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      querySnapshot.forEach((documento) => {
+        const data = documento.data();
         const nombreReal = data.nombre || "Usuario";
-        const correoReal = data.correo || "Sin correo";
         const iniciales = nombreReal.substring(0, 2).toUpperCase();
-
-        const filaHTML = `
+        tbody.innerHTML += `
           <tr>
             <td>
               <div class="user-info">
                 <span class="user-avatar">${iniciales}</span>
                 <div>
                   <div class="user-name">${nombreReal}</div>
-                  <div class="user-email">${correoReal}</div>
+                  <div class="user-email">${data.correo || ''}</div>
                 </div>
               </div>
             </td>
             <td>Reciente</td>
-            <td>
-              <div class="progress-bar-container">
-                <div class="progress-fill" style="width: 0%;"></div>
-                <span class="progress-text">0%</span>
-              </div>
-            </td>
+            <td><div class="progress-bar-container"><div class="progress-fill" style="width: 0%;"></div></div></td>
             <td><span class="status active">Activo</span></td>
-            <td><button class="btn-action">Ver Perfil</button></td>
-          </tr>
-        `;
-        tbody.innerHTML += filaHTML;
+            <td><button class="btn-action">Ver</button></td>
+          </tr>`;
       });
-
     } catch (error) {
-      console.error("Error al leer la base de datos:", error);
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar datos. Verifica las reglas de Firestore.</td></tr>';
+      console.error(error);
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error al cargar.</td></tr>';
     }
   }
 
-  // Ejecutar cuando se cargue la página
+  // --- 2. GESTIÓN DE CURSOS ---
+  window.abrirModalCurso = function() {
+    document.getElementById('formularioCurso').style.display = 'block';
+  }
+  window.cerrarModalCurso = function() {
+    document.getElementById('formularioCurso').style.display = 'none';
+  }
+
+  window.cargarCursosAdmin = async function() {
+    const tbody = document.getElementById('listaCursosAdmin');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando...</td></tr>';
+    try {
+      const querySnapshot = await getDocs(collection(db, "cursos"));
+      tbody.innerHTML = '';
+      if (querySnapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay cursos. Haz clic en + Nuevo Curso.</td></tr>';
+        return;
+      }
+      querySnapshot.forEach((documento) => {
+        const data = documento.data();
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-weight: bold;">${documento.id}</td>
+            <td>${data.titulo || 'Sin título'}</td>
+            <td><span class="status active">${data.categoria || 'N/A'}</span></td>
+            <td>${data.nivel || 'N/A'}</td>
+            <td><button class="btn-action">Editar</button></td>
+          </tr>`;
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  window.guardarCurso = async function() {
+    const id = document.getElementById('cursoId').value.trim();
+    if(!id) return alert("Ingresa un ID");
+
+    const datosCurso = {
+      titulo: document.getElementById('cursoTitulo').value,
+      categoria: document.getElementById('cursoCategoria').value,
+      nivel: document.getElementById('cursoNivel').value,
+      imagen: document.getElementById('cursoImagen').value,
+      descripcion: document.getElementById('cursoDescripcion').value
+    };
+
+    try {
+      await setDoc(doc(db, "cursos", id), datosCurso);
+      alert("Curso guardado!");
+      cerrarModalCurso();
+      cargarCursosAdmin();
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar.");
+    }
+  }
+
+  // --- INICIO DE LA PÁGINA ---
   document.addEventListener('DOMContentLoaded', () => {
-    const isAdmin = sessionStorage.getItem('campiper_admin_auth');
-    if (isAdmin === 'true') {
+    if (sessionStorage.getItem('campiper_admin_auth') === 'true') {
        cargarEstudiantes();
     }
   });
 
-  // Funciones del Admin original (Para que los botones de cerrar sesión y buscar sigan funcionando)
+  // --- NAVEGACIÓN Y UTILIDADES ---
   window.cerrarSesion = function() {
     sessionStorage.removeItem('campiper_admin_auth');
     window.location.replace('index.html');
   }
 
-  window.filterTable = function() {
-    const input = document.getElementById("searchInput");
-    const filter = input.value.toUpperCase();
-    const table = document.getElementById("studentsTable");
-    const tr = table.getElementsByTagName("tr");
-
-    for (let i = 1; i < tr.length; i++) {
-      const td = tr[i].getElementsByTagName("td")[0]; 
-      if (td) {
-        const txtValue = td.textContent || td.innerText;
-        tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-      }       
+  const vistas = ['estudiantes', 'ventas', 'cursos'];
+  vistas.forEach(vista => {
+    window[`mostrar${vista.charAt(0).toUpperCase() + vista.slice(1)}`] = function() {
+      vistas.forEach(v => {
+        document.getElementById(`vista-${v}`).style.display = (v === vista) ? 'block' : 'none';
+        document.getElementById(`btn-${v}`).classList.toggle('active', v === vista);
+      });
+      if(vista === 'cursos') cargarCursosAdmin();
     }
-  }
-  // --- LÓGICA DE NAVEGACIÓN DEL MENÚ ---
-  
-  // Guardamos los botones y las vistas en variables
-  const btnEstudiantes = document.getElementById('btn-estudiantes');
-  const btnVentas = document.getElementById('btn-ventas');
-  const vistaEstudiantes = document.getElementById('vista-estudiantes');
-  const vistaVentas = document.getElementById('vista-ventas');
+  });
 
-  // Función para mostrar la vista de Estudiantes
-  window.mostrarEstudiantes = function() {
-    // Cambiar vista
-    vistaEstudiantes.style.display = 'block';
-    vistaVentas.style.display = 'none';
-    
-    // Cambiar color del botón (clase active)
-    btnEstudiantes.classList.add('active');
-    btnVentas.classList.remove('active');
-  }
-
-  // Función para mostrar la vista de Ventas
-  window.mostrarVentas = function() {
-    // Cambiar vista
-    vistaEstudiantes.style.display = 'none';
-    vistaVentas.style.display = 'block';
-    
-    // Cambiar color del botón (clase active)
-    btnVentas.classList.add('active');
-    btnEstudiantes.classList.remove('active');
-  }
 </script>
-  
 </body>
 </html>
