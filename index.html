@@ -172,43 +172,44 @@
   
 <!-- SDK Modular de Firebase (Importado via CDN) -->
 <script type="module">
-  // 1. Importar las funciones de Firebase
+  // 1. Importaciones correctas y completas
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-  // 2. Tu configuración de Firebase (Pega TUS datos aquí)
+  // 2. Tu configuración (¡REEMPLAZA ESTO CON TUS DATOS!)
   const firebaseConfig = {
-     apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
-     authDomain: "campiper-7414d.firebaseapp.com",
-     projectId: "campiper-7414d",
-     storageBucket: "campiper-7414d.firebasestorage.app",
-     messagingSenderId: "984212599762",
-     appId: "1:984212599762:web:0a0299a4350edcb2818e0b"
+    apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+    authDomain: "campiper-7414d.firebaseapp.com",
+    projectId: "campiper-7414d",
+    storageBucket: "campiper-7414d.firebasestorage.app",
+    messagingSenderId: "984212599762",
+    appId: "1:984212599762:web:0a0299a4350edcb2818e0b"
   };
 
-  // 3. Inicializar Firebase y Firestore
+  // 3. Inicialización crucial: aquí se define 'app' y 'db' globalmente
   const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-  // 4. Función para leer el precio y mostrarlo en la web
+  // 4. La función que usa 'db'
   async function cargarPrecio() {
     try {
-      // Apuntar al documento específico en la base de datos
+      // Apuntamos a la colección 'cursos' y al documento 'davinci-resolve'
       const docRef = doc(db, "cursos", "davinci-resolve");
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const datos = docSnap.data();
-        // Inyectar el precio en el HTML
         document.getElementById("precio-dinamico").innerText = "$" + datos.precio_actual;
+        console.log("Precio cargado con éxito:", datos.precio_actual);
       } else {
-        console.log("No se encontró el documento de precio.");
+        console.log("El documento no existe en Firestore. Revisa el nombre.");
       }
     } catch (error) {
       console.error("Error al obtener Firebase:", error);
     }
   }
 
-  // Ejecutar la función cuando cargue la página
+  // 5. Ejecutar la función
   cargarPrecio();
 </script>
 </body>
