@@ -230,104 +230,69 @@ function initTemporizador() {
   }, 1000);
 }
 
-/* ---------- catalogo.html: tarjetas de módulos ---------- */
-function initCatalogo() {
-  if (!document.getElementById('course-grid')) return;
 /* ---------- catalogo.html: tarjetas de módulos desde Firebase ---------- */
 async function initCatalogo() {
+  console.log("1. Iniciando carga del catálogo...");
   const gridContenedor = document.getElementById('course-grid');
-  if (!gridContenedor) return;
+  
+  // Si no estamos en la página del catálogo, no hace nada
+  if (!gridContenedor) {
+    console.log("No estamos en catalogo.html, cancelando initCatalogo.");
+    return;
+  }
 
-  const botonesFiltro = document.querySelectorAll('.filter-btn');
+  // Mensaje temporal mientras carga
+  gridContenedor.innerHTML = '<p style="color: white; text-align: center;">Conectando con Firebase...</p>';
 
-  // Función para crear las tarjetas HTML
-  function renderizarCursos(cursosFiltrados) {
-    gridContenedor.innerHTML = ''; // Limpiar grid
+  try {
+    console.log("2. Llamando a cargarFirebase()...");
+    const { db, fsMod } = await cargarFirebase();
+    
+    console.log("3. Buscando la colección 'cursos'...");
+    const dbRef = fsMod.collection(db, "cursos");
+    const querySnapshot = await fsMod.getDocs(dbRef);
 
-    if (cursosFiltrados.length === 0) {
-      gridContenedor.innerHTML = '<p class="catalogo-vacio">No hay cursos disponibles en este momento.</p>';
+    console.log("4. ¡Cursos encontrados!: ", querySnapshot.size);
+    gridContenedor.innerHTML = ''; // Limpiamos el texto de carga
+
+    if (querySnapshot.empty) {
+      gridContenedor.innerHTML = '<p style="color: white; text-align: center;">No hay cursos publicados todavía. Ve al Admin a crear uno.</p>';
       return;
     }
 
-    cursosFiltrados.forEach(curso => {
-      const tarjeta = document.createElement('div');
-      tarjeta.className = "tarjeta-curso caja";
-
-      // Usamos una imagen por defecto si el admin no le puso ninguna
-      const imgUrl = curso.imagen ? curso.imagen : "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
-
-      tarjeta.innerHTML = `
-        <div class="tarjeta-imagen">
-          <img src="${imgUrl}" alt="${curso.titulo}" class="tarjeta-img">
-          <span class="insignia insignia-tarjeta">${curso.nivel || 'Módulo'}</span>
-        </div>
-        <div class="tarjeta-contenido">
-          <h3 class="tarjeta-titulo">${curso.titulo}</h3>
-          <p class="tarjeta-descripcion">${curso.descripcion || 'Sin descripción'}</p>
-          <div class="tarjeta-pie">
-            <span class="tarjeta-precio">${curso.precio || ''}</span>
-            <a href="detalle.html?mod=${curso.id}" class="tarjeta-link">
-              Ver detalle
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>
+    // Dibujamos cada curso que traiga Firebase
+    querySnapshot.forEach((doc) => {
+      const curso = doc.data();
+      const imgUrl = curso.imagen || "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+      
+      const tarjetaHTML = `
+        <div class="tarjeta-curso caja">
+          <div class="tarjeta-imagen">
+            <img src="${imgUrl}" class="tarjeta-img" alt="Curso">
+            <span class="insignia insignia-tarjeta">${curso.nivel || 'Módulo'}</span>
+          </div>
+          <div class="tarjeta-contenido">
+            <h3 class="tarjeta-titulo">${curso.titulo || 'Sin Título'}</h3>
+            <p class="tarjeta-descripcion">${curso.descripcion || 'Sin descripción'}</p>
+            <div class="tarjeta-pie">
+              <span class="tarjeta-precio">${curso.precio || ''}</span>
+              <a href="detalle.html?mod=${doc.id}" class="tarjeta-link">Ver detalle</a>
+            </div>
           </div>
         </div>
       `;
-      gridContenedor.appendChild(tarjeta);
-    });
-  }
-
-  // Lógica de filtrado
-  function configurarFiltros(cursosData) {
-    botonesFiltro.forEach(boton => {
-      boton.addEventListener('click', (e) => {
-        botonesFiltro.forEach(btn => btn.classList.remove('active'));
-        const btnSeleccionado = e.target;
-        btnSeleccionado.classList.add('active');
-
-        const categoriaSeleccionada = btnSeleccionado.getAttribute('data-filter');
-
-        if (categoriaSeleccionada === 'todos' || !categoriaSeleccionada) {
-          renderizarCursos(cursosData);
-        } else {
-          const filtrados = cursosData.filter(curso => curso.categoria === categoriaSeleccionada);
-          renderizarCursos(filtrados);
-        }
-      });
-    });
-  }
-
-  // --- CONEXIÓN CON FIREBASE ---
-  gridContenedor.innerHTML = '<p class="catalogo-vacio">Cargando cursos desde la base de datos...</p>';
-  let cursosFirebase = [];
-
-  try {
-    // Usamos la función cargarFirebase() que ya tienes en app.js
-    const { db, fsMod } = await cargarFirebase();
-    const querySnapshot = await fsMod.getDocs(fsMod.collection(db, "cursos"));
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      cursosFirebase.push({
-        id: doc.id,
-        titulo: data.titulo,
-        categoria: data.categoria || "edicion",
-        nivel: data.nivel,
-        precio: data.precio || "",
-        imagen: data.imagen,
-        descripcion: data.descripcion
-      });
+      gridContenedor.innerHTML += tarjetaHTML;
     });
 
-    renderizarCursos(cursosFirebase);
-    configurarFiltros(cursosFirebase);
+    console.log("5. Catálogo dibujado exitosamente.");
 
   } catch (error) {
-    console.error("Error al cargar cursos de Firebase:", error);
-    gridContenedor.innerHTML = '<p class="catalogo-vacio" style="color:red;">Error al cargar el catálogo de cursos.</p>';
+    console.error("ERROR CRÍTICO EN FIREBASE:", error);
+    gridContenedor.innerHTML = '<p style="color: red; text-align: center;">Hubo un error de conexión. Revisa la consola.</p>';
   }
 }
-  // 3. Lógica de Filtrado
+
+//logica de Filtrado
   botonesFiltro.forEach(boton => {
     boton.addEventListener('click', (e) => {
       // Quitar clase active de todos
