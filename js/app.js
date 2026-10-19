@@ -233,81 +233,39 @@ function initTemporizador() {
 /* ---------- catalogo.html: tarjetas de módulos ---------- */
 function initCatalogo() {
   if (!document.getElementById('course-grid')) return;
-
-  // 1. Base de datos simulada (JSON)
-  const cursos = [
-    {
-      id: 1,
-      titulo: "Primeros pasos en Davinci Resolve",
-      categoria: "edicion",
-      nivel: "Primer Modulo",
-      precio: "",
-      imagen: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      descripcion: "Este módulo introductorio establece las bases para comenzar a utilizar el software, guiándote a través del proceso de instalación y su configuración inicial."
-    },
-    {
-      id: 2,
-      titulo: "Edicion básica de video",
-      categoria: "edicion",
-      nivel: "Segundo Modulo",
-      precio: "",
-      imagen: "https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      descripcion: "En esta sección aprenderás a dominar la edición básica manejando cortes, transiciones y la línea de tiempo."
-    },
-    {
-      id: 3,
-      titulo: "Introducción al color granding",
-      categoria: "edicion",
-      nivel: "Tercer Modulo",
-      precio: "",
-      imagen: "https://images.unsplash.com/photo-1555099962-4199c345e5dd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      descripcion: "Explora la rueda de color primaria para distinguir entre corrección de color y estilización, dominando también el uso de scopes como el waveform."
-    },
-    {
-      id: 4,
-      titulo: "Audio y entrega final",
-      categoria: "ia",
-      nivel: "Cuarto Modulo",
-      precio: "",
-      imagen: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      descripcion: "Aplica la mezcla básica de audio en Fairlight y configura los ajustes de exportación para optimizar tus videos en redes sociales"
-    }
-  ];
-
+/* ---------- catalogo.html: tarjetas de módulos desde Firebase ---------- */
+async function initCatalogo() {
   const gridContenedor = document.getElementById('course-grid');
+  if (!gridContenedor) return;
+
   const botonesFiltro = document.querySelectorAll('.filter-btn');
 
-  // 2. Función para renderizar las tarjetas
+  // Función para crear las tarjetas HTML
   function renderizarCursos(cursosFiltrados) {
     gridContenedor.innerHTML = ''; // Limpiar grid
 
     if (cursosFiltrados.length === 0) {
-      gridContenedor.innerHTML = '<p class="catalogo-vacio">No se encontraron cursos en esta categoría.</p>';
+      gridContenedor.innerHTML = '<p class="catalogo-vacio">No hay cursos disponibles en este momento.</p>';
       return;
     }
 
     cursosFiltrados.forEach(curso => {
       const tarjeta = document.createElement('div');
-      // Las clases están definidas en css/style.css
       tarjeta.className = "tarjeta-curso caja";
 
-      tarjeta.innerHTML = `
-        <!-- Imagen del curso -->
-        <div class="tarjeta-imagen">
-          <img src="${curso.imagen}" alt="${curso.titulo}" class="tarjeta-img">
-          <span class="insignia insignia-tarjeta">
-            ${curso.nivel}
-          </span>
-        </div>
+      // Usamos una imagen por defecto si el admin no le puso ninguna
+      const imgUrl = curso.imagen ? curso.imagen : "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
 
-        <!-- Contenido -->
+      tarjeta.innerHTML = `
+        <div class="tarjeta-imagen">
+          <img src="${imgUrl}" alt="${curso.titulo}" class="tarjeta-img">
+          <span class="insignia insignia-tarjeta">${curso.nivel || 'Módulo'}</span>
+        </div>
         <div class="tarjeta-contenido">
           <h3 class="tarjeta-titulo">${curso.titulo}</h3>
-          <p class="tarjeta-descripcion">${curso.descripcion}</p>
-
-          <!-- Pie de tarjeta (Precio y Botón) -->
+          <p class="tarjeta-descripcion">${curso.descripcion || 'Sin descripción'}</p>
           <div class="tarjeta-pie">
-            <span class="tarjeta-precio">${curso.precio}</span>
+            <span class="tarjeta-precio">${curso.precio || ''}</span>
             <a href="detalle.html?mod=${curso.id}" class="tarjeta-link">
               Ver detalle
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -319,6 +277,56 @@ function initCatalogo() {
     });
   }
 
+  // Lógica de filtrado
+  function configurarFiltros(cursosData) {
+    botonesFiltro.forEach(boton => {
+      boton.addEventListener('click', (e) => {
+        botonesFiltro.forEach(btn => btn.classList.remove('active'));
+        const btnSeleccionado = e.target;
+        btnSeleccionado.classList.add('active');
+
+        const categoriaSeleccionada = btnSeleccionado.getAttribute('data-filter');
+
+        if (categoriaSeleccionada === 'todos' || !categoriaSeleccionada) {
+          renderizarCursos(cursosData);
+        } else {
+          const filtrados = cursosData.filter(curso => curso.categoria === categoriaSeleccionada);
+          renderizarCursos(filtrados);
+        }
+      });
+    });
+  }
+
+  // --- CONEXIÓN CON FIREBASE ---
+  gridContenedor.innerHTML = '<p class="catalogo-vacio">Cargando cursos desde la base de datos...</p>';
+  let cursosFirebase = [];
+
+  try {
+    // Usamos la función cargarFirebase() que ya tienes en app.js
+    const { db, fsMod } = await cargarFirebase();
+    const querySnapshot = await fsMod.getDocs(fsMod.collection(db, "cursos"));
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      cursosFirebase.push({
+        id: doc.id,
+        titulo: data.titulo,
+        categoria: data.categoria || "edicion",
+        nivel: data.nivel,
+        precio: data.precio || "",
+        imagen: data.imagen,
+        descripcion: data.descripcion
+      });
+    });
+
+    renderizarCursos(cursosFirebase);
+    configurarFiltros(cursosFirebase);
+
+  } catch (error) {
+    console.error("Error al cargar cursos de Firebase:", error);
+    gridContenedor.innerHTML = '<p class="catalogo-vacio" style="color:red;">Error al cargar el catálogo de cursos.</p>';
+  }
+}
   // 3. Lógica de Filtrado
   botonesFiltro.forEach(boton => {
     boton.addEventListener('click', (e) => {
