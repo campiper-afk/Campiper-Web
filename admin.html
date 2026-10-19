@@ -290,7 +290,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
   // IMPORTANTE: Aquí importamos las herramientas de Firestore
-  import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
   const FIREBASE_CONFIG = {
     apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
@@ -345,13 +345,24 @@
 
   // --- 2. GESTIÓN DE CURSOS ---
   window.abrirModalCurso = function() {
+    // Al abrir para "Nuevo Curso", limpiamos todo y habilitamos el ID
     document.getElementById('formularioCurso').style.display = 'block';
-  }
-  window.cerrarModalCurso = function() {
-    document.getElementById('formularioCurso').style.display = 'none';
+    document.getElementById('tituloFormularioCurso').innerText = 'Agregar Nuevo Curso';
+    document.getElementById('cursoId').disabled = false;
+    document.getElementById('cursoId').value = '';
+    document.getElementById('cursoTitulo').value = '';
+    document.getElementById('cursoCategoria').value = '';
+    document.getElementById('cursoNivel').value = '';
+    document.getElementById('cursoImagen').value = '';
+    document.getElementById('cursoDescripcion').value = '';
   }
 
-  window.cargarCursosAdmin = async function() {
+  window.cerrarModalCurso = function() {
+    document.getElementById('formularioCurso').style.display = 'none';
+    document.getElementById('cursoId').disabled = false; // Lo volvemos a habilitar por si acaso
+  }
+
+ window.cargarCursosAdmin = async function() {
     const tbody = document.getElementById('listaCursosAdmin');
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando...</td></tr>';
     try {
@@ -369,15 +380,65 @@
             <td>${data.titulo || 'Sin título'}</td>
             <td><span class="status active">${data.categoria || 'N/A'}</span></td>
             <td>${data.nivel || 'N/A'}</td>
-            <td><button class="btn-action">Editar</button></td>
+            <td>
+              <button class="btn-action" onclick="editarCurso('${documento.id}')" style="margin-right: 5px; color: var(--blue); border-color: var(--blue);">Editar</button>
+              <button class="btn-action" onclick="eliminarCurso('${documento.id}')" style="color: var(--orange); border-color: var(--orange);">Borrar</button>
+            </td>
           </tr>`;
       });
     } catch (error) {
       console.error(error);
     }
   }
-
   window.guardarCurso = async function() {
+
+    // --- FUNCIÓN PARA ELIMINAR UN CURSO ---
+  window.eliminarCurso = async function(idCurso) {
+    // Pedimos confirmación antes de borrar
+    if (confirm("¿Estás seguro de que quieres eliminar este curso? Esta acción no se puede deshacer.")) {
+      try {
+        await deleteDoc(doc(db, "cursos", idCurso));
+        alert("Curso eliminado correctamente.");
+        cargarCursosAdmin(); // Recargar la tabla
+      } catch (error) {
+        console.error("Error al eliminar el curso:", error);
+        alert("Hubo un error al eliminar el curso.");
+      }
+    }
+  }
+
+  // --- FUNCIÓN PARA EDITAR UN CURSO ---
+  window.editarCurso = async function(idCurso) {
+    try {
+      // 1. Buscamos los datos del curso en Firebase
+      const docSnap = await getDoc(doc(db, "cursos", idCurso));
+      
+      if (docSnap.exists()) {
+        const datos = docSnap.data();
+        
+        // 2. Llenamos el formulario con esos datos
+        document.getElementById('cursoId').value = idCurso;
+        document.getElementById('cursoTitulo').value = datos.titulo || "";
+        document.getElementById('cursoCategoria').value = datos.categoria || "";
+        document.getElementById('cursoNivel').value = datos.nivel || "";
+        document.getElementById('cursoImagen').value = datos.imagen || "";
+        document.getElementById('cursoDescripcion').value = datos.descripcion || "";
+
+        // 3. Bloqueamos el campo del ID para que no lo puedan cambiar y arruinar el registro
+        document.getElementById('cursoId').disabled = true;
+
+        // 4. Abrimos el modal
+        document.getElementById('formularioCurso').style.display = 'block';
+        document.getElementById('tituloFormularioCurso').innerText = 'Editar Curso';
+        
+      } else {
+        alert("No se encontraron los datos de este curso.");
+      }
+    } catch (error) {
+      console.error("Error al obtener los datos del curso:", error);
+    }
+  }
+    
     const id = document.getElementById('cursoId').value.trim();
     if(!id) return alert("Ingresa un ID");
 
