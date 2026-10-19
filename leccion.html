@@ -8,7 +8,38 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="js/app.js" defer></script>
+ <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const video = document.getElementById('video-leccion');
+    
+    // 1. Identificamos qué lección es esta y el total del curso
+    const idLeccionActual = 'leccion_1'; // Cambiar esto en cada archivo de lección (leccion_2, leccion_3, etc.)
+    const totalLecciones = 12; // Total del curso DaVinci Resolve
+
+    video.addEventListener('ended', () => {
+      // 2. Extraer el historial de lecciones (si no hay, crear uno vacío [])
+      let leccionesVistas = JSON.parse(localStorage.getItem('davinci_completadas')) || [];
+      
+      // 3. Ecuación: Solo sumamos si el usuario no había visto esta lección antes
+      if (!leccionesVistas.includes(idLeccionActual)) {
+        leccionesVistas.push(idLeccionActual);
+        // Guardamos el nuevo arreglo matemático en la memoria
+        localStorage.setItem('davinci_completadas', JSON.stringify(leccionesVistas));
+      }
+
+      // 4. Calcular el porcentaje exacto
+      let porcentaje = Math.round((leccionesVistas.length / totalLecciones) * 100);
+      
+      if (porcentaje === 100) {
+        alert('¡Curso completado al 100%!');
+      } else {
+        alert(`Progreso guardado: ${porcentaje}%. Llevas ${leccionesVistas.length} de ${totalLecciones} lecciones.`);
+      }
+      
+      window.location.replace('mis-cursos.html'); 
+    });
+  });
+</script>
 </head>
 <body class="pagina-leccion">
 
