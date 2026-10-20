@@ -7,7 +7,7 @@
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body data-requiere-sesion>
   <div class="courses-page">
     
     <!-- HEADER ESTUDIANTE -->
@@ -21,8 +21,8 @@
         <a href="mailto:soporte@campiper.com">Soporte</a>
       </nav>
       <div class="student-menu">
-        <a href="registro.html">Salir</a>
-        <span aria-label="Perfil de Brecaos">B</span>
+        <a href="index.html" data-salir>Salir</a>
+        <span aria-label="Tu perfil" data-usuario-inicial></span>
       </div>
     </header>
 
@@ -41,7 +41,7 @@
             <path d="m12 2 1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2Zm7 14 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
           </svg>
         </span>
-        <h1>Hola, Brecaos</h1>
+        <h1>Hola, <span data-usuario-nombre>Estudiante</span></h1>
         <p>Aquí tienes tu progreso. Sigue así.</p>
       </section>
 
