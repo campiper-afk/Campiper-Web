@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campiper - DaVinci Resolve</title>
+  <!-- Script de Tailwind para mantener el reset de estilos base -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="site-shell">
+    
+    <!-- HEADER -->
+    <header class="navbar">
+      <a class="brand" href="#inicio" aria-label="Campiper, inicio">
+        <img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="img/campiper-logo.png" />
+      </a>
+      <button class="mobile-menu" aria-label="Abrir menú" aria-expanded="false">
+        <svg aria-hidden="true" fill="none" height="23" viewBox="0 0 24 24" width="23"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16" /></g></svg>
+      </button>
+      <nav aria-label="Navegación principal">
+        <a href="#aprendizaje">Qué aprenderás</a>
+        <a href="#temario">Temario</a>
+        <a href="#requisitos">Requisitos</a>
+      </nav>
+      <a class="button button-sm desktop-cta" href="registro.html">Iniciar Sesión</a>
+    </header>
+
+    <main>
+      <!-- HERO SECTION -->
+      <section class="hero" id="inicio">
+        <div class="cinematic-timeline" aria-hidden="true">
+          <div class="cinema-ruler">
+            <span>00:00:00</span><span>00:00:08</span><span>00:00:16</span><span>00:00:24</span><span>00:00:32</span><span>00:00:40</span>
+          </div>
+          <div class="cinema-track-stack">
+            <!-- Pistas de Video -->
+            <div class="cinema-track video-track">
+              <span class="track-name">V3</span>
+              <div class="track-motion speed-1">
+                <div class="clip-sequence">
+                  <i class="cinema-clip wide scene-a"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip short scene-b"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-c"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip wide scene-d"><b></b><b></b><b></b></i>
+                </div>
+                <div class="clip-sequence">
+                  <i class="cinema-clip wide scene-a"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip short scene-b"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-c"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip wide scene-d"><b></b><b></b><b></b></i>
+                </div>
+              </div>
+            </div>
+            <div class="cinema-track video-track">
+              <span class="track-name">V2</span>
+              <div class="track-motion speed-2">
+                <div class="clip-sequence">
+                  <i class="cinema-clip short scene-e"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip wide scene-c"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-a"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip short scene-b"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-d"><b></b><b></b><b></b></i>
+                </div>
+                <div class="clip-sequence">
+                  <i class="cinema-clip short scene-e"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip wide scene-c"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-a"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip short scene-b"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-d"><b></b><b></b><b></b></i>
+                </div>
+              </div>
+            </div>
+            <div class="cinema-track video-track">
+              <span class="track-name">V1</span>
+              <div class="track-motion speed-3">
+                <div class="clip-sequence">
+                  <i class="cinema-clip medium scene-d"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-e"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip wide scene-b"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip short scene-c"><b></b><b></b><b></b></i>
+                </div>
+                <div class="clip-sequence">
+                  <i class="cinema-clip medium scene-d"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip medium scene-e"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip wide scene-b"><b></b><b></b><b></b></i>
+                  <i class="cinema-clip short scene-c"><b></b><b></b><b></b></i>
+                </div>
+              </div>
+            </div>
+            <!-- Pistas de Audio -->
+            <div class="cinema-track audio-track">
+              <span class="track-name">A1</span>
+              <div class="track-motion audio-speed-1">
+                <div class="clip-sequence">
+                  <i class="cinema-clip audio-clip wide"></i><i class="cinema-clip audio-clip medium"></i><i class="cinema-clip audio-clip short"></i><i class="cinema-clip audio-clip wide"></i>
+                </div>
+                <div class="clip-sequence">
+                  <i class="cinema-clip audio-clip wide"></i><i class="cinema-clip audio-clip medium"></i><i class="cinema-clip audio-clip short"></i><i class="cinema-clip audio-clip wide"></i>
+                </div>
+              </div>
+            </div>
+            <div class="cinema-track audio-track">
+              <span class="track-name">A2</span>
+              <div class="track-motion audio-speed-2">
+                <div class="clip-sequence">
+                  <i class="cinema-clip audio-clip medium"></i><i class="cinema-clip audio-clip wide"></i><i class="cinema-clip audio-clip medium"></i><i class="cinema-clip audio-clip short"></i><i class="cinema-clip audio-clip wide"></i>
+                </div>
+                <div class="clip-sequence">
+                  <i class="cinema-clip audio-clip medium"></i><i class="cinema-clip audio-clip wide"></i><i class="cinema-clip audio-clip medium"></i><i class="cinema-clip audio-clip short"></i><i class="cinema-clip audio-clip wide"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cinema-playhead"><span></span><i></i></div>
+          <div class="cinema-vignette"></div>
+        </div>
+        <div class="hero-grid"></div>
+        
+        <div class="hero-content">
+          <div class="eyebrow"><span></span><b>NIVEL PRINCIPIANTE</b></div>
+          <h1>Edita como lo <br />imaginas.</h1>
+          <p>Domina DaVinci Resolve desde cero y convierte tus ideas en vídeos que la gente quiera ver.</p>
+          <div class="hero-actions">
+            <button class="button button-lg" id="btn-oferta">
+              Empezar el curso <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M5 12h14" /><path d="m14 7 5 5-5 5" /></g></svg>
+            </button>
+            <a class="button button-outline button-lg" href="catalogo.html">
+              Ver catálogo <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5M3 16l9 5 9-5" /></g></svg>
+            </a>
+            <a class="text-link" href="#temario"><span><svg aria-hidden="true" fill="none" height="14" viewBox="0 0 24 24" width="14"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m9 7 8 5-8 5V7Z" /></g></svg></span> Ver el temario</a>
+          </div>
+          <div class="student-proof">
+            <div class="avatars"><span>LM</span><span>SA</span><span>JD</span><span>+</span></div>
+            <div><b>+1.200 estudiantes</b><small>ya están creando mejores vídeos</small></div>
+          </div>
+        </div>
+
+        <!-- MOCKUP WINDOW -->
+        <div class="mockup-wrap" aria-label="Vista previa de la interfaz de edición del curso">
+          <div class="mockup-glow"></div>
+          <div class="mockup-window">
+            <div class="mockup-topbar">
+              <div class="window-dots"><i></i><i></i><i></i></div>
+              <span>Mi primer proyecto — DaVinci Resolve</span>
+              <div class="top-actions"><i></i><i></i></div>
+            </div>
+            <div class="mockup-workspace">
+              <aside class="media-panel">
+                <div class="panel-label">MEDIA POOL</div>
+                <div class="media-grid"><i></i><i></i><i></i><i></i></div>
+              </aside>
+              <div class="viewer">
+                <div class="viewer-image">
+                  <div class="image-sky"></div>
+                  <div class="image-mountain back"></div>
+                  <div class="image-mountain front"></div>
+                  <button class="viewer-play" aria-label="Reproducir vista previa"><svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m9 7 8 5-8 5V7Z" /></g></svg></button>
+                </div>
+                <div class="viewer-controls">
+                  <span>00:00:14:08</span><div><i></i><i></i><i></i></div><span>00:03:22:14</span>
+                </div>
+              </div>
+              <aside class="inspector-panel">
+                <div class="panel-label">INSPECTOR</div>
+                <div class="slider-row"><span>Zoom</span><i><b style="width: 76%"></b></i></div>
+                <div class="slider-row"><span>Position</span><i><b style="width: 65%"></b></i></div>
+                <div class="slider-row"><span>Rotation</span><i><b style="width: 54%"></b></i></div>
+                <div class="slider-row"><span>Opacity</span><i><b style="width: 43%"></b></i></div>
+              </aside>
+            </div>
+            <div class="timeline">
+              <div class="timeline-tools"><span></span><span></span><span></span><b>00:00:14:08</b></div>
+              <div class="tracks">
+                <div class="track-labels"><span>V2</span><span>V1</span><span>A1</span></div>
+                <div class="clips">
+                  <div class="clip-row secondary"><i></i><i></i></div>
+                  <div class="clip-row video-clips"><i></i><i></i><i></i><i></i></div>
+                  <div class="clip-row audio-clips"><i></i><i></i></div>
+                  <b class="playhead"></b>
+                </div>
+              </div>
+            </div>
+            <div class="mockup-footer">
+              <span>Media</span><span>Cut</span><span class="active">Edit</span><span>Fusion</span><span>Color</span><span>Fairlight</span><span>Deliver</span>
+            </div>
+          </div>
+          <div class="floating-chip chip-top"><svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m12 2 1.4 5.6L19 9l-5.6 1.4L12 16l-1.4-5.6L5 9l5.6-1.4L12 2ZM19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16Z" /></g></svg><span><b>+32 lecciones</b> paso a paso</span></div>
+          <div class="floating-chip chip-bottom"><svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg><span>Proyecto final incluido</span></div>
+        </div>
+        <div class="hero-scroll"><span></span> DESCUBRE EL CURSO</div>
+      </section>
+
+      <!-- APRENDIZAJE SECTION -->
+      <section class="learning-section" id="aprendizaje">
+        <div class="section-heading light-heading">
+          <div>
+            <span class="kicker">TODO LO QUE NECESITAS</span>
+            <h2>De cero a tu primer vídeo.<br /><em>Sin saltarte pasos.</em></h2>
+          </div>
+          <p>Un método claro, práctico y sin tecnicismos innecesarios. Aprende haciendo desde la primera lección.</p>
+        </div>
+        <div class="learning-grid">
+          <article class="learning-card">
+            <div class="card-top"><span><svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M4 6h16M4 18h16M7 6v12M17 6v12" /><path d="m10 14 4-4" /></g></svg></span><small>01</small></div>
+            <h3>Edita con intención</h3>
+            <p>Cortes precisos, ritmo narrativo y un flujo de trabajo que te ahorra horas.</p><i></i>
+          </article>
+          <article class="learning-card">
+            <div class="card-top"><span><svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 0 0 18c1.4 0 2-1 1.5-2-.4-.9.3-2 1.4-2H17a4 4 0 0 0 4-4.3A9 9 0 0 0 12 3Z" /><circle cx="8" cy="9" r=".7" fill="currentColor" /><circle cx="12" cy="7" r=".7" fill="currentColor" /><circle cx="16" cy="10" r=".7" fill="currentColor" /></g></svg></span><small>02</small></div>
+            <h3>Domina el color</h3>
+            <p>Corrige tus planos y construye una estética cinematográfica desde nodos.</p><i></i>
+          </article>
+          <article class="learning-card">
+            <div class="card-top"><span><svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M5 10v4h3l4 3V7l-4 3H5Z" /><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" /></g></svg></span><small>03</small></div>
+            <h3>Haz que suene bien</h3>
+            <p>Limpia diálogos, mezcla música y consigue audio profesional con Fairlight.</p><i></i>
+          </article>
+          <article class="learning-card">
+            <div class="card-top"><span><svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><rect x="3" y="5" width="14" height="14" rx="2" /><path d="m17 10 4-2v8l-4-2v-4Z" /></g></svg></span><small>04</small></div>
+            <h3>Exporta sin dudas</h3>
+            <p>Elige el formato ideal y publica con máxima calidad en cualquier plataforma.</p><i></i>
+          </article>
+        </div>
+        <div class="results-strip">
+          <span class="results-icon"><svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m12 2 1.4 5.6L19 9l-5.6 1.4L12 16l-1.4-5.6L5 9l5.6-1.4L12 2ZM19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16Z" /></g></svg></span>
+          <div><small>AL TERMINAR EL CURSO</small><strong>Tendrás un vídeo completo, editado, corregido y listo para publicar.</strong></div>
+          <span class="results-arrow"><svg aria-hidden="true" fill="none" height="26" viewBox="0 0 24 24" width="26"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M5 12h14" /><path d="m14 7 5 5-5 5" /></g></svg></span>
+        </div>
+      </section>
+
+      <!-- TEMARIO SECTION -->
+      <section class="curriculum-section" id="temario">
+        <div class="section-heading dark-heading">
+          <div><span class="kicker">TEMARIO COMPLETO</span><h2>Aprende en el orden<br />que <em>sí funciona.</em></h2></div>
+          <div class="curriculum-stat"><strong>32</strong><span>LECCIONES<br />EN VÍDEO</span></div>
+        </div>
+        
+        <div class="accordion">
+          <!-- Modulo 1 -->
+          <div class="module open">
+            <button aria-expanded="true" class="module-trigger">
+              <span class="module-number">01</span>
+              <span class="module-title-wrap"><strong>Los fundamentos de DaVinci</strong><small>6 lecciones · 48 min</small></span>
+              <span class="module-chevron"><svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m7 10 5 5 5-5" /></g></svg></span>
+            </button>
+            <div class="module-content" aria-hidden="false">
+              <div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Instalación y configuración inicial</span><small>10 min</small></div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Cómo orientarte por la interfaz</span><small>14 min</small></div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Importar, ordenar y respaldar material</span><small>18 min</small></div>
+              </div>
+            </div>
+          </div>
+          <!-- Modulo 2 -->
+          <div class="module">
+            <button aria-expanded="false" class="module-trigger">
+              <span class="module-number">02</span>
+              <span class="module-title-wrap"><strong>Edición con ritmo y precisión</strong><small>9 lecciones · 1 h 35 min</small></span>
+              <span class="module-chevron"><svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m7 10 5 5 5-5" /></g></svg></span>
+            </button>
+            <div class="module-content" aria-hidden="true">
+              <div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Domina el timeline y las herramientas de corte</span><small>10 min</small></div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Transiciones que sí aportan a la historia</span><small>14 min</small></div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Texto, subtítulos y gráficos en movimiento</span><small>18 min</small></div>
+              </div>
+            </div>
+          </div>
+          <!-- Modulo 3 -->
+          <div class="module">
+            <button aria-expanded="false" class="module-trigger">
+              <span class="module-number">03</span>
+              <span class="module-title-wrap"><strong>Color que transforma</strong><small>8 lecciones · 1 h 20 min</small></span>
+              <span class="module-chevron"><svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m7 10 5 5 5-5" /></g></svg></span>
+            </button>
+            <div class="module-content" aria-hidden="true">
+              <div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Lectura de scopes y corrección primaria</span><small>10 min</small></div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Nodos, máscaras y tracking</span><small>14 min</small></div>
+                <div class="lesson"><span class="lesson-play"><svg fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="m9 7 8 5-8 5V7Z" /></svg></span><span>Crea y guarda tu propio look</span><small>18 min</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="curriculum-note"><svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg> Acceso de por vida · Aprende a tu ritmo · Actualizaciones incluidas</p>
+      </section>
+
+      <!-- REQUISITOS SECTION -->
+      <section class="requirements-section" id="requisitos">
+        <div class="requirements-copy">
+          <span class="kicker">ANTES DE EMPEZAR</span>
+          <h2>¿Tu equipo está<br /><em>preparado?</em></h2>
+          <p>No necesitas un ordenador de última generación. Estos son los requisitos recomendados para aprender sin interrupciones.</p>
+          <div class="software-note">
+            <span><svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5M3 16l9 5 9-5" /></g></svg></span>
+            <div><strong>DaVinci Resolve 19</strong><small>Versión gratuita · Te enseñamos a instalarlo</small></div>
+          </div>
+        </div>
+        <div class="hardware-card">
+          <div class="hardware-head"><span>REQUISITOS RECOMENDADOS</span><i>4</i></div>
+          <div class="hardware-list">
+            <div class="hardware-row">
+              <span class="hardware-icon"><svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><rect x="7" y="7" width="10" height="10" rx="2" /><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3M10 10h4v4h-4z" /></g></svg></span>
+              <span><small>Procesador</small><strong>Intel Core i5 / AMD Ryzen 5</strong></span><em>o superior</em>
+            </div>
+            <div class="hardware-row">
+              <span class="hardware-icon"><svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><rect x="3" y="7" width="18" height="10" rx="2" /><path d="M7 10v4M11 10v4M15 10v4M19 10v4M7 17v3M11 17v3M15 17v3M19 17v3" /></g></svg></span>
+              <span><small>Memoria RAM</small><strong>16 GB</strong></span><em>32 GB recomendado</em>
+            </div>
+            <div class="hardware-row">
+              <span class="hardware-icon"><svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="11" cy="12" r="4" /><path d="M21 9h2v6h-2M5 19v2M8 19v2" /></g></svg></span>
+              <span><small>Tarjeta gráfica</small><strong>4 GB de VRAM</strong></span><em>compatible con OpenCL 2.0</em>
+            </div>
+            <div class="hardware-row">
+              <span class="hardware-icon"><svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" /></g></svg></span>
+              <span><small>Almacenamiento</small><strong>10 GB libres</strong></span><em>SSD recomendado</em>
+            </div>
+          </div>
+          <div class="compatibility"><svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg> Compatible con Windows, macOS y Linux</div>
+        </div>
+      </section>
+
+      <!-- OFERTA SECTION -->
+      <section class="offer-section" id="oferta">
+        <div class="offer-noise"></div>
+        <div class="offer-inner">
+          <div class="offer-copy">
+            <span class="kicker">OFERTA DE LANZAMIENTO</span>
+            <h2>Empieza a crear<br /><em>hoy mismo.</em></h2>
+            <p>Todo el curso. Acceso para siempre. Sin cuotas mensuales.</p>
+            <ul>
+              <li><svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg> 32 lecciones en vídeo HD</li>
+              <li><svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg> Archivos para practicar</li>
+              <li><svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg> Certificado al completar</li>
+            </ul>
+          </div>
+          <div class="price-card">
+            <div class="timer-label"><span>LA OFERTA TERMINA EN</span><i>EN DIRECTO</i></div>
+            
+            <div class="countdown" aria-label="Cuenta regresiva">
+              <div class="count-part"><div><strong id="count-hours">11</strong></div><span>HORAS</span><b>:</b></div>
+              <div class="count-part"><div><strong id="count-mins">42</strong></div><span>MIN</span><b>:</b></div>
+              <div class="count-part"><div><strong id="count-secs">18</strong></div><span>SEG</span></div>
+            </div>
+
+            <div class="price-block">
+              <div><small>PRECIO ESPECIAL</small><span><s>$299.000</s> Ahorras $150.000</span></div>
+              <strong>$149.000<sup>COP</sup></strong>
+            </div>
+            <button class="button button-block" onclick="alert('¡Tu plaza está reservada! Pronto recibirás los detalles.')">
+              Inscríbete ahora <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M5 12h14" /><path d="m14 7 5 5-5 5" /></g></svg>
+            </button>
+            <p><svg aria-hidden="true" fill="none" height="15" viewBox="0 0 24 24" width="15"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="m5 12 4 4L19 6" /></g></svg> Pago único y seguro · 14 días de garantía</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-top">
+        <a class="brand" href="#inicio" aria-label="Campiper, volver al inicio"><img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="campiper-logo.png" /></a>
+        <p>Aprende a editar. Cuenta mejores historias.</p>
+        <div><a href="#temario">Temario</a><a href="#requisitos">Requisitos</a><a href="#oferta">Inscripción</a></div>
+      </div>
+      <div class="footer-bottom"><span>© 2026 Campiper. Todos los derechos reservados.</span><span>Hecho para creadores.</span></div>
+    </footer>
+
+    <a class="floating-cta" href="registro.html"><span class="floating-dot"></span> Iniciar Sesión</a>
+  </div>
+
+  <!-- Vinculamos tu archivo JS -->
+  <script src="js/app.js"></script>
+</body>
+</html>

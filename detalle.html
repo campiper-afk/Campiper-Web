@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalle del Módulo - Campiper</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="detail-page">
+    
+    <!-- HEADER -->
+    <header class="detail-nav">
+      <a class="brand" href="index.html" aria-label="Campiper, volver al inicio">
+        <img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="img/campiper-logo.png" />
+      </a>
+      <div class="detail-nav-meta">
+        <span>CURSO</span>
+        <strong>DaVinci Resolve desde cero</strong>
+      </div>
+    </header>
+
+    <main class="detail-main">
+      <a class="detail-back" href="catalogo.html">
+        <span>
+          <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+            <path d="m14 6-6 6 6 6M8 12h11" />
+          </svg>
+        </span>
+        Volver al contenido del curso
+      </a>
+
+      <!-- HERO DEL MÓDULO (Dinámico) -->
+      <section class="detail-heading">
+        <div>
+          <span class="detail-pill" id="mod-label">Cargando...</span>
+          <h1 id="mod-title">Cargando...</h1>
+          <p id="mod-desc"></p>
+        </div>
+        <div class="detail-number">
+          <span>MÓDULO</span>
+          <strong id="mod-key">00</strong>
+        </div>
+      </section>
+
+      <!-- LISTA DE LECCIONES (Dinámico) -->
+      <section class="lessons-panel">
+        <div class="lessons-header">
+          <div>
+            <span>CONTENIDO DEL MÓDULO</span>
+            <h2>Lecciones de este módulo</h2>
+          </div>
+          <div class="duration">
+            <span>Duración</span>
+            <strong id="mod-duration">-- min</strong>
+          </div>
+        </div>
+        <ol id="mod-lessons">
+          <!-- Las lecciones se insertan aquí con JS -->
+        </ol>
+      </section>
+
+      <!-- PANELES INFERIORES -->
+      <section class="detail-bottom">
+        <article class="instructor-card">
+          <span class="detail-card-kicker">TU INSTRUCTOR</span>
+          <div class="instructor-profile">
+            <span class="instructor-avatar">JP</span>
+            <div>
+              <h2>Jean Paul G.</h2>
+              <p>Experto en postproducción audiovisual</p>
+            </div>
+          </div>
+          <p class="instructor-copy">
+            Aprende de la mano de un profesional con un método claro, práctico y pensado para empezar desde cero.
+          </p>
+        </article>
+
+        <article class="detail-price-card">
+          <span class="detail-card-kicker">ACCESO AL CURSO COMPLETO</span>
+          <div class="detail-price">
+            <span>Precio especial</span>
+            <strong>$149.000<sup>COP</sup></strong>
+          </div>
+          <a href="index.html#oferta">
+            Comprar curso completo 
+            <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+          </a>
+          <small>
+            <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><path d="m5 12 4 4L19 6" /></svg>
+            Pago único · Acceso para siempre
+          </small>
+        </article>
+      </section>
+
+      <!-- PAGINACIÓN ENTRE MÓDULOS (Dinámico) -->
+      <nav class="module-pagination" aria-label="Navegación entre módulos">
+        <a id="btn-prev" style="visibility: hidden;" href="#">
+          <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="m14 6-6 6 6 6M8 12h11" /></svg>
+          <span><small>ANTERIOR</small><b id="prev-title"></b></span>
+        </a>
+        <a id="btn-next" style="visibility: hidden;" href="#">
+          <span><small>SIGUIENTE</small><b id="next-title"></b></span>
+          <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+        </a>
+      </nav>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+
+</body>
+</html>

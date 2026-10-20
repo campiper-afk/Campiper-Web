@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mis Cursos - Campiper</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="courses-page">
+    
+    <!-- HEADER ESTUDIANTE -->
+    <header class="courses-nav">
+      <a class="brand" href="index.html" aria-label="Campiper, ir al inicio">
+        <img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="img/campiper-logo.png" />
+      </a>
+      <nav aria-label="Área de estudiante">
+        <a class="active" href="mis-cursos.html">Mis Cursos</a>
+        <a href="catalogo.html">Comunidad</a>
+        <a href="mailto:soporte@campiper.com">Soporte</a>
+      </nav>
+      <div class="student-menu">
+        <a href="registro.html">Salir</a>
+        <span aria-label="Perfil de Brecaos">B</span>
+      </div>
+    </header>
+
+    <main class="courses-main">
+      <a class="courses-back" href="index.html">
+        <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19">
+          <path d="m14 6-6 6 6 6M8 12h11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+        </svg>
+        Volver al inicio
+      </a>
+
+      <!-- SALUDO Y BIENVENIDA -->
+      <section class="welcome">
+        <span class="welcome-icon">
+          <svg aria-hidden="true" fill="none" height="25" viewBox="0 0 24 24" width="25">
+            <path d="m12 2 1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2Zm7 14 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+        </span>
+        <h1>Hola, Brecaos</h1>
+        <p>Aquí tienes tu progreso. Sigue así.</p>
+      </section>
+
+      <div class="dashboard-grid">
+        
+        <!-- COLUMNA PRINCIPAL: CURSOS EN PROGRESO -->
+        <section class="progress-section">
+          <div class="dashboard-title">
+            <div>
+              <span>APRENDIZAJE</span>
+              <h2>En progreso</h2>
+            </div>
+            <small>1 curso activo</small>
+          </div>
+
+          <article class="active-course-card">
+            <div class="active-course-image">
+              <img alt="Línea de tiempo de edición de video" src="https://images.unsplash.com/photo-1614963326505-843868e1d83a?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=86&w=900" />
+              <span>
+                <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17">
+                  <path d="m9 7 8 5-8 5V7Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </span>
+            </div>
+            <div class="active-course-content">
+              <span class="course-category">EDICIÓN DE VIDEO</span>
+              <h3>Domina DaVinci Resolve</h3>
+              <p>Módulo 2 en curso</p>
+              <div class="progress-meta">
+                <span>Tu progreso</span>
+                <strong>45%</strong>
+              </div>
+              <div aria-label="45 por ciento completado" aria-valuemax="100" aria-valuemin="0" aria-valuenow="45" class="progress-bar" role="progressbar">
+                <span></span>
+              </div>
+              <a class="continue-button" href="leccion.html?leccion=1">
+                Continuar aprendizaje
+                <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16">
+                  <path d="m9 7 8 5-8 5V7Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </a>
+            </div>
+          </article>
+        </section>
+
+        <!-- COLUMNA LATERAL: RECURSOS Y CERTIFICADO -->
+        <aside class="resources-section">
+          <div class="dashboard-title">
+            <div>
+              <span>DESCARGAS</span>
+              <h2>Recursos del curso</h2>
+            </div>
+            <small>2 archivos</small>
+          </div>
+
+          <div class="resources-card">
+            <button class="btn-resource-dl" data-title="Clips de práctica">
+              <span class="resource-type">
+                <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
+                  </g>
+                </svg>
+              </span>
+              <span>
+                <strong>Clips de práctica</strong>
+                <small>ZIP · 1.2 GB</small>
+              </span>
+              <span class="resource-download">
+                <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
+                  </g>
+                </svg>
+              </span>
+            </button>
+
+            <button class="btn-resource-dl" data-title="Atajos de teclado">
+              <span class="resource-type">
+                <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M7 3h7l4 4v14H7V3Z" /><path d="M14 3v5h5M10 12h5M10 16h5" />
+                  </g>
+                </svg>
+              </span>
+              <span>
+                <strong>Atajos de teclado</strong>
+                <small>PDF · 2 MB</small>
+              </span>
+              <span class="resource-download">
+                <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
+                  </g>
+                </svg>
+              </span>
+            </button>
+          </div>
+
+          <div class="certificate-card">
+            <span>
+              <svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24">
+                <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                  <rect height="10" rx="2" width="14" x="5" y="10" /><path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                </g>
+              </svg>
+            </span>
+            <strong>Certificado de finalización</strong>
+            <p>Completa el 100 % del curso para desbloquear tu certificado oficial.</p>
+            <div><span></span></div>
+            <small>45 % COMPLETADO</small>
+          </div>
+        </aside>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
