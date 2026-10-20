@@ -84,7 +84,12 @@ function cuentasFirebase() {
     },
     async entrarConGoogle() {
       const { auth, authMod } = await cargarFirebase();
-      const credencial = await authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider());
+      const proveedor = new authMod.GoogleAuthProvider();
+      
+      // 👉 Esta línea fuerza a Google a mostrar SIEMPRE el formulario de selección de cuenta
+      proveedor.setCustomParameters({ prompt: 'select_account' });
+      
+      const credencial = await authMod.signInWithPopup(auth, proveedor);
       await guardarPerfil(credencial.user, credencial.user.displayName);
       Sesion.iniciar(datosUsuario(credencial.user));
     },
