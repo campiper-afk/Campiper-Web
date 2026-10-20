@@ -183,7 +183,8 @@ function initSesion() {
   });
 
   document.querySelectorAll('[data-salir]').forEach(boton => {
-    boton.addEventListener('click', async () => {
+    boton.addEventListener('click', async (e) => {
+      e.preventDefault();
       try { await Cuentas.salir(); } catch (e) { Sesion.cerrar(); }
       window.location.href = 'index.html';
     });
