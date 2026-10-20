@@ -1,5 +1,605 @@
+/* =========================================================
+   Campiper — JavaScript compartido por todas las páginas
+   Cada función solo se ejecuta si encuentra sus elementos.
+   ========================================================= */
+
+/* =========================================================
+   FIREBASE (Authentication + Firestore)
+   ========================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+  authDomain: "campiper-7414d.firebaseapp.com",
+  projectId: "campiper-7414d",
+  storageBucket: "campiper-7414d.firebasestorage.app",
+  messagingSenderId: "984212599762",
+  appId: "1:984212599762:web:0a0299a4350edcb2818e0b"
+};
+const FIREBASE_VERSION = '10.13.1';
+const FIREBASE_ACTIVO = !String(FIREBASE_CONFIG.apiKey).startsWith('PEGA');
+
+// Carga Firebase dinámicamente cuando hace falta
+let _firebase = null;
+function cargarFirebase() {
+  if (!_firebase) {
+    const base = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/';
+    _firebase = Promise.all([
+      import(base + 'firebase-app.js'),
+      import(base + 'firebase-auth.js'),
+      import(base + 'firebase-firestore.js')
+    ]).then(([appMod, authMod, fsMod]) => {
+      const app = appMod.initializeApp(FIREBASE_CONFIG);
+      return { auth: authMod.getAuth(app), db: fsMod.getFirestore(app), authMod: authMod, fsMod: fsMod };
+    }).catch(error => {
+      _firebase = null;
+      throw error;
+    });
+  }
+  return _firebase;
+}
+
+/* ---------- Sesión en LocalStorage ---------- */
+const Sesion = {
+  CLAVE: 'campiper_sesion',
+  obtener() {
+    try { return JSON.parse(localStorage.getItem(this.CLAVE)); } catch (e) { return null; }
+  },
+  iniciar(usuario) {
+    try { localStorage.setItem(this.CLAVE, JSON.stringify(usuario)); } catch (e) {}
+  },
+  cerrar() {
+    try { localStorage.removeItem(this.CLAVE); } catch (e) {}
+  }
+};
+
+function nombreDesdeCorreo(correo) {
+  return String(correo || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, letra => letra.toUpperCase());
+}
+
+/* ---------- Gestión de Cuentas (Firebase / Demo) ---------- */
+function cuentasFirebase() {
+  const datosUsuario = u => ({ nombre: u.displayName || nombreDesdeCorreo(u.email), correo: u.email || '' });
+
+  async function guardarPerfil(usuario, nombre, extra) {
+    try {
+      const { db, fsMod } = await cargarFirebase();
+      const datos = Object.assign({ nombre: nombre || '', correo: usuario.email || '' }, extra || {});
+      await fsMod.setDoc(fsMod.doc(db, 'users', usuario.uid), datos, { merge: true });
+    } catch (error) {
+      console.error('No se pudo guardar el perfil en Firestore:', error);
+    }
+  }
+
+  return {
+    async registrar(nombre, correo, clave) {
+      const { auth, authMod, fsMod } = await cargarFirebase();
+      const credencial = await authMod.createUserWithEmailAndPassword(auth, correo, clave);
+      await authMod.updateProfile(credencial.user, { displayName: nombre });
+      await guardarPerfil(credencial.user, nombre, { creadoEn: fsMod.serverTimestamp() });
+      Sesion.iniciar({ nombre: nombre, correo: correo });
+    },
+    async entrar(correo, clave) {
+      const { auth, authMod } = await cargarFirebase();
+      const credencial = await authMod.signInWithEmailAndPassword(auth, correo, clave);
+      Sesion.iniciar(datosUsuario(credencial.user));
+    },
+    async entrarConGoogle() {
+      const { auth, authMod } = await cargarFirebase();
+      const credencial = await authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider());
+      await guardarPerfil(credencial.user, credencial.user.displayName);
+      Sesion.iniciar(datosUsuario(credencial.user));
+    },
+    async recuperar(correo) {
+      const { auth, authMod } = await cargarFirebase();
+      try {
+        await authMod.sendPasswordResetEmail(auth, correo);
+      } catch (error) {
+        if (error.code !== 'auth/user-not-found') throw error;
+      }
+    },
+    async salir() {
+      try {
+        const { auth, authMod } = await cargarFirebase();
+        await authMod.signOut(auth);
+      } finally {
+        Sesion.cerrar();
+      }
+    },
+    alCambiar(callback) {
+      cargarFirebase().then(({ auth, authMod }) => {
+        authMod.onAuthStateChanged(auth, usuario => callback(usuario ? datosUsuario(usuario) : null));
+      }).catch(() => callback(Sesion.obtener()));
+    }
+  };
+}
+
+function cuentasDemo() {
+  const CLAVE_USUARIOS = 'campiper_usuarios';
+  function leerUsuarios() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_USUARIOS)) || {}; } catch (e) { return {}; }
+  }
+  function guardarUsuario(correo, nombre) {
+    try {
+      const usuarios = leerUsuarios();
+      usuarios[correo] = { nombre: nombre };
+      localStorage.setItem(CLAVE_USUARIOS, JSON.stringify(usuarios));
+    } catch (e) {}
+  }
+
+  return {
+    async registrar(nombre, correo) {
+      guardarUsuario(correo, nombre);
+      Sesion.iniciar({ nombre: nombre, correo: correo });
+    },
+    async entrar(correo) {
+      const cuenta = leerUsuarios()[correo];
+      Sesion.iniciar({ nombre: cuenta ? cuenta.nombre : nombreDesdeCorreo(correo), correo: correo });
+    },
+    async entrarConGoogle() {
+      Sesion.iniciar({ nombre: 'Estudiante', correo: '' });
+    },
+    async recuperar() {},
+    async salir() {
+      Sesion.cerrar();
+    },
+    alCambiar(callback) {
+      callback(Sesion.obtener());
+    }
+  };
+}
+
+const Cuentas = FIREBASE_ACTIVO ? cuentasFirebase() : cuentasDemo();
+
+/* ---------- Control UI de Sesión ---------- */
+function pintarSesion(usuario) {
+  document.querySelectorAll('[data-solo="visitante"]').forEach(el => { el.hidden = !!usuario; });
+  document.querySelectorAll('[data-solo="usuario"]').forEach(el => { el.hidden = !usuario; });
+
+  if (usuario) {
+    const nombre = (usuario.nombre || '').trim() || 'Estudiante';
+    const iniciales = nombre.split(/\s+/).slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('');
+    document.querySelectorAll('[data-usuario-nombre]').forEach(el => { el.textContent = nombre; });
+    document.querySelectorAll('[data-usuario-inicial]').forEach(el => { el.textContent = iniciales; });
+  }
+}
+
+function initSesion() {
+  const guardada = Sesion.obtener();
+  const requiereSesion = document.body.hasAttribute('data-requiere-sesion');
+
+  if (!requiereSesion || guardada) pintarSesion(guardada);
+
+  Cuentas.alCambiar(usuario => {
+    if (usuario) Sesion.iniciar(usuario); else Sesion.cerrar();
+    if (requiereSesion && !usuario) {
+      window.location.replace('registro.html');
+      return;
+    }
+    pintarSesion(usuario);
+  });
+
+  document.querySelectorAll('[data-salir]').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      try { await Cuentas.salir(); } catch (e) { Sesion.cerrar(); }
+      window.location.href = 'index.html';
+    });
+  });
+}
+
+/* ---------- Efectos Reutilizables ---------- */
+const Efectos = {
+  revelar() {},
+  ripple() {}
+};
+
+function inyectarEstilosBase() {
+  if (document.getElementById('campiper-estilos-base')) return;
+  const estilo = document.createElement('style');
+  estilo.id = 'campiper-estilos-base';
+  estilo.textContent = `
+    [data-solo][hidden] { display: none !important; }
+    .auth-status { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.4; }
+    .auth-status[hidden] { display: none; }
+    .auth-status--error { color: #ff8a8a; }
+    input[aria-invalid="true"] { border-color: #ff8a8a !important; }
+    .catalog-empty { grid-column: 1 / -1; text-align: center; opacity: 0.85; }
+    .catalog-empty--error { color: #ff8a8a; opacity: 1; }
+  `;
+  document.head.appendChild(estilo);
+}
+
+function escaparHTML(valor) {
+  return String(valor == null ? '' : valor).replace(/[&<>"']/g, caracter => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[caracter]));
+}
+
+/* ---------- Catálogo desde Firestore ---------- */
+async function initCatalogo() {
+  const grid = document.getElementById('course-grid');
+  if (!grid) return;
+
+  const IMAGEN_POR_DEFECTO = 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+  const botonesFiltro = document.querySelectorAll('.filter-btn');
+
+  function mostrarMensaje(texto, esError) {
+    grid.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'catalog-empty' + (esError ? ' catalog-empty--error' : '');
+    p.textContent = texto;
+    grid.appendChild(p);
+  }
+
+  function crearTarjeta(curso) {
+    const tarjeta = document.createElement('article');
+    tarjeta.className = 'course-card';
+    tarjeta.innerHTML = `
+      <div class="course-card-media">
+        <img src="${escaparHTML(curso.imagen || IMAGEN_POR_DEFECTO)}" alt="${escaparHTML(curso.titulo)}" loading="lazy">
+        <span class="badge">${escaparHTML(curso.nivel || 'Módulo')}</span>
+      </div>
+      <div class="course-card-body">
+        <h3>${escaparHTML(curso.titulo || 'Sin título')}</h3>
+        <p>${escaparHTML(curso.descripcion || 'Sin descripción')}</p>
+        <div class="course-card-footer">
+          <span class="course-card-price">${escaparHTML(curso.precio || '')}</span>
+          <a class="button" href="detalle.html?modulo=${encodeURIComponent(curso.id)}">Ver detalle</a>
+        </div>
+      </div>
+    `;
+    return tarjeta;
+  }
+
+  function renderizarCursos(cursos) {
+    if (cursos.length === 0) {
+      mostrarMensaje('No hay cursos disponibles en esta categoría.');
+      return;
+    }
+    grid.innerHTML = '';
+    const tarjetas = cursos.map(crearTarjeta);
+    tarjetas.forEach(tarjeta => grid.appendChild(tarjeta));
+    Efectos.revelar(tarjetas);
+    Efectos.ripple(grid.querySelectorAll('button, .button'));
+  }
+
+  function configurarFiltros(cursos) {
+    botonesFiltro.forEach(boton => {
+      boton.addEventListener('click', () => {
+        botonesFiltro.forEach(btn => btn.classList.remove('active'));
+        boton.classList.add('active');
+
+        const categoria = boton.getAttribute('data-filter');
+        if (!categoria || categoria === 'todos') {
+          renderizarCursos(cursos);
+        } else {
+          renderizarCursos(cursos.filter(curso => curso.categoria === categoria));
+        }
+      });
+    });
+  }
+
+  mostrarMensaje('Cargando cursos desde la base de datos...');
+
+  try {
+    const { db, fsMod } = await cargarFirebase();
+    const resultado = await fsMod.getDocs(fsMod.collection(db, 'cursos'));
+
+    const cursos = [];
+    resultado.forEach(doc => {
+      const data = doc.data();
+      cursos.push({
+        id: doc.id,
+        titulo: data.titulo,
+        categoria: data.categoria || 'edicion',
+        nivel: data.nivel,
+        precio: data.precio || '',
+        imagen: data.imagen,
+        descripcion: data.descripcion
+      });
+    });
+
+    if (cursos.length === 0) {
+      mostrarMensaje('No hay cursos publicados todavía. Ve al Admin a crear uno.');
+      return;
+    }
+
+    renderizarCursos(cursos);
+    configurarFiltros(cursos);
+  } catch (error) {
+    console.error('Error al cargar cursos de Firebase:', error);
+    mostrarMensaje('Error de conexión. Revisa la consola.', true);
+  }
+}
+
+/* ---------- Autenticación (Login / Registro) ---------- */
+function initAuth() {
+  const PAGINA_DESTINO = 'mis-cursos.html';
+  const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  let mode = 'login';
+
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const kickerText = document.getElementById('auth-kicker-text');
+  const titleText = document.getElementById('auth-title-text');
+  const subtitleText = document.getElementById('auth-subtitle-text');
+
+  const fieldName = document.getElementById('field-name');
+  const fieldPasswordRepeat = document.getElementById('field-password-repeat');
+  const btnForgotPassword = document.getElementById('btn-forgot-password');
+  const passwordHelper = document.getElementById('password-helper');
+  const submitBtn = document.getElementById('auth-submit-btn');
+
+  const switchLabel = document.getElementById('switch-label');
+  const btnSwitchMode = document.getElementById('btn-switch-mode');
+
+  const form = document.getElementById('auth-form');
+  const btnGoogle = document.getElementById('btn-google');
+
+  const passwordInput = document.getElementById('password');
+  const btnTogglePassword = document.getElementById('btn-toggle-password');
+  const togglePasswordText = document.getElementById('toggle-password-text');
+
+  const nameInput = fieldName ? fieldName.querySelector('input') : null;
+  const repeatInput = fieldPasswordRepeat ? fieldPasswordRepeat.querySelector('input') : null;
+  const emailInput = form ? form.querySelector('input[type="email"], #email, input[name="email"]') : null;
+
+  const reglas = new Map();
+  let statusEl = null;
+
+  function updateAuthUI() {
+    if (mode === 'login') {
+      if (tabLogin) { tabLogin.classList.add('active'); tabLogin.setAttribute('aria-selected', 'true'); }
+      if (tabRegister) { tabRegister.classList.remove('active'); tabRegister.setAttribute('aria-selected', 'false'); }
+
+      if (kickerText) kickerText.textContent = 'QUÉ BUENO VERTE';
+      if (titleText) titleText.textContent = 'Bienvenido de nuevo';
+      if (subtitleText) subtitleText.textContent = 'Entra con tu correo y contraseña.';
+
+      if (fieldName) fieldName.style.display = 'none';
+      if (fieldPasswordRepeat) fieldPasswordRepeat.style.display = 'none';
+      if (btnForgotPassword) btnForgotPassword.style.display = 'inline-block';
+      if (passwordHelper) passwordHelper.style.display = 'none';
+
+      if (submitBtn) submitBtn.textContent = 'Iniciar sesión';
+      if (switchLabel) switchLabel.textContent = '¿Aún no tienes cuenta?';
+      if (btnSwitchMode) btnSwitchMode.textContent = 'Crear cuenta';
+      document.title = 'Iniciar sesión - Campiper';
+    } else {
+      if (tabRegister) { tabRegister.classList.add('active'); tabRegister.setAttribute('aria-selected', 'true'); }
+      if (tabLogin) { tabLogin.classList.remove('active'); tabLogin.setAttribute('aria-selected', 'false'); }
+
+      if (kickerText) kickerText.textContent = 'EMPIEZA A CREAR';
+      if (titleText) titleText.textContent = 'Crea tu cuenta';
+      if (subtitleText) subtitleText.textContent = 'Tu nombre, un correo y una contraseña.';
+
+      if (fieldName) fieldName.style.display = 'grid';
+      if (fieldPasswordRepeat) fieldPasswordRepeat.style.display = 'grid';
+      if (btnForgotPassword) btnForgotPassword.style.display = 'none';
+      if (passwordHelper) passwordHelper.style.display = 'block';
+
+      if (submitBtn) submitBtn.textContent = 'Crear cuenta';
+      if (switchLabel) switchLabel.textContent = '¿Ya tienes cuenta?';
+      if (btnSwitchMode) btnSwitchMode.textContent = 'Iniciar sesión';
+      document.title = 'Crear cuenta - Campiper';
+    }
+    limpiarErrores();
+  }
+
+  if (tabLogin) tabLogin.addEventListener('click', () => { mode = 'login'; updateAuthUI(); });
+  if (tabRegister) tabRegister.addEventListener('click', () => { mode = 'register'; updateAuthUI(); });
+  if (btnSwitchMode) btnSwitchMode.addEventListener('click', () => {
+    mode = mode === 'login' ? 'register' : 'login';
+    updateAuthUI();
+  });
+
+  if (btnTogglePassword && passwordInput) {
+    let passwordVisible = false;
+    btnTogglePassword.addEventListener('click', () => {
+      passwordVisible = !passwordVisible;
+      passwordInput.type = passwordVisible ? 'text' : 'password';
+      if (togglePasswordText) togglePasswordText.textContent = passwordVisible ? 'Ocultar' : 'Mostrar';
+      btnTogglePassword.setAttribute('aria-label', passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+  }
+
+  if (!emailInput) return;
+
+  statusEl = document.getElementById('auth-status');
+  if (!statusEl && submitBtn) {
+    statusEl = document.createElement('p');
+    statusEl.id = 'auth-status';
+    statusEl.className = 'auth-status';
+    statusEl.setAttribute('role', 'status');
+    statusEl.setAttribute('aria-live', 'polite');
+    statusEl.hidden = true;
+    submitBtn.insertAdjacentElement('afterend', statusEl);
+  }
+
+  function mostrarEstado(mensaje, tipo) {
+    if (!statusEl) return;
+    statusEl.textContent = mensaje || '';
+    statusEl.hidden = !mensaje;
+    statusEl.classList.toggle('auth-status--error', tipo === 'error');
+  }
+
+  if (nameInput) reglas.set(nameInput, () => nameInput.value.trim().length < 2 ? 'Escribe tu nombre.' : '');
+  reglas.set(emailInput, () => {
+    const valor = emailInput.value.trim();
+    if (!valor) return 'Escribe tu correo electrónico.';
+    if (!REGEX_CORREO.test(valor)) return 'Revisa el correo: debe verse como nombre@correo.com.';
+    return '';
+  });
+  if (passwordInput) {
+    reglas.set(passwordInput, () => {
+      if (!passwordInput.value) return mode === 'login' ? 'Escribe tu contraseña.' : 'Crea una contraseña.';
+      if (mode === 'register' && passwordInput.value.length < 8) return 'Usa al menos 8 caracteres.';
+      return '';
+    });
+  }
+  if (repeatInput) {
+    reglas.set(repeatInput, () => {
+      if (!repeatInput.value) return 'Repite la contraseña.';
+      if (repeatInput.value !== passwordInput.value) return 'Las contraseñas no coinciden.';
+      return '';
+    });
+  }
+
+  function huecoDeError(input) {
+    return input.id ? document.getElementById(input.id + '-error') : null;
+  }
+
+  function marcar(input, mensaje) {
+    if (mensaje) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
+    const hueco = huecoDeError(input);
+    if (hueco) hueco.textContent = mensaje || '';
+    return mensaje;
+  }
+
+  function limpiarErrores() {
+    reglas.forEach((regla, input) => marcar(input, ''));
+    mostrarEstado('');
+  }
+
+  function camposActivos() {
+    return Array.from(reglas.keys()).filter(input =>
+      mode === 'register' || (input !== nameInput && input !== repeatInput));
+  }
+
+  function validarCampos(campos) {
+    const errores = campos
+      .map(input => ({ input, mensaje: marcar(input, reglas.get(input)()) }))
+      .filter(e => e.mensaje);
+    if (errores.length === 0) return true;
+
+    errores[0].input.focus();
+    const sinHueco = errores.find(e => !huecoDeError(e.input));
+    if (sinHueco) mostrarEstado(sinHueco.mensaje, 'error');
+    return false;
+  }
+
+  reglas.forEach((regla, input) => {
+    input.addEventListener('input', () => {
+      if (input.getAttribute('aria-invalid') === 'true') marcar(input, regla());
+      if (statusEl && statusEl.classList.contains('auth-status--error')) mostrarEstado('');
+      if (input === passwordInput && repeatInput && repeatInput.value) {
+        marcar(repeatInput, reglas.get(repeatInput)());
+      }
+    });
+  });
+
+  function bloquear(boton, textoCargando) {
+    boton.dataset.textoOriginal = boton.textContent;
+    boton.disabled = true;
+    boton.textContent = textoCargando;
+  }
+  function desbloquear(boton) {
+    boton.disabled = false;
+    if (boton.dataset.textoOriginal) boton.textContent = boton.dataset.textoOriginal;
+  }
+
+  function mensajeDeError(error) {
+    const mensajes = {
+      'auth/email-already-in-use': 'Ese correo ya tiene una cuenta. Prueba iniciando sesión.',
+      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+      'auth/invalid-login-credentials': 'Correo o contraseña incorrectos.',
+      'auth/wrong-password': 'Correo o contraseña incorrectos.',
+      'auth/user-not-found': 'Correo o contraseña incorrectos.',
+      'auth/invalid-email': 'Revisa el correo: debe verse como nombre@correo.com.',
+      'auth/weak-password': 'La contraseña es muy débil. Usa al menos 8 caracteres.',
+      'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+      'auth/network-request-failed': 'No hay conexión. Revisa tu internet e inténtalo de nuevo.',
+      'auth/popup-blocked': 'Tu navegador bloqueó la ventana de Google.',
+      'auth/operation-not-allowed': 'Este método de acceso no está activado.',
+      'auth/unauthorized-domain': 'Este dominio no está autorizado.'
+    };
+    console.error(error);
+    return mensajes[error && error.code] || 'No pudimos completar la acción. Inténtalo de nuevo.';
+  }
+
+  function esCancelacion(error) {
+    return error && (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request');
+  }
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      mostrarEstado('');
+      if (!validarCampos(camposActivos())) return;
+
+      const correo = emailInput.value.trim().toLowerCase();
+      bloquear(submitBtn, mode === 'register' ? 'Creando cuenta…' : 'Entrando…');
+      try {
+        if (mode === 'register') {
+          await Cuentas.registrar(nameInput ? nameInput.value.trim() : '', correo, passwordInput.value);
+          mostrarEstado('Cuenta creada. Te llevamos a tus cursos…');
+          setTimeout(() => { window.location.href = PAGINA_DESTINO; }, 900);
+        } else {
+          await Cuentas.entrar(correo, passwordInput.value);
+          window.location.href = PAGINA_DESTINO;
+        }
+      } catch (error) {
+        desbloquear(submitBtn);
+        mostrarEstado(mensajeDeError(error), 'error');
+      }
+    });
+  }
+
+  if (btnForgotPassword) {
+    btnForgotPassword.addEventListener('click', async (e) => {
+      e.preventDefault();
+      mostrarEstado('');
+
+      const mensaje = marcar(emailInput, reglas.get(emailInput)());
+      if (mensaje) {
+        emailInput.focus();
+        mostrarEstado('Escribe tu correo para enviarte el enlace de recuperación.', 'error');
+        return;
+      }
+
+      const correo = emailInput.value.trim().toLowerCase();
+      btnForgotPassword.disabled = true;
+      try {
+        await Cuentas.recuperar(correo);
+        mostrarEstado('Si ' + correo + ' tiene una cuenta, te enviamos un enlace para crear una nueva contraseña.');
+      } catch (error) {
+        mostrarEstado(mensajeDeError(error), 'error');
+      } finally {
+        btnForgotPassword.disabled = false;
+      }
+    });
+  }
+
+  if (btnGoogle) {
+    btnGoogle.addEventListener('click', async () => {
+      mostrarEstado('');
+      btnGoogle.disabled = true;
+      mostrarEstado('Conectando con Google…');
+      try {
+        await Cuentas.entrarConGoogle();
+        window.location.href = PAGINA_DESTINO;
+      } catch (error) {
+        btnGoogle.disabled = false;
+        mostrarEstado(esCancelacion(error) ? '' : mensajeDeError(error), esCancelacion(error) ? '' : 'error');
+      }
+    });
+  }
+
+  const modo = new URLSearchParams(window.location.search).get('modo');
+  if (modo === 'registro' || modo === 'register') {
+    mode = 'register';
+    updateAuthUI();
+  }
+}
+
+/* =========================================================
+   DOM CONTENT LOADED — INICIALIZACIÓN GENERAL
+   ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
   const isReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 0. SESIÓN Y ESTILOS BASE
+  inyectarEstilosBase();
+  initSesion();
 
   // 1. EFECTOS GLOBALES Y DE SCROLL
   if (!isReducedMotion) {
@@ -33,6 +633,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     revealItems.forEach((item) => observer.observe(item));
 
+    Efectos.revelar = (items) => {
+      Array.from(items).forEach((item, index) => {
+        item.classList.add("scroll-reveal");
+        item.style.setProperty("--reveal-delay", `${(index % 4) * 65}ms`);
+        observer.observe(item);
+      });
+    };
+
     window.addEventListener("scroll", () => {
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       const amount = scrollable > 0 ? window.scrollY / scrollable : 0;
@@ -45,8 +653,8 @@ document.addEventListener("DOMContentLoaded", () => {
       glow.classList.add("is-active");
     }, { passive: true });
 
-    const interactiveItems = document.querySelectorAll("button, .button");
-    interactiveItems.forEach((item) => {
+    const attachRipple = (item) => {
+      if (item.classList.contains("ripple-target")) return;
       item.classList.add("ripple-target");
       item.addEventListener("pointerdown", (event) => {
         const bounds = item.getBoundingClientRect();
@@ -57,7 +665,10 @@ document.addEventListener("DOMContentLoaded", () => {
         item.classList.add("is-rippling");
         setTimeout(() => item.classList.remove("is-rippling"), 650);
       });
-    });
+    };
+
+    document.querySelectorAll("button, .button").forEach(attachRipple);
+    Efectos.ripple = (items) => Array.from(items).forEach(attachRipple);
   }
 
   // 2. FONDO ANIMADO DEL TIMELINE (Inicio)
@@ -191,7 +802,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const params = new URLSearchParams(window.location.search);
-    let currentKey = params.get("modulo") || "01";
+    let currentKey = params.get("modulo") || params.get("mod") || "01";
+    if (/^\d$/.test(currentKey)) currentKey = currentKey.padStart(2, "0");
     if (!modulesData[currentKey]) currentKey = "01";
 
     const mod = modulesData[currentKey];
@@ -336,98 +948,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 10. LÓGICA DE LA PÁGINA DE REGISTRO / LOGIN (registro.html)
   if (document.querySelector('.auth-page')) {
-    let mode = 'login';
-
-    const tabLogin = document.getElementById('tab-login');
-    const tabRegister = document.getElementById('tab-register');
-    const kickerText = document.getElementById('auth-kicker-text');
-    const titleText = document.getElementById('auth-title-text');
-    const subtitleText = document.getElementById('auth-subtitle-text');
-    
-    const fieldName = document.getElementById('field-name');
-    const fieldPasswordRepeat = document.getElementById('field-password-repeat');
-    const btnForgotPassword = document.getElementById('btn-forgot-password');
-    const passwordHelper = document.getElementById('password-helper');
-    const submitBtn = document.getElementById('auth-submit-btn');
-    
-    const switchLabel = document.getElementById('switch-label');
-    const btnSwitchMode = document.getElementById('btn-switch-mode');
-    
-    const form = document.getElementById('auth-form');
-    const btnGoogle = document.getElementById('btn-google');
-    
-    const passwordInput = document.getElementById('password');
-    const btnTogglePassword = document.getElementById('btn-toggle-password');
-    const togglePasswordText = document.getElementById('toggle-password-text');
-
-    function updateAuthUI() {
-      if (mode === 'login') {
-        tabLogin.classList.add('active');
-        tabLogin.setAttribute('aria-selected', 'true');
-        tabRegister.classList.remove('active');
-        tabRegister.setAttribute('aria-selected', 'false');
-
-        kickerText.textContent = 'QUÉ BUENO VERTE';
-        titleText.textContent = 'Bienvenido de nuevo';
-        subtitleText.textContent = 'Entra con tu correo y contraseña.';
-
-        fieldName.style.display = 'none';
-        fieldPasswordRepeat.style.display = 'none';
-        btnForgotPassword.style.display = 'inline-block';
-        passwordHelper.style.display = 'none';
-
-        submitBtn.textContent = 'Iniciar sesión';
-        switchLabel.textContent = '¿Aún no tienes cuenta?';
-        btnSwitchMode.textContent = 'Crear cuenta';
-      } else {
-        tabRegister.classList.add('active');
-        tabRegister.setAttribute('aria-selected', 'true');
-        tabLogin.classList.remove('active');
-        tabLogin.setAttribute('aria-selected', 'false');
-
-        kickerText.textContent = 'EMPIEZA A CREAR';
-        titleText.textContent = 'Crea tu cuenta';
-        subtitleText.textContent = 'Tu nombre, un correo y una contraseña.';
-
-        fieldName.style.display = 'grid';
-        fieldPasswordRepeat.style.display = 'grid';
-        btnForgotPassword.style.display = 'none';
-        passwordHelper.style.display = 'block';
-
-        submitBtn.textContent = 'Crear cuenta';
-        switchLabel.textContent = '¿Ya tienes cuenta?';
-        btnSwitchMode.textContent = 'Iniciar sesión';
-      }
-    }
-
-    tabLogin.addEventListener('click', () => { mode = 'login'; updateAuthUI(); });
-    tabRegister.addEventListener('click', () => { mode = 'register'; updateAuthUI(); });
-    btnSwitchMode.addEventListener('click', () => {
-      mode = mode === 'login' ? 'register' : 'login';
-      updateAuthUI();
-    });
-
-    let passwordVisible = false;
-    btnTogglePassword.addEventListener('click', () => {
-      passwordVisible = !passwordVisible;
-      passwordInput.type = passwordVisible ? 'text' : 'password';
-      togglePasswordText.textContent = passwordVisible ? 'Ocultar' : 'Mostrar';
-      btnTogglePassword.setAttribute('aria-label', passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña');
-    });
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      window.location.href = 'mis-cursos.html';
-    });
-
-    btnGoogle.addEventListener('click', () => {
-      window.location.href = 'mis-cursos.html';
-    });
+    initAuth();
   }
 
-  // 11. LÓGICA DE LA PÁGINA DE ADMINISTRACIÓN (admin.html)
+  // 11. CATÁLOGO DESDE FIRESTORE (catalogo.html)
+  initCatalogo();
+
+  // 12. LÓGICA DE LA PÁGINA DE ADMINISTRACIÓN (admin.html)
   if (document.querySelector('.admin-page')) {
-    // Datos iniciales
     const students = [
       { initials: "LO", name: "Loli123_gg", email: "lolhhh3345@gmail.com", enrolled: "18 feb 2026", progress: 84, status: "Activo" },
       { initials: "BR", name: "Brecaos", email: "breinercamargo16@gmail.com", enrolled: "16 feb 2026", progress: 45, status: "Activo" },
@@ -448,9 +976,8 @@ document.addEventListener("DOMContentLoaded", () => {
       { id: "04", title: "Audio y entrega final", category: "Audio", level: "Cuarto módulo", lessons: 9, students: 584 }
     ];
 
-    let currentView = "students"; // "students" | "reports" | "courses"
+    let currentView = "students";
 
-    // Elementos DOM
     const sidebar = document.getElementById('admin-sidebar');
     const mobileToggle = document.getElementById('admin-mobile-toggle');
     const backdrop = document.getElementById('admin-nav-backdrop');
@@ -475,7 +1002,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const courseAdminList = document.getElementById('course-admin-list');
 
-    // Modales
     const studentModal = document.getElementById('student-modal-backdrop');
     const btnCloseStudentModal = document.getElementById('btn-close-student-modal');
 
@@ -485,7 +1011,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const courseModalTitle = document.getElementById('course-modal-title');
     const courseFormSubmit = document.getElementById('course-form-submit');
 
-    // Función auxiliar para descargas CSV
     function downloadCSV(filename, content) {
       const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));
       const anchor = document.createElement("a");
@@ -495,7 +1020,6 @@ document.addEventListener("DOMContentLoaded", () => {
       URL.revokeObjectURL(url);
     }
 
-    // Navegación de Vistas
     const viewDetails = {
       students: {
         kicker: "COMUNIDAD",
@@ -519,28 +1043,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function switchView(targetView) {
       currentView = targetView;
-      [navStudents, navReports, navCourses].forEach(btn => btn.classList.remove('active'));
+      [navStudents, navReports, navCourses].forEach(btn => btn && btn.classList.remove('active'));
 
-      viewStudentsSec.style.display = 'none';
-      viewReportsSec.style.display = 'none';
-      viewCoursesSec.style.display = 'none';
+      if (viewStudentsSec) viewStudentsSec.style.display = 'none';
+      if (viewReportsSec) viewReportsSec.style.display = 'none';
+      if (viewCoursesSec) viewCoursesSec.style.display = 'none';
 
-      if (targetView === 'students') {
-        navStudents.classList.add('active');
+      if (targetView === 'students' && viewStudentsSec) {
+        if (navStudents) navStudents.classList.add('active');
         viewStudentsSec.style.display = 'block';
-      } else if (targetView === 'reports') {
-        navReports.classList.add('active');
+      } else if (targetView === 'reports' && viewReportsSec) {
+        if (navReports) navReports.classList.add('active');
         viewReportsSec.style.display = 'block';
-      } else if (targetView === 'courses') {
-        navCourses.classList.add('active');
+      } else if (targetView === 'courses' && viewCoursesSec) {
+        if (navCourses) navCourses.classList.add('active');
         viewCoursesSec.style.display = 'block';
       }
 
       const info = viewDetails[targetView];
-      viewKicker.textContent = info.kicker;
-      viewTitle.textContent = info.title;
-      viewCopy.textContent = info.copy;
-      actionContainer.innerHTML = info.buttonHTML;
+      if (viewKicker) viewKicker.textContent = info.kicker;
+      if (viewTitle) viewTitle.textContent = info.title;
+      if (viewCopy) viewCopy.textContent = info.copy;
+      if (actionContainer) actionContainer.innerHTML = info.buttonHTML;
 
       bindHeaderButtons();
       closeMobileMenu();
@@ -573,27 +1097,26 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Menú Móvil Sidebar
     function openMobileMenu() {
-      sidebar.classList.add('open');
-      backdrop.style.display = 'block';
+      if (sidebar) sidebar.classList.add('open');
+      if (backdrop) backdrop.style.display = 'block';
     }
 
     function closeMobileMenu() {
-      sidebar.classList.remove('open');
-      backdrop.style.display = 'none';
+      if (sidebar) sidebar.classList.remove('open');
+      if (backdrop) backdrop.style.display = 'none';
     }
 
     if (mobileToggle) mobileToggle.addEventListener('click', openMobileMenu);
     if (backdrop) backdrop.addEventListener('click', closeMobileMenu);
     if (sidebarClose) sidebarClose.addEventListener('click', closeMobileMenu);
 
-    navStudents.addEventListener('click', () => switchView('students'));
-    navReports.addEventListener('click', () => switchView('reports'));
-    navCourses.addEventListener('click', () => switchView('courses'));
+    if (navStudents) navStudents.addEventListener('click', () => switchView('students'));
+    if (navReports) navReports.addEventListener('click', () => switchView('reports'));
+    if (navCourses) navCourses.addEventListener('click', () => switchView('courses'));
 
-    // RENDERIZAR TABLA DE ESTUDIANTES
     function renderStudents(filterTerm = "") {
+      if (!studentTableBody) return;
       studentTableBody.innerHTML = "";
       const term = filterTerm.trim().toLowerCase();
 
@@ -602,9 +1125,9 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       if (filtered.length === 0) {
-        studentEmptyState.style.display = 'flex';
+        if (studentEmptyState) studentEmptyState.style.display = 'flex';
       } else {
-        studentEmptyState.style.display = 'none';
+        if (studentEmptyState) studentEmptyState.style.display = 'none';
         filtered.forEach(student => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -630,7 +1153,6 @@ document.addEventListener("DOMContentLoaded", () => {
           studentTableBody.appendChild(tr);
         });
 
-        // Eventos para ver detalles de estudiante
         document.querySelectorAll('.btn-view-student').forEach(btn => {
           btn.addEventListener('click', () => {
             const email = btn.getAttribute('data-email');
@@ -647,8 +1169,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // MODAL DETALLE ESTUDIANTE
     function openStudentModal(student) {
+      if (!studentModal) return;
       document.getElementById('modal-student-avatar').textContent = student.initials;
       document.getElementById('student-modal-title').textContent = student.name;
       document.getElementById('modal-student-email').textContent = student.email;
@@ -662,16 +1184,20 @@ document.addEventListener("DOMContentLoaded", () => {
       studentModal.style.display = 'flex';
     }
 
-    btnCloseStudentModal.addEventListener('click', () => { studentModal.style.display = 'none'; });
-    studentModal.addEventListener('click', (e) => {
-      if (e.target === studentModal) studentModal.style.display = 'none';
-    });
+    if (btnCloseStudentModal) btnCloseStudentModal.addEventListener('click', () => { studentModal.style.display = 'none'; });
+    if (studentModal) {
+      studentModal.addEventListener('click', (e) => {
+        if (e.target === studentModal) studentModal.style.display = 'none';
+      });
+    }
 
-    // RENDERIZAR LISTA DE CURSOS
     function renderCourses() {
+      if (!courseAdminList) return;
       courseAdminList.innerHTML = "";
-      document.getElementById('courses-count-stat').textContent = courses.length;
-      document.getElementById('courses-count-label').textContent = `${courses.length} módulos`;
+      const statEl = document.getElementById('courses-count-stat');
+      const labelEl = document.getElementById('courses-count-label');
+      if (statEl) statEl.textContent = courses.length;
+      if (labelEl) labelEl.textContent = `${courses.length} módulos`;
 
       courses.forEach((course, index) => {
         const num = String(index + 1).padStart(2, "0");
@@ -700,7 +1226,6 @@ document.addEventListener("DOMContentLoaded", () => {
         courseAdminList.appendChild(article);
       });
 
-      // Eventos de Editar y Eliminar
       document.querySelectorAll('.btn-edit-course').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-id');
@@ -721,60 +1246,61 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // MODAL DE CURSO (CREAR / EDITAR)
     function openCourseModal(course = null) {
+      if (!courseModal) return;
       if (course) {
-        courseModalTitle.textContent = "Editar módulo";
+        if (courseModalTitle) courseModalTitle.textContent = "Editar módulo";
         document.getElementById('course-form-id').value = course.id;
         document.getElementById('course-form-title').value = course.title;
         document.getElementById('course-form-category').value = course.category;
         document.getElementById('course-form-lessons').value = course.lessons;
         document.getElementById('course-form-level').value = course.level;
-        courseFormSubmit.querySelector('span').textContent = "Guardar cambios";
+        if (courseFormSubmit) courseFormSubmit.querySelector('span').textContent = "Guardar cambios";
       } else {
-        courseModalTitle.textContent = "Crear nuevo módulo";
-        courseForm.reset();
+        if (courseModalTitle) courseModalTitle.textContent = "Crear nuevo módulo";
+        if (courseForm) courseForm.reset();
         document.getElementById('course-form-id').value = "";
         document.getElementById('course-form-lessons').value = 6;
-        courseFormSubmit.querySelector('span').textContent = "Crear módulo";
+        if (courseFormSubmit) courseFormSubmit.querySelector('span').textContent = "Crear módulo";
       }
       courseModal.style.display = 'flex';
     }
 
-    btnCloseCourseModal.addEventListener('click', () => { courseModal.style.display = 'none'; });
-    courseModal.addEventListener('click', (e) => {
-      if (e.target === courseModal) courseModal.style.display = 'none';
-    });
+    if (btnCloseCourseModal) btnCloseCourseModal.addEventListener('click', () => { courseModal.style.display = 'none'; });
+    if (courseModal) {
+      courseModal.addEventListener('click', (e) => {
+        if (e.target === courseModal) courseModal.style.display = 'none';
+      });
+    }
 
-    courseForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const id = document.getElementById('course-form-id').value;
-      const title = document.getElementById('course-form-title').value;
-      const category = document.getElementById('course-form-category').value;
-      const lessonsCount = Number(document.getElementById('course-form-lessons').value);
-      const level = document.getElementById('course-form-level').value;
+    if (courseForm) {
+      courseForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('course-form-id').value;
+        const title = document.getElementById('course-form-title').value;
+        const category = document.getElementById('course-form-category').value;
+        const lessonsCount = Number(document.getElementById('course-form-lessons').value);
+        const level = document.getElementById('course-form-level').value;
 
-      if (id) {
-        // Editar
-        courses = courses.map(c => c.id === id ? { ...c, title, category, lessons: lessonsCount, level } : c);
-      } else {
-        // Crear
-        const newId = String(courses.length + 1).padStart(2, "0");
-        courses.push({
-          id: newId,
-          title,
-          category,
-          level,
-          lessons: lessonsCount,
-          students: 0
-        });
-      }
+        if (id) {
+          courses = courses.map(c => c.id === id ? { ...c, title, category, lessons: lessonsCount, level } : c);
+        } else {
+          const newId = String(courses.length + 1).padStart(2, "0");
+          courses.push({
+            id: newId,
+            title,
+            category,
+            level,
+            lessons: lessonsCount,
+            students: 0
+          });
+        }
 
-      renderCourses();
-      courseModal.style.display = 'none';
-    });
+        renderCourses();
+        courseModal.style.display = 'none';
+      });
+    }
 
-    // Inicialización
     switchView('students');
     renderStudents();
     renderCourses();
