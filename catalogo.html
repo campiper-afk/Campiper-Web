@@ -15,7 +15,12 @@
       <a class="brand" href="index.html" aria-label="Campiper, volver al inicio">
         <img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="img/campiper-logo.png" />
       </a>
-      <a class="catalog-login" href="registro.html">Iniciar Sesión</a>
+      <a class="catalog-login" data-solo="visitante" href="registro.html">Iniciar Sesión</a>
+      <div class="student-menu" data-solo="usuario" hidden>
+        <a href="mis-cursos.html">Mis cursos</a>
+        <a href="index.html" data-salir>Salir</a>
+        <span aria-hidden="true" data-usuario-inicial></span>
+      </div>
     </header>
 
     <main class="catalog-main">
