@@ -20,7 +20,12 @@
         <a href="catalogo.html">Contenido</a>
         <a href="index.html#oferta">Precio</a>
       </nav>
-      <a class="lesson-login" href="registro.html">Iniciar Sesión</a>
+      <a class="lesson-login" data-solo="visitante" href="registro.html">Iniciar Sesión</a>
+      <div class="student-menu" data-solo="usuario" hidden>
+        <a href="mis-cursos.html">Mis cursos</a>
+        <a href="index.html" data-salir>Salir</a>
+        <span aria-hidden="true" data-usuario-inicial></span>
+      </div>
     </header>
 
     <main class="lesson-main">
