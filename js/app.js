@@ -316,6 +316,59 @@ async function initCatalogo() {
   }
 }
 
+/* ---------- Precio del curso desde Firestore ---------- */
+// Documento esperado en Firestore: colección "config", documento "curso",
+// con el campo "precio" (número, p. ej. 149000) y, opcional, "precioAnterior".
+const PRECIO_CACHE = 'campiper_precio';
+
+function aNumeroPrecio(valor) {
+  const numero = typeof valor === 'number' ? valor : Number(String(valor == null ? '' : valor).replace(/\D/g, ''));
+  return Number.isFinite(numero) && numero > 0 ? numero : null;
+}
+
+function formatoPrecio(numero) {
+  return '$' + String(Math.round(numero)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function pintarPrecio(datos) {
+  const precio = aNumeroPrecio(datos && datos.precio);
+  if (!precio) return;
+  const anterior = aNumeroPrecio(datos.precioAnterior);
+  const hayDescuento = !!anterior && anterior > precio;
+
+  document.querySelectorAll('[data-precio]').forEach(el => { el.textContent = formatoPrecio(precio); });
+  document.querySelectorAll('[data-precio-descuento]').forEach(el => { el.hidden = !hayDescuento; });
+  if (hayDescuento) {
+    document.querySelectorAll('[data-precio-anterior]').forEach(el => { el.textContent = formatoPrecio(anterior); });
+    document.querySelectorAll('[data-precio-ahorro]').forEach(el => { el.textContent = formatoPrecio(anterior - precio); });
+  }
+}
+
+async function initPrecio() {
+  if (!document.querySelector('[data-precio]')) return;
+
+  // Pinta de inmediato el último precio conocido para evitar saltos visuales
+  try {
+    const guardado = JSON.parse(localStorage.getItem(PRECIO_CACHE));
+    if (guardado) pintarPrecio(guardado);
+  } catch (e) {}
+
+  if (!FIREBASE_ACTIVO) return;
+
+  try {
+    const { db, fsMod } = await cargarFirebase();
+    const documento = await fsMod.getDoc(fsMod.doc(db, 'config', 'curso'));
+    if (!documento.exists()) return;
+    const datos = documento.data();
+    pintarPrecio(datos);
+    try {
+      localStorage.setItem(PRECIO_CACHE, JSON.stringify({ precio: datos.precio, precioAnterior: datos.precioAnterior }));
+    } catch (e) {}
+  } catch (error) {
+    console.error('No se pudo cargar el precio desde Firestore:', error);
+  }
+}
+
 /* ---------- Autenticación (Login / Registro) ---------- */
 function initAuth() {
   const PAGINA_DESTINO = 'mis-cursos.html';
@@ -959,6 +1012,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 11. CATÁLOGO DESDE FIRESTORE (catalogo.html)
   initCatalogo();
+
+  // 11b. PRECIO DEL CURSO DESDE FIRESTORE (index.html y detalle.html)
+  initPrecio();
 
   // 12. LÓGICA DE LA PÁGINA DE ADMINISTRACIÓN (admin.html)
   if (document.querySelector('.admin-page')) {
