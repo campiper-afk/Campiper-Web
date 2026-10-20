@@ -24,7 +24,12 @@
         <a href="#temario">Temario</a>
         <a href="#requisitos">Requisitos</a>
       </nav>
-      <a class="button button-sm desktop-cta" href="registro.html">Iniciar Sesión</a>
+      <a class="button button-sm desktop-cta" data-solo="visitante" href="registro.html">Iniciar Sesión</a>
+      <div class="student-menu" data-solo="usuario" hidden>
+        <a href="mis-cursos.html">Mis cursos</a>
+        <a href="index.html" data-salir>Salir</a>
+        <span aria-hidden="true" data-usuario-inicial></span>
+      </div>
     </header>
 
     <main>
@@ -368,7 +373,8 @@
       <div class="footer-bottom"><span>© 2026 Campiper. Todos los derechos reservados.</span><span>Hecho para creadores.</span></div>
     </footer>
 
-    <a class="floating-cta" href="registro.html"><span class="floating-dot"></span> Iniciar Sesión</a>
+    <a class="floating-cta" data-solo="visitante" href="registro.html"><span class="floating-dot"></span> Iniciar Sesión</a>
+    <a class="floating-cta" data-solo="usuario" href="mis-cursos.html" hidden><span class="floating-dot"></span> Ir a mis cursos</a>
   </div>
 
   <!-- Vinculamos tu archivo JS -->
