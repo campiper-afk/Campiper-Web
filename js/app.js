@@ -1662,3 +1662,34 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCourses();
   }
 });
+// --- INTEGRACIÓN DE CORREO DE BIENVENIDA (Sin alterar Firebase) ---
+document.addEventListener('DOMContentLoaded', () => {
+  const formularioAuth = document.getElementById('auth-form');
+  
+  if (formularioAuth) {
+    formularioAuth.addEventListener('submit', () => {
+      const campoNombreContenedor = document.getElementById('field-name');
+      
+      // Verificamos si el formulario está en modo "Crear cuenta" (el campo nombre no está oculto)
+      if (campoNombreContenedor && campoNombreContenedor.style.display !== 'none') {
+        
+        const nombreIngresado = document.getElementById('name').value;
+        const correoIngresado = document.getElementById('email').value;
+        
+        // Reemplaza esto con tu NUEVA URL de la Aplicación Web de Google
+        const urlGoogleSheets = "https://script.google.com/macros/s/TU_NUEVA_URL_AQUI/exec";
+        
+        // Enviamos los datos en segundo plano a Google Sheets
+        fetch(urlGoogleSheets, {
+          method: 'POST',
+          mode: 'no-cors', // Evita bloqueos de seguridad del navegador
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            nombre: nombreIngresado,
+            email: correoIngresado
+          })
+        }).catch(e => console.log("Copia enviada silenciosamente."));
+      }
+    });
+  }
+});
