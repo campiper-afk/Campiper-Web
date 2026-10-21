@@ -64,10 +64,15 @@ function cuentasFirebase() {
       const { db, fsMod } = await cargarFirebase();
       const ref = fsMod.doc(db, 'users', usuario.uid);
       const datos = Object.assign({ nombre: nombre || '', correo: usuario.email || '' }, extra || {});
-      // Primera vez que se guarda este perfil (p. ej. con Google): registra la fecha de inscripción
+      // Si el perfil aún no tiene fecha de inscripción, guarda la fecha real de creación de la cuenta (la de Authentication)
       if (!datos.creadoEn) {
         const existente = await fsMod.getDoc(ref);
-        if (!existente.exists()) datos.creadoEn = fsMod.serverTimestamp();
+        if (!existente.exists() || !existente.data().creadoEn) {
+          const creacion = usuario.metadata && usuario.metadata.creationTime ? new Date(usuario.metadata.creationTime) : null;
+          datos.creadoEn = creacion && !isNaN(creacion.getTime())
+            ? fsMod.Timestamp.fromDate(creacion)
+            : fsMod.serverTimestamp();
+        }
       }
       await fsMod.setDoc(ref, datos, { merge: true });
     } catch (error) {
@@ -1360,7 +1365,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ---------- Estudiantes desde Firestore (colección "users") ---------- */
-    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    // Fechas de creación de las cuentas que ya existían (tomadas de Firebase Authentication).
+    // Se usan solo si el perfil en Firestore todavía no tiene "creadoEn". Se compara con el inicio del correo.
+    // Cuando cada persona vuelva a iniciar sesión, la fecha queda guardada en Firestore y esta lista deja de hacer falta.
+    const FECHAS_CUENTAS_ANTERIORES = {
+      'lolhhh3345': '2026-10-14',
+      'ignaciogaunap': '2026-10-14',
+      'breinercamargo16': '2026-10-14',
+      'chelsemipertumoren': '2026-10-15',
+      'tortello.design': '2026-10-19',
+      'pierohlr': '2026-10-19',
+      'activosyhabitos': '2026-10-19',
+      'hablemosdepaises': '2026-10-19',
+      'delatorre': '2026-10-19',
+      'bunuelou': '2026-10-19'
+    };
+
+    function fechaDeCuentaAnterior(correo) {
+      const inicio = String(correo || '').toLowerCase();
+      const clave = Object.keys(FECHAS_CUENTAS_ANTERIORES).find(k => inicio.startsWith(k));
+      if (!clave) return null;
+      const [anio, mes, dia] = FECHAS_CUENTAS_ANTERIORES[clave].split('-').map(Number);
+      return new Date(anio, mes - 1, dia);
+    }
 
     function aFecha(valor) {
       if (!valor) return null;
@@ -1369,20 +1398,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return isNaN(fecha.getTime()) ? null : fecha;
     }
 
-    // Mismo formato que muestra la consola de Firebase: 20 de octubre de 2026, 2:39:53 p.m. UTC-5
+    // Mismo formato que muestra Firebase Authentication: 19 oct 2026
     function formatoFecha(fecha) {
       if (!fecha) return '—';
-      const horas24 = fecha.getHours();
-      const horas = horas24 % 12 || 12;
-      const meridiano = horas24 < 12 ? 'a.m.' : 'p.m.';
-      const dos = n => String(n).padStart(2, '0');
-
-      const minutosZona = -fecha.getTimezoneOffset();
-      const absZona = Math.abs(minutosZona);
-      const zona = 'UTC' + (minutosZona < 0 ? '-' : '+') + Math.floor(absZona / 60) + (absZona % 60 ? ':' + dos(absZona % 60) : '');
-
-      return fecha.getDate() + ' de ' + MESES[fecha.getMonth()] + ' de ' + fecha.getFullYear() + ', ' +
-        horas + ':' + dos(fecha.getMinutes()) + ':' + dos(fecha.getSeconds()) + ' ' + meridiano + ' ' + zona;
+      return fecha.getDate() + ' ' + MESES[fecha.getMonth()] + ' ' + fecha.getFullYear();
     }
 
     function estudianteDesdeDoc(doc) {
@@ -1391,14 +1410,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const nombre = String(d.nombre || d.name || '').trim() || nombreDesdeCorreo(correo) || 'Sin nombre';
       const progreso = Number(d.progreso != null ? d.progreso : d.progress);
       const fechaOriginal = d.creadoEn || d.createdAt;
-      const fecha = aFecha(fechaOriginal);
+      const fecha = aFecha(fechaOriginal) || fechaDeCuentaAnterior(correo);
       return {
         id: doc.id,
         initials: nombre.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]/g, '').slice(0, 2).toUpperCase() || '?',
         name: nombre,
         email: correo,
         fecha: fecha,
-        enrolled: typeof fechaOriginal === 'string' ? fechaOriginal : formatoFecha(fecha), // si en Firebase es texto, se muestra tal cual
+        enrolled: typeof fechaOriginal === 'string' && fechaOriginal ? fechaOriginal : formatoFecha(fecha), // si en Firebase es texto, se muestra tal cual
         progress: Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0,
         status: String(d.estado || d.status || 'Activo')
       };
