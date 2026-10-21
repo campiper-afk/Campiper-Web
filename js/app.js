@@ -835,6 +835,7 @@ document.addEventListener("DOMContentLoaded", () => {
   inyectarEstilosBase();
   initSesion();
   initBotonAdmin();
+  initCompra();
 
   // LÓGICA DE LA VENTANA MI PERFIL (MODAL)
   const btnMiPerfil = document.getElementById('btn-mi-perfil');
