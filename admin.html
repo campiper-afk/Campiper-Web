@@ -256,12 +256,17 @@
         <div class="student-modal-grid">
           <div><small>INSCRIPCIÓN</small><strong id="modal-student-enrolled">16 feb 2026</strong></div>
           <div><small>ESTADO</small><strong id="modal-student-status">Activo</strong></div>
+          <div class="student-modal-wide"><small>CURSO</small><strong id="modal-student-course">Sin inscripción</strong></div>
         </div>
         <small>PROGRESO DEL CURSO</small>
         <div class="admin-progress" id="modal-student-progress" role="progressbar">
           <span></span>
           <strong id="modal-student-progress-text">45%</strong>
         </div>
+        <button class="admin-primary-button enroll-toggle" id="btn-toggle-enroll" type="button">
+          <span>Inscribir al curso</span>
+        </button>
+        <div class="enroll-feedback" id="enroll-feedback" role="status" aria-live="polite" hidden></div>
         <a href="mis-cursos.html">
           Ver experiencia del estudiante 
           <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" /></svg>
