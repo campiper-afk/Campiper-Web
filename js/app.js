@@ -79,58 +79,8 @@ function cuentasFirebase() {
         }
       }
 
-      /* ---------- Compra del curso (botones con data-comprar) ----------
-        Sin sesión → registro. Con sesión → pasarela de Mercado Pago.
-        PAGOS_API = URL de la Cloud Function "crearPago". Mientras esté vacía se
-        usa el enlace fijo de data-pago-fallback (se puede pagar, pero el curso
-        NO se activa solo). */
-      const PAGOS_API = '';
-  
-      function esperarUsuarioFirebase() {
-        return cargarFirebase().then(({ auth, authMod }) => new Promise(resolve => {
-          const cancelar = authMod.onAuthStateChanged(auth, usuario => { cancelar(); resolve(usuario); });
-        }));
-      }
-
-      function initCompra() {
-        const botones = document.querySelectorAll('[data-comprar]');
-        if (botones.length === 0) return;
-
-        window.addEventListener('pageshow', () => botones.forEach(b => b.removeAttribute('aria-busy')));
-
-        botones.forEach(boton => {
-          boton.addEventListener('click', async (e) => {
-          e.preventDefault();
-          if (boton.getAttribute('aria-busy') === 'true') return;
-          boton.setAttribute('aria-busy', 'true');
-
-          try {
-            const usuario = FIREBASE_ACTIVO ? await esperarUsuarioFirebase() : Sesion.obtener();
-            if (!usuario) { window.location.href = 'registro.html?modo=registro'; return; }
-
-            if (!PAGOS_API || !FIREBASE_ACTIVO) {
-              window.location.href = boton.dataset.pagoFallback || 'mis-cursos.html';
-              return;
-            }
-
-            const token = await usuario.getIdToken();
-            const respuesta = await fetch(PAGOS_API, {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-              body: '{}'
-            });
-            const datos = await respuesta.json().catch(() => ({}));
-            if (!respuesta.ok) throw new Error(datos.error || ('HTTP ' + respuesta.status));
-
-            window.location.href = datos.yaInscrito ? 'mis-cursos.html' : datos.url;
-            } catch (error) {
-            console.error('No se pudo iniciar el pago:', error);
-            alert('No pudimos iniciar el pago. Inténtalo de nuevo en unos segundos.');
-            boton.removeAttribute('aria-busy');
-            }
-          });
-        });
-      }
+      // [CAMBIO PAGOS] Ya no se inscribe automáticamente: el curso lo activa el pago
+      // (Cloud Function webhookMercadoPago) o un administrador desde admin.html.
 
       await fsMod.setDoc(ref, datos, { merge: true });
     } catch (error) {
@@ -308,6 +258,59 @@ async function initBotonAdmin() {
   } catch (error) {
     console.error('No se pudo iniciar la verificación de administrador:', error);
   }
+}
+
+/* ---------- [CAMBIO PAGOS] Compra del curso (botones con data-comprar) ----------
+   Sin sesión → registro. Con sesión → pasarela de Mercado Pago.
+   PAGOS_API = URL de la Cloud Function "crearPago" (functions/index.js).
+   Mientras esté vacía se usa el enlace fijo de data-pago-fallback
+   (se puede pagar, pero el curso NO se activa solo). */
+const PAGOS_API = '';
+
+function esperarUsuarioFirebase() {
+  return cargarFirebase().then(({ auth, authMod }) => new Promise(resolve => {
+    const cancelar = authMod.onAuthStateChanged(auth, usuario => { cancelar(); resolve(usuario); });
+  }));
+}
+
+function initCompra() {
+  const botones = document.querySelectorAll('[data-comprar]');
+  if (botones.length === 0) return;
+
+  window.addEventListener('pageshow', () => botones.forEach(b => b.removeAttribute('aria-busy')));
+
+  botones.forEach(boton => {
+    boton.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (boton.getAttribute('aria-busy') === 'true') return;
+      boton.setAttribute('aria-busy', 'true');
+
+      try {
+        const usuario = FIREBASE_ACTIVO ? await esperarUsuarioFirebase() : Sesion.obtener();
+        if (!usuario) { window.location.href = 'registro.html?modo=registro'; return; }
+
+        if (!PAGOS_API || !FIREBASE_ACTIVO) {
+          window.location.href = boton.dataset.pagoFallback || 'mis-cursos.html';
+          return;
+        }
+
+        const token = await usuario.getIdToken();
+        const respuesta = await fetch(PAGOS_API, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: '{}'
+        });
+        const datos = await respuesta.json().catch(() => ({}));
+        if (!respuesta.ok) throw new Error(datos.error || ('HTTP ' + respuesta.status));
+
+        window.location.href = datos.yaInscrito ? 'mis-cursos.html' : datos.url;
+      } catch (error) {
+        console.error('No se pudo iniciar el pago:', error);
+        alert('No pudimos iniciar el pago. Inténtalo de nuevo en unos segundos.');
+        boton.removeAttribute('aria-busy');
+      }
+    });
+  });
 }
 
 /* ---------- Efectos Reutilizables ---------- */
@@ -502,10 +505,25 @@ async function initMisCursos() {
   const certTexto = document.getElementById('certificate-progress-text');
   const certBarra = document.getElementById('certificate-progress-bar');
 
+  // [CAMBIO PAGOS] Al volver de Mercado Pago (?pago=ok | pendiente) esperamos a que el servidor active el curso
+  const retornoPago = new URLSearchParams(window.location.search).get('pago');
+  let esperaTerminada = false;
+  let ultimoEstado = { inscrito: false, progreso: 0 };
+
   function mostrar(inscrito, progreso) {
-    if (cargando) cargando.hidden = true;
+    ultimoEstado = { inscrito: inscrito, progreso: progreso };
+    const esperandoPago = !inscrito && !esperaTerminada && (retornoPago === 'ok' || retornoPago === 'pendiente');
+    let aviso = '';
+    if (esperandoPago) {
+      aviso = retornoPago === 'pendiente'
+        ? 'Tu pago está pendiente de confirmación. Cuando se apruebe, tu curso aparecerá aquí automáticamente.'
+        : 'Estamos confirmando tu pago. Tu curso aparecerá aquí en unos segundos…';
+    } else if (!inscrito && retornoPago === 'ok') {
+      aviso = 'Si ya pagaste y aún no ves tu curso, escríbenos a soporte@campiper.com antes de volver a pagar.';
+    }
+    if (cargando) { cargando.textContent = aviso; cargando.hidden = !aviso; }
     panel.hidden = !inscrito;
-    if (vacio) vacio.hidden = inscrito;
+    if (vacio) vacio.hidden = inscrito || esperandoPago;
     if (contador) contador.textContent = inscrito ? '1 curso activo' : '0 cursos';
     if (!inscrito) return;
 
@@ -519,6 +537,10 @@ async function initMisCursos() {
     if (barraInterna) barraInterna.style.width = pct + '%';
     if (certTexto) certTexto.textContent = pct + ' % COMPLETADO';
     if (certBarra) certBarra.style.width = pct + '%';
+  }
+
+  if (retornoPago === 'ok') { // [CAMBIO PAGOS]
+    setTimeout(() => { esperaTerminada = true; mostrar(ultimoEstado.inscrito, ultimoEstado.progreso); }, 45000);
   }
 
   if (!FIREBASE_ACTIVO) { mostrar(true, 45); return; }
@@ -835,7 +857,7 @@ document.addEventListener("DOMContentLoaded", () => {
   inyectarEstilosBase();
   initSesion();
   initBotonAdmin();
-  initCompra();
+  initCompra(); // [CAMBIO PAGOS]
 
   // LÓGICA DE LA VENTANA MI PERFIL (MODAL)
   const btnMiPerfil = document.getElementById('btn-mi-perfil');
@@ -1411,7 +1433,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span></span><strong>${progreso}%</strong>
               </div>
             </td>
-            <td data-label="Estado"><span class="status-pill"><i></i>${escaparHTML(student.status)}</span>${student.inscrito ? '<span class="enrolled-tag">Con curso</span>' : ''}</td>
+            <td data-label="Estado"><span class="status-pill"><i></i>${escaparHTML(student.status)}</span>${student.inscrito ? '<span class="enrolled-tag">' + (student.accesoOrigen === 'pago' ? 'Pagado' : 'Con curso') + '</span>' : ''}</td>
             <td>
               <button class="icon-action btn-view-student" aria-label="Ver a ${escaparHTML(student.name)}" data-id="${escaparHTML(student.id)}">
                 <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.5" /></g></svg>
@@ -1451,7 +1473,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function pintarInscripcion(student) {
       const celda = document.getElementById('modal-student-course');
-      if (celda) celda.textContent = student.inscrito ? 'Inscrito en DaVinci Resolve' : 'Sin inscripción';
+      if (celda) { // [CAMBIO PAGOS]
+        celda.textContent = !student.inscrito
+          ? 'Sin inscripción'
+          : student.accesoOrigen === 'pago'
+            ? 'Inscrito · pagó el ' + formatoFecha(student.pagoEn)
+            : 'Inscrito en DaVinci Resolve (activado a mano)';
+      }
       if (btnToggleEnroll) {
         btnToggleEnroll.disabled = false;
         btnToggleEnroll.classList.toggle('is-remove', student.inscrito);
@@ -1463,10 +1491,12 @@ document.addEventListener("DOMContentLoaded", () => {
     async function cambiarInscripcion(student, inscribir) {
       const { db, fsMod } = await cargarFirebase();
       await fsMod.updateDoc(fsMod.doc(db, 'users', student.id), {
-        cursos: inscribir ? fsMod.arrayUnion(CURSO_ID) : fsMod.arrayRemove(CURSO_ID)
+        cursos: inscribir ? fsMod.arrayUnion(CURSO_ID) : fsMod.arrayRemove(CURSO_ID),
+        accesoOrigen: inscribir ? 'manual' : fsMod.deleteField() // [CAMBIO PAGOS]
       });
       student.cursos = student.cursos.filter(c => c !== CURSO_ID).concat(inscribir ? [CURSO_ID] : []);
       student.inscrito = inscribir;
+      student.accesoOrigen = inscribir ? 'manual' : ''; // [CAMBIO PAGOS]
     }
 
     if (btnToggleEnroll) {
@@ -1680,7 +1710,9 @@ document.addEventListener("DOMContentLoaded", () => {
         progress: Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0,
         status: String(d.estado || d.status || 'Activo'),
         cursos: cursos,
-        inscrito: cursos.includes(CURSO_ID)
+        inscrito: cursos.includes(CURSO_ID),
+        accesoOrigen: String(d.accesoOrigen || ''), // [CAMBIO PAGOS]
+        pagoEn: aFecha(d.pagoEn)                    // [CAMBIO PAGOS]
       };
     }
 
@@ -1792,45 +1824,6 @@ document.addEventListener('DOMContentLoaded', () => {
             email: correoIngresado
           })
         }).catch(e => console.log("Copia enviada silenciosamente."));
-      }
-    });
-  }
-});
-document.addEventListener('DOMContentLoaded', () => {
-  const tabLogin = document.getElementById('tab-login');
-  const tabRegister = document.getElementById('tab-register');
-  const btnSwitchMode = document.getElementById('btn-switch-mode');
-  const fieldTerms = document.getElementById('field-terms');
-  const termsCheckbox = document.getElementById('terms-checkbox');
-
-  // Activa la obligatoriedad de la casilla
-  const exigirTerminos = () => {
-    if(fieldTerms && termsCheckbox) {
-      fieldTerms.style.display = 'block';
-      termsCheckbox.required = true;
-    }
-  };
-
-  // Desactiva la obligatoriedad de la casilla
-  const quitarTerminos = () => {
-    if(fieldTerms && termsCheckbox) {
-      fieldTerms.style.display = 'none';
-      termsCheckbox.required = false;
-    }
-  };
-
-  // Se añade como un evento adicional a los clics (no sobreescribe los anteriores)
-  if(tabRegister) tabRegister.addEventListener('click', exigirTerminos);
-  if(tabLogin) tabLogin.addEventListener('click', quitarTerminos);
-  
-  // También controla el botón de "¿Aún no tienes cuenta? / Crear cuenta" al final del formulario
-  if(btnSwitchMode) {
-    btnSwitchMode.addEventListener('click', () => {
-      // Revisa el estado actual: si la casilla está oculta, la muestra; si no, la oculta.
-      if (fieldTerms.style.display === 'none' || fieldTerms.style.display === '') {
-        exigirTerminos();
-      } else {
-        quitarTerminos();
       }
     });
   }
