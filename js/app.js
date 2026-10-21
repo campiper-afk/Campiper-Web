@@ -1730,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const correoIngresado = document.getElementById('email').value;
         
         // Reemplaza esto con tu NUEVA URL de la Aplicación Web de Google
-        const urlGoogleSheets = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxhpmC6U8GMHeLs4BACkB9U8d5uizP4GLI97HqrRzsu0_6C3kkeuIAjYxzsPWiQyWB-Bg/exec/exec";
+        const urlGoogleSheets = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbyQYtji6cgbF6kB6HalWdgjPTvSVkh3_tpTgmARgR87XmjT6P2iFLVuDeoErnVpavr52Q/exec/exec";
         
         // Enviamos los datos en segundo plano a Google Sheets
         fetch(urlGoogleSheets, {
