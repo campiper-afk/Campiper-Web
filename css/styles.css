@@ -1808,6 +1808,16 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   color: var(--white);
 }
 
+.student-menu > a.admin-link {
+  background: rgba(74, 144, 226, 0.12);
+  border-color: var(--blue);
+  color: var(--white);
+}
+
+.student-menu > a.admin-link:hover {
+  background: var(--blue);
+}
+
 .student-menu > span {
   align-items: center;
   background: #30313a;
@@ -2190,6 +2200,10 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   }
   .student-menu > a {
     display: none;
+  }
+  .student-menu > a.admin-link:not([hidden]) {
+    display: inline-flex;
+    padding: 8px 12px;
   }
   .courses-main {
     padding: 34px 18px 70px;
