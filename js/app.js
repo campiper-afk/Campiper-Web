@@ -1746,3 +1746,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+document.addEventListener('DOMContentLoaded', () => {
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const btnSwitchMode = document.getElementById('btn-switch-mode');
+  const fieldTerms = document.getElementById('field-terms');
+  const termsCheckbox = document.getElementById('terms-checkbox');
+
+  // Activa la obligatoriedad de la casilla
+  const exigirTerminos = () => {
+    if(fieldTerms && termsCheckbox) {
+      fieldTerms.style.display = 'block';
+      termsCheckbox.required = true;
+    }
+  };
+
+  // Desactiva la obligatoriedad de la casilla
+  const quitarTerminos = () => {
+    if(fieldTerms && termsCheckbox) {
+      fieldTerms.style.display = 'none';
+      termsCheckbox.required = false;
+    }
+  };
+
+  // Se añade como un evento adicional a los clics (no sobreescribe los anteriores)
+  if(tabRegister) tabRegister.addEventListener('click', exigirTerminos);
+  if(tabLogin) tabLogin.addEventListener('click', quitarTerminos);
+  
+  // También controla el botón de "¿Aún no tienes cuenta? / Crear cuenta" al final del formulario
+  if(btnSwitchMode) {
+    btnSwitchMode.addEventListener('click', () => {
+      // Revisa el estado actual: si la casilla está oculta, la muestra; si no, la oculta.
+      if (fieldTerms.style.display === 'none' || fieldTerms.style.display === '') {
+        exigirTerminos();
+      } else {
+        quitarTerminos();
+      }
+    });
+  }
+});
