@@ -79,9 +79,57 @@ function cuentasFirebase() {
         }
       }
 
-      // ACCESO AUTOMÁTICO: Si es un usuario nuevo, le agregamos el curso
-      if (!existente.exists()) {
-        datos.cursos = [CURSO_ID];
+      /* ---------- Compra del curso (botones con data-comprar) ----------
+        Sin sesión → registro. Con sesión → pasarela de Mercado Pago.
+        PAGOS_API = URL de la Cloud Function "crearPago". Mientras esté vacía se
+        usa el enlace fijo de data-pago-fallback (se puede pagar, pero el curso
+        NO se activa solo). */
+      const PAGOS_API = '';
+  
+      function esperarUsuarioFirebase() {
+        return cargarFirebase().then(({ auth, authMod }) => new Promise(resolve => {
+          const cancelar = authMod.onAuthStateChanged(auth, usuario => { cancelar(); resolve(usuario); });
+        }));
+      }
+
+      function initCompra() {
+        const botones = document.querySelectorAll('[data-comprar]');
+        if (botones.length === 0) return;
+
+        window.addEventListener('pageshow', () => botones.forEach(b => b.removeAttribute('aria-busy')));
+
+        botones.forEach(boton => {
+          boton.addEventListener('click', async (e) => {
+          e.preventDefault();
+          if (boton.getAttribute('aria-busy') === 'true') return;
+          boton.setAttribute('aria-busy', 'true');
+
+          try {
+            const usuario = FIREBASE_ACTIVO ? await esperarUsuarioFirebase() : Sesion.obtener();
+            if (!usuario) { window.location.href = 'registro.html?modo=registro'; return; }
+
+            if (!PAGOS_API || !FIREBASE_ACTIVO) {
+              window.location.href = boton.dataset.pagoFallback || 'mis-cursos.html';
+              return;
+            }
+
+            const token = await usuario.getIdToken();
+            const respuesta = await fetch(PAGOS_API, {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+              body: '{}'
+            });
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok) throw new Error(datos.error || ('HTTP ' + respuesta.status));
+
+            window.location.href = datos.yaInscrito ? 'mis-cursos.html' : datos.url;
+            } catch (error) {
+            console.error('No se pudo iniciar el pago:', error);
+            alert('No pudimos iniciar el pago. Inténtalo de nuevo en unos segundos.');
+            boton.removeAttribute('aria-busy');
+            }
+          });
+        });
       }
 
       await fsMod.setDoc(ref, datos, { merge: true });
@@ -274,6 +322,7 @@ function inyectarEstilosBase() {
   estilo.id = 'campiper-estilos-base';
   estilo.textContent = `
     [data-solo][hidden], [data-admin-link][hidden] { display: none !important; }
+    [data-comprar][aria-busy="true"] { opacity: 0.6; pointer-events: none; }
     .auth-status { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.4; }
     .auth-status[hidden] { display: none; }
     .dashboard-grid[hidden], .empty-courses[hidden], .courses-loading[hidden], .enroll-feedback[hidden] { display: none !important; }
