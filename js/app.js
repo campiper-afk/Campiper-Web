@@ -17,8 +17,7 @@ const FIREBASE_CONFIG = {
 const FIREBASE_VERSION = '10.13.1';
 const FIREBASE_ACTIVO = !String(FIREBASE_CONFIG.apiKey).startsWith('PEGA');
 
-// Curso al que se inscribe manualmente desde el panel de administración.
-// Se guarda en Firestore: users/{uid}.cursos = ['davinci-resolve']
+// Curso al que se inscribe automáticamente o manualmente.
 const CURSO_ID = 'davinci-resolve';
 
 // Carga Firebase dinámicamente cuando hace falta
@@ -68,9 +67,10 @@ function cuentasFirebase() {
       const { db, fsMod } = await cargarFirebase();
       const ref = fsMod.doc(db, 'users', usuario.uid);
       const datos = Object.assign({ nombre: nombre || '', correo: usuario.email || '' }, extra || {});
-      // Si el perfil aún no tiene fecha de inscripción, guarda la fecha real de creación de la cuenta (la de Authentication)
+      
+      const existente = await fsMod.getDoc(ref);
+
       if (!datos.creadoEn) {
-        const existente = await fsMod.getDoc(ref);
         if (!existente.exists() || !existente.data().creadoEn) {
           const creacion = usuario.metadata && usuario.metadata.creationTime ? new Date(usuario.metadata.creationTime) : null;
           datos.creadoEn = creacion && !isNaN(creacion.getTime())
@@ -78,6 +78,12 @@ function cuentasFirebase() {
             : fsMod.serverTimestamp();
         }
       }
+
+      // ACCESO AUTOMÁTICO: Si es un usuario nuevo, le agregamos el curso
+      if (!existente.exists()) {
+        datos.cursos = [CURSO_ID];
+      }
+
       await fsMod.setDoc(ref, datos, { merge: true });
     } catch (error) {
       console.error('No se pudo guardar el perfil en Firestore:', error);
@@ -100,8 +106,6 @@ function cuentasFirebase() {
     async entrarConGoogle() {
       const { auth, authMod } = await cargarFirebase();
       const proveedor = new authMod.GoogleAuthProvider();
-      
-      // 👉 Esta línea fuerza a Google a mostrar SIEMPRE el formulario de selección de cuenta
       proveedor.setCustomParameters({ prompt: 'select_account' });
       
       const credencial = await authMod.signInWithPopup(auth, proveedor);
@@ -333,8 +337,6 @@ async function initCatalogo() {
 }
 
 /* ---------- Precio del curso desde Firestore ---------- */
-// Documento esperado en Firestore: colección "config", documento "curso",
-// con el campo "precio" (número, p. ej. 149000) y, opcional, "precioAnterior".
 const PRECIO_CACHE = 'campiper_precio';
 
 function aNumeroPrecio(valor) {
@@ -363,7 +365,6 @@ function pintarPrecio(datos) {
 async function initPrecio() {
   if (!document.querySelector('[data-precio]')) return;
 
-  // Pinta de inmediato el último precio conocido para evitar saltos visuales
   try {
     const guardado = JSON.parse(localStorage.getItem(PRECIO_CACHE));
     if (guardado) pintarPrecio(guardado);
@@ -386,7 +387,6 @@ async function initPrecio() {
 }
 
 /* ---------- Mis cursos: el curso aparece solo si el usuario está inscrito ---------- */
-// Escucha users/{uid} en tiempo real: si el admin inscribe al usuario, el curso aparece sin recargar.
 async function initMisCursos() {
   const panel = document.getElementById('courses-dashboard');
   if (!panel) return;
@@ -420,13 +420,11 @@ async function initMisCursos() {
     if (certBarra) certBarra.style.width = pct + '%';
   }
 
-  // Modo demo (sin Firebase): se conserva el comportamiento anterior
   if (!FIREBASE_ACTIVO) { mostrar(true, 45); return; }
 
   try {
     const { auth, db, authMod, fsMod } = await cargarFirebase();
 
-    // Espera a que Firebase restaure la sesión (si no hay usuario, initSesion redirige a registro.html)
     const usuario = await new Promise(resolve => {
       const cancelar = authMod.onAuthStateChanged(auth, u => { cancelar(); resolve(u); });
     });
@@ -648,7 +646,6 @@ function initAuth() {
       'auth/operation-not-allowed': 'Este método de acceso no está activado.',
       'auth/unauthorized-domain': 'Este dominio no está autorizado.'
     };
-    console.error(error);
     return mensajes[error && error.code] || 'No pudimos completar la acción. Inténtalo de nuevo.';
   }
 
@@ -736,6 +733,44 @@ document.addEventListener("DOMContentLoaded", () => {
   // 0. SESIÓN Y ESTILOS BASE
   inyectarEstilosBase();
   initSesion();
+
+  // LÓGICA DE LA VENTANA MI PERFIL (MODAL)
+  const btnMiPerfil = document.getElementById('btn-mi-perfil');
+  const profileModal = document.getElementById('profile-modal-backdrop');
+  const btnCloseProfile = document.getElementById('btn-close-profile-modal');
+
+  if (btnMiPerfil && profileModal) {
+    btnMiPerfil.addEventListener('click', (e) => {
+      e.preventDefault();
+      profileModal.style.display = 'flex';
+      
+      const usuarioActivo = Sesion.obtener();
+      if (usuarioActivo) {
+        const titleEl = document.getElementById('profile-modal-title');
+        const emailEl = document.getElementById('profile-modal-email');
+        const avatarEl = document.getElementById('profile-avatar');
+        
+        if (titleEl) titleEl.textContent = usuarioActivo.nombre || 'Estudiante';
+        if (emailEl) emailEl.textContent = usuarioActivo.correo || 'Sin correo';
+        
+        if (avatarEl) {
+          const iniciales = (usuarioActivo.nombre || 'Estudiante')
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(p => p.charAt(0).toUpperCase())
+            .join('');
+          avatarEl.textContent = iniciales;
+        }
+      }
+    });
+
+    if (btnCloseProfile) {
+      btnCloseProfile.addEventListener('click', () => { profileModal.style.display = 'none'; });
+    }
+    profileModal.addEventListener('click', (e) => {
+      if (e.target === profileModal) profileModal.style.display = 'none';
+    });
+  }
 
   // 1. EFECTOS GLOBALES Y DE SCROLL
   if (!isReducedMotion) {
@@ -1096,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 12. LÓGICA DE LA PÁGINA DE ADMINISTRACIÓN (admin.html)
   if (document.querySelector('.admin-page')) {
-    let students = []; // Se llena desde Firestore (colección "users")
+    let students = []; 
 
     let courses = [
       { id: "01", title: "Primeros pasos en DaVinci Resolve", category: "Edición", level: "Primer módulo", lessons: 6, students: 1200 },
@@ -1491,9 +1526,6 @@ document.addEventListener("DOMContentLoaded", () => {
     /* ---------- Estudiantes desde Firestore (colección "users") ---------- */
     const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
-    // Fechas de creación de las cuentas que ya existían (tomadas de Firebase Authentication).
-    // Se usan solo si el perfil en Firestore todavía no tiene "creadoEn". Se compara con el inicio del correo.
-    // Cuando cada persona vuelva a iniciar sesión, la fecha queda guardada en Firestore y esta lista deja de hacer falta.
     const FECHAS_CUENTAS_ANTERIORES = {
       'lolhhh3345': '2026-10-14',
       'ignaciogaunap': '2026-10-14',
@@ -1522,7 +1554,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return isNaN(fecha.getTime()) ? null : fecha;
     }
 
-    // Mismo formato que muestra Firebase Authentication: 19 oct 2026
     function formatoFecha(fecha) {
       if (!fecha) return '—';
       return fecha.getDate() + ' ' + MESES[fecha.getMonth()] + ' ' + fecha.getFullYear();
@@ -1542,7 +1573,7 @@ document.addEventListener("DOMContentLoaded", () => {
         name: nombre,
         email: correo,
         fecha: fecha,
-        enrolled: typeof fechaOriginal === 'string' && fechaOriginal ? fechaOriginal : formatoFecha(fecha), // si en Firebase es texto, se muestra tal cual
+        enrolled: typeof fechaOriginal === 'string' && fechaOriginal ? fechaOriginal : formatoFecha(fecha),
         progress: Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0,
         status: String(d.estado || d.status || 'Activo'),
         cursos: cursos,
@@ -1579,7 +1610,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function cargarEstudiantes() {
-      // La página queda oculta hasta confirmar que la persona tiene permiso de administrador
       document.body.style.visibility = 'hidden';
       const mostrarPagina = () => { document.body.style.visibility = ''; };
 
@@ -1593,7 +1623,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const { auth, db, authMod, fsMod } = await cargarFirebase();
 
-        // Espera a que Firebase restaure la sesión antes de consultar la base de datos
         const usuario = await new Promise(resolve => {
           const cancelar = authMod.onAuthStateChanged(auth, u => { cancelar(); resolve(u); });
         });
@@ -1607,11 +1636,10 @@ document.addEventListener("DOMContentLoaded", () => {
         resultado.forEach(doc => {
           const d = doc.data();
           const rol = String(d.rol || d.role || '').toLowerCase();
-          if (rol === 'admin' || rol === 'administrador') return; // las cuentas de admin no cuentan como estudiantes
+          if (rol === 'admin' || rol === 'administrador') return; 
           lista.push(estudianteDesdeDoc(doc));
         });
 
-        // Más recientes primero
         lista.sort((a, b) => (b.fecha ? b.fecha.getTime() : 0) - (a.fecha ? a.fecha.getTime() : 0));
         students = lista;
 
@@ -1620,7 +1648,6 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarPagina();
       } catch (error) {
         console.error('Error al cargar estudiantes desde Firestore:', error);
-        // Sin permiso (no es administrador) -> fuera del panel
         if (error && error.code === 'permission-denied') {
           window.location.replace('mis-cursos.html');
           return;
