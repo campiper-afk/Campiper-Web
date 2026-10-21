@@ -210,6 +210,58 @@ function initSesion() {
   });
 }
 
+/* ---------- Botón "Panel admin" (solo para administradores) ----------
+   No guardamos la lista de correos en el navegador. Para saber si la cuenta
+   es admin hacemos la misma lectura que hace admin.html (traer 1 documento de
+   "users"): las reglas de Firestore la permiten solo a los administradores.
+   Si Firestore responde "permission-denied", la persona no es admin. */
+const CACHE_ADMIN = 'campiper_es_admin';
+
+async function consultarEsAdmin(uid) {
+  const { db, fsMod } = await cargarFirebase();
+  try {
+    await fsMod.getDocs(fsMod.query(fsMod.collection(db, 'users'), fsMod.limit(1)));
+    return true;
+  } catch (error) {
+    if (error && error.code === 'permission-denied') return false;
+    throw error;
+  }
+}
+
+async function initBotonAdmin() {
+  const botones = document.querySelectorAll('[data-admin-link]');
+  if (botones.length === 0 || !FIREBASE_ACTIVO) return;
+
+  const mostrar = visible => botones.forEach(b => { b.hidden = !visible; });
+
+  // Pintado inmediato con el último resultado conocido (evita parpadeo)
+  let cache = null;
+  try { cache = JSON.parse(sessionStorage.getItem(CACHE_ADMIN)); } catch (e) {}
+
+  try {
+    const { auth, authMod } = await cargarFirebase();
+    authMod.onAuthStateChanged(auth, async usuario => {
+      if (!usuario) {
+        try { sessionStorage.removeItem(CACHE_ADMIN); } catch (e) {}
+        mostrar(false);
+        return;
+      }
+      if (cache && cache.uid === usuario.uid) mostrar(cache.admin);
+      try {
+        const admin = await consultarEsAdmin(usuario.uid);
+        cache = { uid: usuario.uid, admin: admin };
+        try { sessionStorage.setItem(CACHE_ADMIN, JSON.stringify(cache)); } catch (e) {}
+        mostrar(admin);
+      } catch (error) {
+        console.error('No se pudo verificar el rol de administrador:', error);
+        mostrar(false);
+      }
+    });
+  } catch (error) {
+    console.error('No se pudo iniciar la verificación de administrador:', error);
+  }
+}
+
 /* ---------- Efectos Reutilizables ---------- */
 const Efectos = {
   revelar() {},
@@ -221,7 +273,7 @@ function inyectarEstilosBase() {
   const estilo = document.createElement('style');
   estilo.id = 'campiper-estilos-base';
   estilo.textContent = `
-    [data-solo][hidden] { display: none !important; }
+    [data-solo][hidden], [data-admin-link][hidden] { display: none !important; }
     .auth-status { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.4; }
     .auth-status[hidden] { display: none; }
     .dashboard-grid[hidden], .empty-courses[hidden], .courses-loading[hidden], .enroll-feedback[hidden] { display: none !important; }
@@ -733,6 +785,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 0. SESIÓN Y ESTILOS BASE
   inyectarEstilosBase();
   initSesion();
+  initBotonAdmin();
 
   // LÓGICA DE LA VENTANA MI PERFIL (MODAL)
   const btnMiPerfil = document.getElementById('btn-mi-perfil');
@@ -1660,36 +1713,5 @@ document.addEventListener("DOMContentLoaded", () => {
     switchView('students');
     cargarEstudiantes();
     renderCourses();
-  }
-});
-// --- INTEGRACIÓN DE CORREO DE BIENVENIDA (Sin alterar Firebase) ---
-document.addEventListener('DOMContentLoaded', () => {
-  const formularioAuth = document.getElementById('auth-form');
-  
-  if (formularioAuth) {
-    formularioAuth.addEventListener('submit', () => {
-      const campoNombreContenedor = document.getElementById('field-name');
-      
-      // Verificamos si el formulario está en modo "Crear cuenta" (el campo nombre no está oculto)
-      if (campoNombreContenedor && campoNombreContenedor.style.display !== 'none') {
-        
-        const nombreIngresado = document.getElementById('name').value;
-        const correoIngresado = document.getElementById('email').value;
-        
-        // Reemplaza esto con tu NUEVA URL de la Aplicación Web de Google
-        const urlGoogleSheets = "https://script.google.com/macros/s/TU_NUEVA_URL_AQUI/exec";
-        
-        // Enviamos los datos en segundo plano a Google Sheets
-        fetch(urlGoogleSheets, {
-          method: 'POST',
-          mode: 'no-cors', // Evita bloqueos de seguridad del navegador
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            nombre: nombreIngresado,
-            email: correoIngresado
-          })
-        }).catch(e => console.log("Copia enviada silenciosamente."));
-      }
-    });
   }
 });
