@@ -17,7 +17,7 @@
       </a>
       <nav aria-label="Área de estudiante">
         <a class="active" href="mis-cursos.html">Mis Cursos</a>
-        <a href="catalogo.html">Catalogo</a>
+        <a href="catalogo.html">Comunidad</a>
         <a href="mailto:soporte@campiper.com">Soporte</a>
       </nav>
       <div class="student-menu">
@@ -45,7 +45,21 @@
         <p>Aquí tienes tu progreso. Sigue así.</p>
       </section>
 
-      <div class="dashboard-grid">
+      <p class="courses-loading" id="courses-loading">Cargando tus cursos…</p>
+
+      <!-- SIN CURSOS: se muestra si el administrador aún no te inscribió -->
+      <section class="empty-courses" id="empty-courses" hidden>
+        <span>
+          <svg aria-hidden="true" fill="none" height="26" viewBox="0 0 24 24" width="26">
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H13v16h4.5A2.5 2.5 0 0 1 20 21V5.5Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+        </span>
+        <h2>Aún no tienes cursos</h2>
+        <p>Cuando tu acceso esté activo, tu curso aparecerá aquí automáticamente.</p>
+        <a class="continue-button" href="index.html#oferta">Ver el curso</a>
+      </section>
+
+      <div class="dashboard-grid" id="courses-dashboard" hidden>
         
         <!-- COLUMNA PRINCIPAL: CURSOS EN PROGRESO -->
         <section class="progress-section">
@@ -54,7 +68,7 @@
               <span>APRENDIZAJE</span>
               <h2>En progreso</h2>
             </div>
-            <small>1 curso activo</small>
+            <small id="courses-count">1 curso activo</small>
           </div>
 
           <article class="active-course-card">
@@ -69,12 +83,12 @@
             <div class="active-course-content">
               <span class="course-category">EDICIÓN DE VIDEO</span>
               <h3>Domina DaVinci Resolve</h3>
-              <p>Módulo 2 en curso</p>
+              <p id="course-status">Listo para empezar</p>
               <div class="progress-meta">
                 <span>Tu progreso</span>
-                <strong>45%</strong>
+                <strong id="course-progress-text">0%</strong>
               </div>
-              <div aria-label="45 por ciento completado" aria-valuemax="100" aria-valuemin="0" aria-valuenow="45" class="progress-bar" role="progressbar">
+              <div aria-label="0 por ciento completado" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar" id="course-progress-bar" role="progressbar">
                 <span></span>
               </div>
               <a class="continue-button" href="leccion.html?leccion=1">
@@ -151,8 +165,8 @@
             </span>
             <strong>Certificado de finalización</strong>
             <p>Completa el 100 % del curso para desbloquear tu certificado oficial.</p>
-            <div><span></span></div>
-            <small>45 % COMPLETADO</small>
+            <div><span id="certificate-progress-bar"></span></div>
+            <small id="certificate-progress-text">0 % COMPLETADO</small>
           </div>
         </aside>
 
