@@ -17,6 +17,10 @@ const FIREBASE_CONFIG = {
 const FIREBASE_VERSION = '10.13.1';
 const FIREBASE_ACTIVO = !String(FIREBASE_CONFIG.apiKey).startsWith('PEGA');
 
+// Curso al que se inscribe manualmente desde el panel de administración.
+// Se guarda en Firestore: users/{uid}.cursos = ['davinci-resolve']
+const CURSO_ID = 'davinci-resolve';
+
 // Carga Firebase dinámicamente cuando hace falta
 let _firebase = null;
 function cargarFirebase() {
@@ -216,6 +220,7 @@ function inyectarEstilosBase() {
     [data-solo][hidden] { display: none !important; }
     .auth-status { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.4; }
     .auth-status[hidden] { display: none; }
+    .dashboard-grid[hidden], .empty-courses[hidden], .courses-loading[hidden], .enroll-feedback[hidden] { display: none !important; }
     .auth-status--error { color: #ff8a8a; }
     input[aria-invalid="true"] { border-color: #ff8a8a !important; }
     .catalog-empty { grid-column: 1 / -1; text-align: center; opacity: 0.85; }
@@ -377,6 +382,67 @@ async function initPrecio() {
     } catch (e) {}
   } catch (error) {
     console.error('No se pudo cargar el precio desde Firestore:', error);
+  }
+}
+
+/* ---------- Mis cursos: el curso aparece solo si el usuario está inscrito ---------- */
+// Escucha users/{uid} en tiempo real: si el admin inscribe al usuario, el curso aparece sin recargar.
+async function initMisCursos() {
+  const panel = document.getElementById('courses-dashboard');
+  if (!panel) return;
+
+  const cargando = document.getElementById('courses-loading');
+  const vacio = document.getElementById('empty-courses');
+  const contador = document.getElementById('courses-count');
+  const estado = document.getElementById('course-status');
+  const porcentaje = document.getElementById('course-progress-text');
+  const barra = document.getElementById('course-progress-bar');
+  const barraInterna = barra ? barra.querySelector('span') : null;
+  const certTexto = document.getElementById('certificate-progress-text');
+  const certBarra = document.getElementById('certificate-progress-bar');
+
+  function mostrar(inscrito, progreso) {
+    if (cargando) cargando.hidden = true;
+    panel.hidden = !inscrito;
+    if (vacio) vacio.hidden = inscrito;
+    if (contador) contador.textContent = inscrito ? '1 curso activo' : '0 cursos';
+    if (!inscrito) return;
+
+    const pct = Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0;
+    if (estado) estado.textContent = pct > 0 ? 'Llevas el ' + pct + ' % del curso' : 'Listo para empezar';
+    if (porcentaje) porcentaje.textContent = pct + '%';
+    if (barra) {
+      barra.setAttribute('aria-valuenow', pct);
+      barra.setAttribute('aria-label', pct + ' por ciento completado');
+    }
+    if (barraInterna) barraInterna.style.width = pct + '%';
+    if (certTexto) certTexto.textContent = pct + ' % COMPLETADO';
+    if (certBarra) certBarra.style.width = pct + '%';
+  }
+
+  // Modo demo (sin Firebase): se conserva el comportamiento anterior
+  if (!FIREBASE_ACTIVO) { mostrar(true, 45); return; }
+
+  try {
+    const { auth, db, authMod, fsMod } = await cargarFirebase();
+
+    // Espera a que Firebase restaure la sesión (si no hay usuario, initSesion redirige a registro.html)
+    const usuario = await new Promise(resolve => {
+      const cancelar = authMod.onAuthStateChanged(auth, u => { cancelar(); resolve(u); });
+    });
+    if (!usuario) return;
+
+    fsMod.onSnapshot(fsMod.doc(db, 'users', usuario.uid), snap => {
+      const datos = snap.exists() ? snap.data() : {};
+      const cursos = Array.isArray(datos.cursos) ? datos.cursos : [];
+      mostrar(cursos.includes(CURSO_ID), Number(datos.progreso != null ? datos.progreso : datos.progress));
+    }, error => {
+      console.error('No se pudo leer la inscripción:', error);
+      if (cargando) { cargando.textContent = 'No pudimos cargar tus cursos. Recarga la página.'; cargando.hidden = false; }
+    });
+  } catch (error) {
+    console.error('Error al cargar Mis cursos:', error);
+    if (cargando) { cargando.textContent = 'No pudimos cargar tus cursos. Recarga la página.'; cargando.hidden = false; }
   }
 }
 
@@ -1007,6 +1073,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 9. LÓGICA DE LA PÁGINA MIS CURSOS (mis-cursos.html)
   if (document.querySelector('.courses-page')) {
+    initMisCursos();
     const resourceBtns = document.querySelectorAll('.btn-resource-dl');
     resourceBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1206,7 +1273,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span></span><strong>${progreso}%</strong>
               </div>
             </td>
-            <td data-label="Estado"><span class="status-pill"><i></i>${escaparHTML(student.status)}</span></td>
+            <td data-label="Estado"><span class="status-pill"><i></i>${escaparHTML(student.status)}</span>${student.inscrito ? '<span class="enrolled-tag">Con curso</span>' : ''}</td>
             <td>
               <button class="icon-action btn-view-student" aria-label="Ver a ${escaparHTML(student.name)}" data-id="${escaparHTML(student.id)}">
                 <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.5" /></g></svg>
@@ -1232,6 +1299,61 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    /* ---------- Inscripción manual (users/{uid}.cursos) ---------- */
+    let estudianteAbierto = null;
+    const btnToggleEnroll = document.getElementById('btn-toggle-enroll');
+    const enrollFeedback = document.getElementById('enroll-feedback');
+
+    function mostrarAvisoInscripcion(mensaje, esError) {
+      if (!enrollFeedback) return;
+      enrollFeedback.textContent = mensaje || '';
+      enrollFeedback.hidden = !mensaje;
+      enrollFeedback.classList.toggle('is-error', !!esError);
+    }
+
+    function pintarInscripcion(student) {
+      const celda = document.getElementById('modal-student-course');
+      if (celda) celda.textContent = student.inscrito ? 'Inscrito en DaVinci Resolve' : 'Sin inscripción';
+      if (btnToggleEnroll) {
+        btnToggleEnroll.disabled = false;
+        btnToggleEnroll.classList.toggle('is-remove', student.inscrito);
+        btnToggleEnroll.querySelector('span').textContent = student.inscrito ? 'Quitar inscripción' : 'Inscribir al curso';
+      }
+      mostrarAvisoInscripcion('');
+    }
+
+    async function cambiarInscripcion(student, inscribir) {
+      const { db, fsMod } = await cargarFirebase();
+      await fsMod.updateDoc(fsMod.doc(db, 'users', student.id), {
+        cursos: inscribir ? fsMod.arrayUnion(CURSO_ID) : fsMod.arrayRemove(CURSO_ID)
+      });
+      student.cursos = student.cursos.filter(c => c !== CURSO_ID).concat(inscribir ? [CURSO_ID] : []);
+      student.inscrito = inscribir;
+    }
+
+    if (btnToggleEnroll) {
+      btnToggleEnroll.addEventListener('click', async () => {
+        if (!estudianteAbierto) return;
+        const estudiante = estudianteAbierto;
+        const inscribir = !estudiante.inscrito;
+        btnToggleEnroll.disabled = true;
+        try {
+          await cambiarInscripcion(estudiante, inscribir);
+          pintarInscripcion(estudiante);
+          mostrarAvisoInscripcion(inscribir
+            ? 'Listo: ' + estudiante.name + ' ya ve el curso en Mis cursos.'
+            : 'Inscripción retirada: el curso ya no aparece en Mis cursos.');
+          renderStudents(studentSearchInput ? studentSearchInput.value : '');
+        } catch (error) {
+          console.error('No se pudo cambiar la inscripción:', error);
+          btnToggleEnroll.disabled = false;
+          mostrarAvisoInscripcion(error && error.code === 'permission-denied'
+            ? 'Firestore rechazó el cambio: revisa las reglas de seguridad.'
+            : 'No se pudo guardar. Inténtalo de nuevo.', true);
+        }
+      });
+    }
+
     function openStudentModal(student) {
       if (!studentModal) return;
       document.getElementById('modal-student-avatar').textContent = student.initials;
@@ -1244,6 +1366,8 @@ document.addEventListener("DOMContentLoaded", () => {
       progEl.style.setProperty('--progress', `${student.progress}%`);
       document.getElementById('modal-student-progress-text').textContent = `${student.progress}%`;
 
+      estudianteAbierto = student;
+      pintarInscripcion(student);
       studentModal.style.display = 'flex';
     }
 
@@ -1411,6 +1535,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const progreso = Number(d.progreso != null ? d.progreso : d.progress);
       const fechaOriginal = d.creadoEn || d.createdAt;
       const fecha = aFecha(fechaOriginal) || fechaDeCuentaAnterior(correo);
+      const cursos = Array.isArray(d.cursos) ? d.cursos : [];
       return {
         id: doc.id,
         initials: nombre.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]/g, '').slice(0, 2).toUpperCase() || '?',
@@ -1419,7 +1544,9 @@ document.addEventListener("DOMContentLoaded", () => {
         fecha: fecha,
         enrolled: typeof fechaOriginal === 'string' && fechaOriginal ? fechaOriginal : formatoFecha(fecha), // si en Firebase es texto, se muestra tal cual
         progress: Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0,
-        status: String(d.estado || d.status || 'Activo')
+        status: String(d.estado || d.status || 'Activo'),
+        cursos: cursos,
+        inscrito: cursos.includes(CURSO_ID)
       };
     }
 
