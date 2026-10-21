@@ -143,49 +143,5 @@
       </main>
     </div>
   </div>
-
-  <script src="js/app.js"></script>
-  <script>
-  // 1. Conectamos con el formulario de tu página
-  const formulario = document.getElementById('formulario-registro');
-
-  // 2. Le decimos qué hacer exactamente cuando alguien presiona "Registrarse"
-  formulario.addEventListener('submit', function(evento) {
-    
-    // ESTO ES VITAL: Evita que la página se recargue en blanco al hacer clic
-    evento.preventDefault(); 
-
-    // 3. Extraemos el texto que el usuario escribió
-    const nombreUsuario = document.getElementById('input-nombre').value;
-    const emailUsuario = document.getElementById('input-email').value;
-
-    // 4. Tu enlace de Apps Script (El que termina en /exec)
-    const urlGoogleSheets = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzcq1UleSFyfT7ZGm_oVKlmsqHp7gc6w5EXBYeCovAooWWIqE6IO_LlOLqLNKXd-gQ/exec/exec";
-
-    // 5. Enviamos el paquete de datos
-    fetch(urlGoogleSheets, {
-      method: 'POST',
-      body: JSON.stringify({
-        nombre: nombreUsuario,
-        email: emailUsuario,
-        curso: "DaVinci Resolve"
-      })
-    })
-    .then(respuesta => respuesta.json())
-    .then(datos => {
-      // 6. Lo que pasa cuando el envío tiene éxito
-      alert("¡Registro exitoso! Revisa tu correo electrónico para comenzar.");
-      formulario.reset(); // Limpia los campos del formulario
-      
-      // Opcional: Redirigir al usuario al catálogo
-      // window.location.href = "mis-cursos.html";
-    })
-    .catch(error => {
-      console.error("Hubo un error al conectar:", error);
-      alert("Error al registrar. Por favor, intenta de nuevo.");
-    });
-
-  });
-</script>
 </body>
 </html>
