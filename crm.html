@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM Campiper - Gestión de Prospectos</title>
+  <!-- Tailwind CSS por CDN (como en tus otros archivos) -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="css/styles.css" />
+  
+  <style>
+    /* Estilos base para simular el tema oscuro de tu administrador */
+    body { background-color: #1a1d24; color: #e5e7eb; font-family: sans-serif; }
+    .sidebar { background-color: #14161a; border-right: 1px solid #2d333b; }
+    .card-dark { background-color: #22262d; border: 1px solid #2d333b; }
+    .input-dark { background-color: #14161a; border: 1px solid #2d333b; color: white; }
+    .input-dark:focus { border-color: #3b82f6; outline: none; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR (Menú lateral de admin) -->
+  <aside class="sidebar w-64 flex flex-col justify-between p-4 hidden md:flex">
+    <div>
+      <div class="mb-8 px-2">
+        <img src="img/campiper-logo.png" alt="Campiper" class="h-8 mb-2">
+        <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Administración</span>
+      </div>
+      <nav class="space-y-2">
+        <a href="#" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Panel de control</a>
+        <a href="#" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Estudiantes</a>
+        <!-- Menú Activo -->
+        <a href="#" class="block px-4 py-2 bg-blue-600/10 text-blue-400 font-medium rounded-lg border border-blue-500/20">CRM Ventas</a>
+        <a href="#" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Cursos</a>
+      </nav>
+    </div>
+    <div class="px-4 py-2 text-sm text-gray-500">
+      Admin: Jean Paul
+    </div>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 flex flex-col h-full relative overflow-hidden">
+    
+    <!-- Header y Controles -->
+    <header class="p-6 border-b border-gray-800 flex justify-between items-end">
+      <div>
+        <h1 class="text-2xl font-bold text-white mb-1">CRM: Seguimiento de clientes</h1>
+        <p class="text-sm text-gray-400">Gestiona prospectos y aumenta tus ventas.</p>
+      </div>
+      <!-- Botones para cambiar de vista -->
+      <div class="flex bg-gray-800 rounded-lg p-1">
+        <button id="btn-embudo" class="px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm" onclick="cambiarVista('embudo')">Embudo</button>
+        <button id="btn-tabla" class="px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white" onclick="cambiarVista('tabla')">Tabla</button>
+      </div>
+    </header>
+
+    <!-- Barra de Filtros -->
+    <div class="p-6 pb-0 flex flex-wrap gap-4 items-center">
+      <input type="text" placeholder="Buscar por nombre..." class="input-dark px-3 py-2 rounded-lg text-sm w-full md:w-64">
+      
+      <select class="input-dark px-3 py-2 rounded-lg text-sm">
+        <option value="">Curso de interés (Todos)</option>
+        <option value="davinci">DaVinci Resolve</option>
+        <option value="premiere">Premiere Pro</option>
+      </select>
+
+      <select class="input-dark px-3 py-2 rounded-lg text-sm">
+        <option value="">Origen (Todos)</option>
+        <option value="instagram">Instagram</option>
+        <option value="web">Sitio Web</option>
+        <option value="youtube">YouTube</option>
+      </select>
+
+      <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium ml-auto">
+        + Nuevo Prospecto
+      </button>
+    </div>
+
+    <!-- ÁREA DE VISTAS (Aquí el JS cargará los datos de Firebase) -->
+    <div class="flex-1 p-6 overflow-hidden flex flex-col">
+      
+      <!-- 1. VISTA EMBUDO (Kanban) -->
+      <div id="vista-embudo" class="flex-1 flex gap-4 overflow-x-auto pb-4">
+        
+        <!-- Columna 1: Nuevo -->
+        <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
+          <div class="p-3 border-b border-gray-800 flex justify-between items-center">
+            <span class="font-semibold text-gray-300 text-sm">Nuevo</span>
+            <span class="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded-full">1</span>
+          </div>
+          <!-- Tarjeta de Contacto (Ejemplo) -->
+          <div class="p-2 space-y-2 overflow-y-auto">
+            <div class="card-dark p-3 rounded-lg shadow-sm">
+              <h3 class="font-medium text-white text-sm">Breiner</h3>
+              <p class="text-xs text-gray-400 mb-2">Interés: DaVinci Resolve</p>
+              
+              <div class="flex gap-2 mt-3">
+                <select class="input-dark text-xs rounded px-1 py-1 w-full" onchange="moverContacto(this)">
+                  <option selected>Nuevo</option>
+                  <option>Contactado</option>
+                  <option>Interesado</option>
+                  <option>Cliente</option>
+                  <option>Perdido</option>
+                </select>
+                <button onclick="abrirModal()" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white" title="Ver detalles y notas">📝</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna 2: Contactado -->
+        <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
+          <div class="p-3 border-b border-gray-800 flex justify-between items-center">
+            <span class="font-semibold text-blue-400 text-sm">Contactado</span>
+            <span class="bg-blue-900/30 text-blue-400 text-xs px-2 py-0.5 rounded-full">0</span>
+          </div>
+          <div class="p-2 space-y-2 overflow-y-auto"></div>
+        </div>
+
+        <!-- Columna 3: Interesado -->
+        <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
+          <div class="p-3 border-b border-gray-800 flex justify-between items-center">
+            <span class="font-semibold text-yellow-400 text-sm">Interesado</span>
+            <span class="bg-yellow-900/30 text-yellow-400 text-xs px-2 py-0.5 rounded-full">0</span>
+          </div>
+          <div class="p-2 space-y-2 overflow-y-auto"></div>
+        </div>
+
+        <!-- Columna 4: Cliente -->
+        <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
+          <div class="p-3 border-b border-gray-800 flex justify-between items-center">
+            <span class="font-semibold text-green-400 text-sm">Cliente</span>
+            <span class="bg-green-900/30 text-green-400 text-xs px-2 py-0.5 rounded-full">0</span>
+          </div>
+          <div class="p-2 space-y-2 overflow-y-auto"></div>
+        </div>
+
+        <!-- Columna 5: Perdido -->
+        <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
+          <div class="p-3 border-b border-gray-800 flex justify-between items-center">
+            <span class="font-semibold text-red-400 text-sm">Perdido</span>
+            <span class="bg-red-900/30 text-red-400 text-xs px-2 py-0.5 rounded-full">0</span>
+          </div>
+          <div class="p-2 space-y-2 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- 2. VISTA TABLA (Oculta por defecto) -->
+      <div id="vista-tabla" class="hidden flex-1 overflow-auto rounded-xl border border-gray-800 bg-[#14161a]">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+            <tr>
+              <th class="px-4 py-3 font-medium">Nombre / Contacto</th>
+              <th class="px-4 py-3 font-medium">Origen</th>
+              <th class="px-4 py-3 font-medium">Curso Interés</th>
+              <th class="px-4 py-3 font-medium">Etapa Actual</th>
+              <th class="px-4 py-3 font-medium">Próxima Acción</th>
+              <th class="px-4 py-3 font-medium text-right">Detalles</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-800">
+            <tr class="hover:bg-gray-800/30 transition-colors">
+              <td class="px-4 py-3">
+                <div class="font-medium text-white">Breiner</div>
+                <div class="text-xs text-gray-500">breiner@gmail.com</div>
+              </td>
+              <td class="px-4 py-3"><span class="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300">Instagram</span></td>
+              <td class="px-4 py-3 text-gray-300">DaVinci Resolve</td>
+              <td class="px-4 py-3"><span class="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded-full">Nuevo</span></td>
+              <td class="px-4 py-3 text-gray-400">23 Oct 2026</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="abrirModal()" class="text-blue-400 hover:text-blue-300 text-xs font-medium">Historial</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL: NOTAS Y SEGUIMIENTO -->
+  <div id="modal-notas" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="card-dark w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- Cabecera del modal -->
+      <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white">Seguimiento de Cliente</h2>
+          <p class="text-sm text-gray-400">Breiner - Interesado en DaVinci</p>
+        </div>
+        <button onclick="cerrarModal()" class="text-gray-400 hover:text-white p-1">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <!-- Cuerpo del modal -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        
+        <!-- Historial de interacción -->
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 mb-3 tracking-wider">HISTORIAL DE NOTAS</h3>
+          <div class="space-y-3">
+            <div class="bg-gray-800/50 p-3 rounded-lg text-sm border border-gray-800">
+              <span class="text-xs text-blue-400 font-bold block mb-1">21 Oct 2026 - Instagram</span>
+              <p class="text-gray-300">Preguntó por el precio del curso. Le envié la información general, quedó de revisar con su tarjeta.</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-gray-800">
+
+        <!-- Formulario nueva nota -->
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 mb-3 tracking-wider">AGREGAR INTERACCIÓN</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Canal de contacto</label>
+              <select class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                <option>WhatsApp</option>
+                <option>Instagram DM</option>
+                <option>Correo Electrónico</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Nota de la conversación</label>
+              <textarea class="input-dark w-full px-3 py-2 rounded-lg text-sm h-20 resize-none" placeholder="Escribe los detalles de la charla..."></textarea>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Fecha próxima acción (Agendar)</label>
+              <input type="date" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pie del modal -->
+      <div class="p-4 border-t border-gray-800 flex justify-end gap-3 bg-[#14161a]">
+        <button onclick="cerrarModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white">Cancelar</button>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Guardar Interacción</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT BÁSICO PARA LA INTERFAZ -->
+  <script>
+    // Alternar entre Embudo y Tabla
+    function cambiarVista(vista) {
+      const btnEmbudo = document.getElementById('btn-embudo');
+      const btnTabla = document.getElementById('btn-tabla');
+      const divEmbudo = document.getElementById('vista-embudo');
+      const divTabla = document.getElementById('vista-tabla');
+
+      if (vista === 'embudo') {
+        divEmbudo.classList.remove('hidden');
+        divTabla.classList.add('hidden');
+        btnEmbudo.className = "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm";
+        btnTabla.className = "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
+      } else {
+        divEmbudo.classList.add('hidden');
+        divTabla.classList.remove('hidden');
+        btnTabla.className = "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm";
+        btnEmbudo.className = "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
+      }
+    }
+
+    // Funciones del Modal
+    function abrirModal() {
+      document.getElementById('modal-notas').classList.remove('hidden');
+      document.getElementById('modal-notas').classList.add('flex');
+    }
+    
+    function cerrarModal() {
+      document.getElementById('modal-notas').classList.add('hidden');
+      document.getElementById('modal-notas').classList.remove('flex');
+    }
+
+    // Simulación de mover contacto
+    function moverContacto(selectElement) {
+      console.log("El contacto cambiará a la etapa: ", selectElement.value);
+      // Aquí el JS de Firebase de Breiner actualizará el doc y recargará las columnas
+    }
+  </script>
+</body>
+</html>
