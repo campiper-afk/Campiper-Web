@@ -22,7 +22,7 @@
       </nav>
       <div class="student-menu">
         <a href="index.html" data-salir>Salir</a>
-        <span aria-label="Tu perfil" data-usuario-inicial></span>
+        <span id="btn-mi-perfil" aria-label="Tu perfil" data-usuario-inicial style="cursor: pointer;" title="Ver mi perfil"></span>
       </div>
     </header>
 
@@ -47,7 +47,7 @@
 
       <p class="courses-loading" id="courses-loading">Cargando tus cursos…</p>
 
-      <!-- SIN CURSOS: se muestra si el administrador aún no te inscribió -->
+      <!-- SIN CURSOS: se muestra si no hay inscripción -->
       <section class="empty-courses" id="empty-courses" hidden>
         <span>
           <svg aria-hidden="true" fill="none" height="26" viewBox="0 0 24 24" width="26">
@@ -172,6 +172,27 @@
 
       </div>
     </main>
+
+    <!-- MODAL MI PERFIL -->
+    <div class="admin-modal-backdrop" id="profile-modal-backdrop" style="display: none;">
+      <section aria-labelledby="profile-modal-title" aria-modal="true" class="admin-modal profile-modal" role="dialog" style="max-width: 420px;">
+        <button class="modal-close" id="btn-close-profile-modal" aria-label="Cerrar">
+          <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" /></svg>
+        </button>
+        <div class="modal-avatar" id="profile-avatar">--</div>
+        <span>MI PERFIL</span>
+        <h2 id="profile-modal-title" style="margin-bottom: 2px;">Cargando...</h2>
+        <p id="profile-modal-email">cargando@correo.com</p>
+        
+        <div class="student-modal-grid">
+          <div class="student-modal-wide">
+            <small>HISTORIAL DE COMPRAS</small>
+            <strong id="profile-modal-courses">DaVinci Resolve desde cero</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+
   </div>
 
   <script src="js/app.js"></script>
