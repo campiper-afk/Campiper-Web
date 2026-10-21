@@ -68,9 +68,12 @@ function cuentasFirebase() {
       const { db, fsMod } = await cargarFirebase();
       const ref = fsMod.doc(db, 'users', usuario.uid);
       const datos = Object.assign({ nombre: nombre || '', correo: usuario.email || '' }, extra || {});
-      // Si el perfil aún no tiene fecha de inscripción, guarda la fecha real de creación de la cuenta (la de Authentication)
+      
+      // 1. Consultar si el perfil ya existe en la base de datos
+      const existente = await fsMod.getDoc(ref);
+
+      // Si el perfil aún no tiene fecha de inscripción, guarda la fecha real
       if (!datos.creadoEn) {
-        const existente = await fsMod.getDoc(ref);
         if (!existente.exists() || !existente.data().creadoEn) {
           const creacion = usuario.metadata && usuario.metadata.creationTime ? new Date(usuario.metadata.creationTime) : null;
           datos.creadoEn = creacion && !isNaN(creacion.getTime())
@@ -78,6 +81,12 @@ function cuentasFirebase() {
             : fsMod.serverTimestamp();
         }
       }
+
+      // 2. ACCESO AUTOMÁTICO: Si es un usuario nuevo, le agregamos el curso por defecto
+      if (!existente.exists()) {
+        datos.cursos = [CURSO_ID];
+      }
+
       await fsMod.setDoc(ref, datos, { merge: true });
     } catch (error) {
       console.error('No se pudo guardar el perfil en Firestore:', error);
