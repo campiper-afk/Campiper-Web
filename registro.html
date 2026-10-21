@@ -3,152 +3,145 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catálogo de Módulos - Campiper</title>
+  <title>Acceso / Registro - Campiper</title>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div class="catalog-page">
-    
-    <!-- HEADER -->
-    <header class="catalog-nav">
-      <a class="brand" href="index.html" aria-label="Campiper, volver al inicio">
-        <img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="img/campiper-logo.png" />
-      </a>
-      <a class="catalog-login" href="registro.html">Iniciar Sesión</a>
-    </header>
-
-    <main class="catalog-main">
-      <a class="back-link" href="index.html">
-        <span>
-          <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
-            <path d="m14 6-6 6 6 6M8 12h11" />
-          </svg>
-        </span>
+  <div class="auth-page">
+    <div class="auth-shell">
+      <a class="auth-back" href="index.html">
+        <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+          <path d="m14 6-6 6 6 6M8 12h11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+        </svg>
         Volver al inicio
       </a>
 
-      <!-- HERO CATÁLOGO -->
-      <section class="catalog-hero">
-        <div>
-          <span class="catalog-kicker">TU RUTA DE APRENDIZAJE</span>
-          <h1>Contenido del <em>curso.</em></h1>
-          <p>Descubre todo lo que nuestro curso tiene para ofrecer, desde tu primer corte hasta la exportación final.</p>
-        </div>
-        <aside class="course-summary" aria-label="Resumen del curso">
-          <div><strong>32</strong><span>LECCIONES</span></div><i aria-hidden="true"></i>
-          <div><strong>5h+</strong><span>DE CONTENIDO</span></div><i aria-hidden="true"></i>
-          <div><strong>4</strong><span>MÓDULOS</span></div>
-        </aside>
-      </section>
-
-      <!-- GRID DE MÓDULOS -->
-      <section class="course-grid" aria-label="Módulos del curso">
-        
-        <!-- Módulo 1 -->
-        <article class="course-card" id="modulo-01">
-          <div class="course-image">
-            <img alt="Monitor mostrando una línea de tiempo de edición de video" src="https://images.unsplash.com/photo-1614963326505-843868e1d83a?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=1200" />
-            <span class="module-pill">Primer módulo</span>
-            <span class="module-index">01</span>
-            <div class="image-overlay"></div>
+      <main class="auth-layout">
+        <!-- SECCIÓN IZQUIERDA: PRESENTACIÓN -->
+        <section class="auth-intro">
+          <a class="brand auth-brand" href="index.html" aria-label="Campiper, volver al inicio">
+            <img alt="Campiper Logo" class="brand-logo" src="img/campiper-logo.png" />
+          </a>
+          <div>
+            <span class="auth-kicker">APRENDE A TU RITMO</span>
+            <h1>Tu curso de DaVinci Resolve te espera.</h1>
+            <p>Entra para retomar tu progreso o crea una cuenta y empieza desde el primer módulo.</p>
           </div>
-          <div class="course-card-body">
-            <div class="module-meta">
-              <span>6 lecciones</span><i></i><span>48 min</span>
+          <ul>
+            <li>
+              <span>
+                <svg aria-hidden="true" fill="none" height="15" viewBox="0 0 24 24" width="15">
+                  <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </span>
+              Tu avance queda guardado en cada lección
+            </li>
+            <li>
+              <span>
+                <svg aria-hidden="true" fill="none" height="15" viewBox="0 0 24 24" width="15">
+                  <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </span>
+              Clips de práctica y atajos de teclado para descargar
+            </li>
+            <li>
+              <span>
+                <svg aria-hidden="true" fill="none" height="15" viewBox="0 0 24 24" width="15">
+                  <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </span>
+              Certificado al completar el 100 % del curso
+            </li>
+          </ul>
+        </section>
+
+        <!-- SECCIÓN DERECHA: FORMULARIO INTERACTIVO -->
+        <section class="auth-card">
+          <!-- PESTAÑAS -->
+          <div class="auth-tabs" role="tablist" aria-label="Acceso a Campiper">
+            <button id="tab-login" class="active" role="tab" aria-selected="true" type="button">
+              Iniciar sesión
+            </button>
+            <button id="tab-register" role="tab" aria-selected="false" type="button">
+              Crear cuenta
+            </button>
+          </div>
+
+          <!-- ENCABEZADO DINÁMICO -->
+          <div class="auth-card-heading">
+            <span id="auth-kicker-text">QUÉ BUENO VERTE</span>
+            <h2 id="auth-title-text">Bienvenido de nuevo</h2>
+            <p id="auth-subtitle-text">Entra con tu correo y contraseña.</p>
+          </div>
+
+          <!-- FORMULARIO -->
+          <form id="auth-form">
+            <!-- Campo Nombre (solo en registro) -->
+            <label class="auth-field" id="field-name" style="display: none;" htmlFor="name">
+              <span>Nombre</span>
+              <input autoComplete="name" id="name" placeholder="Tu nombre" type="text" />
+            </label>
+
+            <!-- Campo Correo -->
+            <label class="auth-field" htmlFor="email">
+              <span>Correo electrónico</span>
+              <input autoComplete="email" id="email" placeholder="nombre@correo.com" required type="email" />
+            </label>
+
+            <!-- Campo Contraseña con toggle -->
+            <div class="password-label">
+              <span>Contraseña</span>
+              <button id="btn-forgot-password" type="button">¿Olvidaste tu contraseña?</button>
             </div>
-            <h2>Primeros pasos en DaVinci Resolve</h2>
-            <p>Este módulo introductorio establece las bases para comenzar a utilizar el software, guiándote a través del proceso de instalación y su configuración inicial.</p>
-            <a class="detail-link" href="detalle.html?modulo=01">
-              Ver detalle 
-              <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-            </a>
-          </div>
-        </article>
+            <label class="auth-field" htmlFor="password">
+              <div class="password-input">
+                <input autoComplete="current-password" id="password" minlength="8" required type="password" />
+                <button id="btn-toggle-password" aria-label="Mostrar contraseña" type="button">
+                  <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16">
+                    <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                      <circle cx="12" cy="12" r="2.5" />
+                    </g>
+                  </svg>
+                  <span id="toggle-password-text">Mostrar</span>
+                </button>
+              </div>
+              <small id="password-helper" style="display: none;">Mínimo 8 caracteres.</small>
+            </label>
 
-        <!-- Módulo 2 -->
-        <article class="course-card" id="modulo-02">
-          <div class="course-image">
-            <img alt="Estación de trabajo para producción audiovisual" src="https://images.unsplash.com/photo-1574717025058-2f8737d2e2b7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=1200" />
-            <span class="module-pill">Segundo módulo</span>
-            <span class="module-index">02</span>
-            <div class="image-overlay"></div>
-          </div>
-          <div class="course-card-body">
-            <div class="module-meta">
-              <span>9 lecciones</span><i></i><span>1 h 35 min</span>
-            </div>
-            <h2>Edición básica de video</h2>
-            <p>En esta sección aprenderás a dominar la edición básica manejando cortes, transiciones y la línea de tiempo.</p>
-            <a class="detail-link" href="detalle.html?modulo=02">
-              Ver detalle 
-              <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-            </a>
-          </div>
-        </article>
+            <!-- Campo Repetir Contraseña (solo en registro) -->
+            <label class="auth-field" id="field-password-repeat" style="display: none;" htmlFor="password-repeat">
+              <span>Repite la contraseña</span>
+              <div class="password-input">
+                <input autoComplete="new-password" id="password-repeat" minlength="8" type="password" />
+              </div>
+            </label>
 
-        <!-- Módulo 3 -->
-        <article class="course-card" id="modulo-03">
-          <div class="course-image">
-            <img alt="Monitor profesional en una estación de edición" src="https://images.unsplash.com/photo-1618329027137-a520b57c6606?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=1200" />
-            <span class="module-pill">Tercer módulo</span>
-            <span class="module-index">03</span>
-            <div class="image-overlay"></div>
-          </div>
-          <div class="course-card-body">
-            <div class="module-meta">
-              <span>8 lecciones</span><i></i><span>1 h 20 min</span>
-            </div>
-            <h2>Introducción al color grading</h2>
-            <p>Explora la rueda de color primaria para distinguir entre corrección de color y estilización, dominando también el uso de scopes como el waveform.</p>
-            <a class="detail-link" href="detalle.html?modulo=03">
-              Ver detalle 
-              <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-            </a>
-          </div>
-        </article>
+            <button class="auth-submit" id="auth-submit-btn" type="submit">
+              Iniciar sesión
+            </button>
+          </form>
 
-        <!-- Módulo 4 -->
-        <article class="course-card" id="modulo-04">
-          <div class="course-image">
-            <img alt="Estudio oscuro con software profesional de edición de audio" src="https://images.unsplash.com/photo-1781865202550-157c6bc03561?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=1200" />
-            <span class="module-pill">Cuarto módulo</span>
-            <span class="module-index">04</span>
-            <div class="image-overlay"></div>
-          </div>
-          <div class="course-card-body">
-            <div class="module-meta">
-              <span>9 lecciones</span><i></i><span>1 h 27 min</span>
-            </div>
-            <h2>Audio y entrega final</h2>
-            <p>Aplica la mezcla básica de audio en Fairlight y configura los ajustes de exportación para optimizar tus videos en redes sociales.</p>
-            <a class="detail-link" href="detalle.html?modulo=04">
-              Ver detalle 
-              <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-            </a>
-          </div>
-        </article>
+          <div class="auth-divider"><span>o</span></div>
 
-      </section>
+          <button class="google-button" id="btn-google" type="button">
+            <svg aria-hidden="true" height="18" viewBox="0 0 24 24" width="18">
+              <path d="M21.6 12.23c0-.71-.06-1.4-.19-2.07H12v3.91h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.4Z" fill="#4285F4" />
+              <path d="M12 22c2.7 0 4.98-.9 6.63-2.42l-3.24-2.54c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.62A10 10 0 0 0 12 22Z" fill="#34A853" />
+              <path d="M6.39 13.87A6 6 0 0 1 6.08 12c0-.65.11-1.28.31-1.87V7.51H3.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.49l3.34-2.62Z" fill="#FBBC05" />
+              <path d="M12 6c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.95 5.51l3.34 2.62C7.18 7.76 9.39 6 12 6Z" fill="#EA4335" />
+            </svg>
+            Entrar con Google
+          </button>
 
-      <!-- LLAMADO A LA ACCIÓN -->
-      <section class="catalog-cta">
-        <div>
-          <span class="catalog-kicker">TU PRÓXIMO PASO</span>
-          <h2>¿Listo para empezar a crear?</h2>
-        </div>
-        <a href="index.html#oferta">
-          Inscríbete al curso 
-          <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-        </a>
-      </section>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="catalog-footer">
-      <span>© 2026 Campiper. Todos los derechos reservados.</span>
-      <span>Aprende a editar. Cuenta mejores historias.</span>
-    </footer>
+          <p class="auth-switch">
+            <span id="switch-label">¿Aún no tienes cuenta?</span>
+            <button id="btn-switch-mode" type="button">Crear cuenta</button>
+          </p>
+        </section>
+      </main>
+    </div>
   </div>
 
   <script src="js/app.js"></script>
