@@ -1360,7 +1360,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /* ---------- Estudiantes desde Firestore (colección "users") ---------- */
-    const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
     function aFecha(valor) {
       if (!valor) return null;
@@ -1369,9 +1369,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return isNaN(fecha.getTime()) ? null : fecha;
     }
 
+    // Mismo formato que muestra la consola de Firebase: 20 de octubre de 2026, 2:39:53 p.m. UTC-5
     function formatoFecha(fecha) {
       if (!fecha) return '—';
-      return String(fecha.getDate()).padStart(2, '0') + ' ' + MESES[fecha.getMonth()] + ' ' + fecha.getFullYear();
+      const horas24 = fecha.getHours();
+      const horas = horas24 % 12 || 12;
+      const meridiano = horas24 < 12 ? 'a.m.' : 'p.m.';
+      const dos = n => String(n).padStart(2, '0');
+
+      const minutosZona = -fecha.getTimezoneOffset();
+      const absZona = Math.abs(minutosZona);
+      const zona = 'UTC' + (minutosZona < 0 ? '-' : '+') + Math.floor(absZona / 60) + (absZona % 60 ? ':' + dos(absZona % 60) : '');
+
+      return fecha.getDate() + ' de ' + MESES[fecha.getMonth()] + ' de ' + fecha.getFullYear() + ', ' +
+        horas + ':' + dos(fecha.getMinutes()) + ':' + dos(fecha.getSeconds()) + ' ' + meridiano + ' ' + zona;
     }
 
     function estudianteDesdeDoc(doc) {
@@ -1379,14 +1390,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const correo = String(d.correo || d.email || '').trim();
       const nombre = String(d.nombre || d.name || '').trim() || nombreDesdeCorreo(correo) || 'Sin nombre';
       const progreso = Number(d.progreso != null ? d.progreso : d.progress);
-      const fecha = aFecha(d.creadoEn || d.createdAt);
+      const fechaOriginal = d.creadoEn || d.createdAt;
+      const fecha = aFecha(fechaOriginal);
       return {
         id: doc.id,
         initials: nombre.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]/g, '').slice(0, 2).toUpperCase() || '?',
         name: nombre,
         email: correo,
         fecha: fecha,
-        enrolled: formatoFecha(fecha),
+        enrolled: typeof fechaOriginal === 'string' ? fechaOriginal : formatoFecha(fecha), // si en Firebase es texto, se muestra tal cual
         progress: Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0,
         status: String(d.estado || d.status || 'Activo')
       };
