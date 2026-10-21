@@ -62,8 +62,14 @@ function cuentasFirebase() {
   async function guardarPerfil(usuario, nombre, extra) {
     try {
       const { db, fsMod } = await cargarFirebase();
+      const ref = fsMod.doc(db, 'users', usuario.uid);
       const datos = Object.assign({ nombre: nombre || '', correo: usuario.email || '' }, extra || {});
-      await fsMod.setDoc(fsMod.doc(db, 'users', usuario.uid), datos, { merge: true });
+      // Primera vez que se guarda este perfil (p. ej. con Google): registra la fecha de inscripción
+      if (!datos.creadoEn) {
+        const existente = await fsMod.getDoc(ref);
+        if (!existente.exists()) datos.creadoEn = fsMod.serverTimestamp();
+      }
+      await fsMod.setDoc(ref, datos, { merge: true });
     } catch (error) {
       console.error('No se pudo guardar el perfil en Firestore:', error);
     }
@@ -1018,18 +1024,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 12. LÓGICA DE LA PÁGINA DE ADMINISTRACIÓN (admin.html)
   if (document.querySelector('.admin-page')) {
-    const students = [
-      { initials: "LO", name: "Loli123_gg", email: "lolhhh3345@gmail.com", enrolled: "18 feb 2026", progress: 84, status: "Activo" },
-      { initials: "BR", name: "Brecaos", email: "breinercamargo16@gmail.com", enrolled: "16 feb 2026", progress: 45, status: "Activo" },
-      { initials: "HA", name: "Hablemos de Países", email: "hablemosdepaises@gmail.com", enrolled: "12 feb 2026", progress: 72, status: "Activo" },
-      { initials: "BU", name: "Bunuelo Usa", email: "bunuelo@gmail.com", enrolled: "08 feb 2026", progress: 31, status: "Activo" },
-      { initials: "AN", name: "Andrea Diseño", email: "tortello.design@gmail.com", enrolled: "02 feb 2026", progress: 96, status: "Activo" },
-      { initials: "JE", name: "Jean Delatorre", email: "delatorrenjeanpierre@gmail.com", enrolled: "28 ene 2026", progress: 58, status: "Activo" },
-      { initials: "AC", name: "Activos y Hábitos", email: "activosyhabitos@gmail.com", enrolled: "22 ene 2026", progress: 19, status: "Activo" },
-      { initials: "OR", name: "Orlando", email: "orjacace19@gmail.com", enrolled: "15 ene 2026", progress: 67, status: "Activo" },
-      { initials: "LA", name: "Lannsi", email: "chelsemipertumoren@gmail.com", enrolled: "09 ene 2026", progress: 42, status: "Activo" },
-      { initials: "PI", name: "Piero Rado Hilario", email: "pierohir@gmail.com", enrolled: "04 ene 2026", progress: 88, status: "Activo" }
-    ];
+    let students = []; // Se llena desde Firestore (colección "users")
 
     let courses = [
       { id: "01", title: "Primeros pasos en DaVinci Resolve", category: "Edición", level: "Primer módulo", lessons: 6, students: 1200 },
@@ -1182,7 +1177,7 @@ document.addEventListener("DOMContentLoaded", () => {
       studentTableBody.innerHTML = "";
       const term = filterTerm.trim().toLowerCase();
 
-      const filtered = students.filter(s => 
+      const filtered = students.filter(s =>
         s.name.toLowerCase().includes(term) || s.email.toLowerCase().includes(term)
       );
 
@@ -1191,23 +1186,24 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         if (studentEmptyState) studentEmptyState.style.display = 'none';
         filtered.forEach(student => {
+          const progreso = Number(student.progress) || 0;
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>
               <div class="student-cell">
-                <span>${student.initials}</span>
-                <div><strong>${student.name}</strong><small>${student.email}</small></div>
+                <span>${escaparHTML(student.initials)}</span>
+                <div><strong>${escaparHTML(student.name)}</strong><small>${escaparHTML(student.email)}</small></div>
               </div>
             </td>
-            <td data-label="Inscripción">${student.enrolled}</td>
+            <td data-label="Inscripción">${escaparHTML(student.enrolled)}</td>
             <td data-label="Progreso">
-              <div class="admin-progress" role="progressbar" aria-valuenow="${student.progress}" aria-valuemin="0" aria-valuemax="100" style="--progress: ${student.progress}%;">
-                <span></span><strong>${student.progress}%</strong>
+              <div class="admin-progress" role="progressbar" aria-valuenow="${progreso}" aria-valuemin="0" aria-valuemax="100" style="--progress: ${progreso}%;">
+                <span></span><strong>${progreso}%</strong>
               </div>
             </td>
-            <td data-label="Estado"><span class="status-pill"><i />${student.status}</span></td>
+            <td data-label="Estado"><span class="status-pill"><i></i>${escaparHTML(student.status)}</span></td>
             <td>
-              <button class="icon-action btn-view-student" aria-label="Ver a ${student.name}" data-email="${student.email}">
+              <button class="icon-action btn-view-student" aria-label="Ver a ${escaparHTML(student.name)}" data-id="${escaparHTML(student.id)}">
                 <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.5" /></g></svg>
               </button>
             </td>
@@ -1217,8 +1213,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.querySelectorAll('.btn-view-student').forEach(btn => {
           btn.addEventListener('click', () => {
-            const email = btn.getAttribute('data-email');
-            const student = students.find(s => s.email === email);
+            const id = btn.getAttribute('data-id');
+            const student = students.find(s => s.id === id);
             if (student) openStudentModal(student);
           });
         });
@@ -1363,8 +1359,121 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    /* ---------- Estudiantes desde Firestore (colección "users") ---------- */
+    const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    function aFecha(valor) {
+      if (!valor) return null;
+      if (typeof valor.toDate === 'function') return valor.toDate();
+      const fecha = new Date(valor);
+      return isNaN(fecha.getTime()) ? null : fecha;
+    }
+
+    function formatoFecha(fecha) {
+      if (!fecha) return '—';
+      return String(fecha.getDate()).padStart(2, '0') + ' ' + MESES[fecha.getMonth()] + ' ' + fecha.getFullYear();
+    }
+
+    function estudianteDesdeDoc(doc) {
+      const d = doc.data();
+      const correo = String(d.correo || d.email || '').trim();
+      const nombre = String(d.nombre || d.name || '').trim() || nombreDesdeCorreo(correo) || 'Sin nombre';
+      const progreso = Number(d.progreso != null ? d.progreso : d.progress);
+      const fecha = aFecha(d.creadoEn || d.createdAt);
+      return {
+        id: doc.id,
+        initials: nombre.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]/g, '').slice(0, 2).toUpperCase() || '?',
+        name: nombre,
+        email: correo,
+        fecha: fecha,
+        enrolled: formatoFecha(fecha),
+        progress: Number.isFinite(progreso) ? Math.max(0, Math.min(100, Math.round(progreso))) : 0,
+        status: String(d.estado || d.status || 'Activo')
+      };
+    }
+
+    function mensajeEnTabla(texto) {
+      if (!studentTableBody) return;
+      if (studentEmptyState) studentEmptyState.style.display = 'none';
+      studentTableBody.innerHTML = '';
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 5;
+      td.style.cssText = 'padding: 32px 20px; text-align: center; color: #a6a8b0;';
+      td.textContent = texto;
+      tr.appendChild(td);
+      studentTableBody.appendChild(tr);
+    }
+
+    function actualizarEstadisticas() {
+      const total = students.length;
+      const activos = students.filter(s => s.status.toLowerCase() === 'activo').length;
+      const promedio = total ? Math.round(students.reduce((suma, s) => suma + s.progress, 0) / total) : 0;
+      const ahora = new Date();
+      const nuevos = students.filter(s => s.fecha && s.fecha.getMonth() === ahora.getMonth() && s.fecha.getFullYear() === ahora.getFullYear()).length;
+
+      const poner = (id, texto) => { const el = document.getElementById(id); if (el) el.textContent = texto; };
+      poner('stat-students-count', total);
+      poner('stat-students-new', '+' + nuevos + ' este mes');
+      poner('stat-avg-progress', promedio + '%');
+      poner('stat-active-percent', (total ? Math.round(activos / total * 100) : 0) + '%');
+      poner('stat-active-accounts', activos + ' de ' + total + ' estudiantes');
+    }
+
+    async function cargarEstudiantes() {
+      // La página queda oculta hasta confirmar que la persona tiene permiso de administrador
+      document.body.style.visibility = 'hidden';
+      const mostrarPagina = () => { document.body.style.visibility = ''; };
+
+      mensajeEnTabla('Cargando estudiantes…');
+      if (!FIREBASE_ACTIVO) {
+        mensajeEnTabla('Firebase no está configurado.');
+        mostrarPagina();
+        return;
+      }
+
+      try {
+        const { auth, db, authMod, fsMod } = await cargarFirebase();
+
+        // Espera a que Firebase restaure la sesión antes de consultar la base de datos
+        const usuario = await new Promise(resolve => {
+          const cancelar = authMod.onAuthStateChanged(auth, u => { cancelar(); resolve(u); });
+        });
+        if (!usuario) {
+          window.location.replace('registro.html');
+          return;
+        }
+
+        const resultado = await fsMod.getDocs(fsMod.collection(db, 'users'));
+        const lista = [];
+        resultado.forEach(doc => {
+          const d = doc.data();
+          const rol = String(d.rol || d.role || '').toLowerCase();
+          if (rol === 'admin' || rol === 'administrador') return; // las cuentas de admin no cuentan como estudiantes
+          lista.push(estudianteDesdeDoc(doc));
+        });
+
+        // Más recientes primero
+        lista.sort((a, b) => (b.fecha ? b.fecha.getTime() : 0) - (a.fecha ? a.fecha.getTime() : 0));
+        students = lista;
+
+        actualizarEstadisticas();
+        renderStudents(studentSearchInput ? studentSearchInput.value : '');
+        mostrarPagina();
+      } catch (error) {
+        console.error('Error al cargar estudiantes desde Firestore:', error);
+        // Sin permiso (no es administrador) -> fuera del panel
+        if (error && error.code === 'permission-denied') {
+          window.location.replace('mis-cursos.html');
+          return;
+        }
+        mensajeEnTabla('No pudimos cargar a los estudiantes. Revisa la consola.');
+        mostrarPagina();
+      }
+    }
+
     switchView('students');
-    renderStudents();
+    cargarEstudiantes();
     renderCourses();
   }
 });
