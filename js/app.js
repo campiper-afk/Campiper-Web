@@ -80,7 +80,7 @@ function cuentasFirebase() {
       }
 
       // [CAMBIO PAGOS] Ya no se inscribe automáticamente: el curso lo activa el pago
-      // (Cloud Function webhookMercadoPago) o un administrador desde admin.html.
+      // (verificación con Apps Script, ver apps-script/Codigo.gs) o un administrador desde admin.html.
 
       await fsMod.setDoc(ref, datos, { merge: true });
     } catch (error) {
@@ -262,10 +262,25 @@ async function initBotonAdmin() {
 
 /* ---------- [CAMBIO PAGOS] Compra del curso (botones con data-comprar) ----------
    Sin sesión → registro. Con sesión → pasarela de Mercado Pago.
-   PAGOS_API = URL de la Cloud Function "crearPago" (functions/index.js).
+   PAGOS_API = URL de la aplicación web de Google Apps Script
+   (apps-script/Codigo.gs), tipo https://script.google.com/macros/s/XXXX/exec
    Mientras esté vacía se usa el enlace fijo de data-pago-fallback
    (se puede pagar, pero el curso NO se activa solo). */
 const PAGOS_API = '';
+
+// El ID token va en el cuerpo (Apps Script no lee cabeceras personalizadas).
+// Sin Content-Type el navegador envía text/plain y no exige preflight CORS.
+async function llamarPagos(accion, usuario) {
+  const idToken = await usuario.getIdToken();
+  const respuesta = await fetch(PAGOS_API, {
+    method: 'POST',
+    body: JSON.stringify({ accion: accion, idToken: idToken })
+  });
+  let datos = {};
+  try { datos = JSON.parse(await respuesta.text()); } catch (e) {}
+  if (!datos.ok) throw new Error(datos.error || 'No se pudo completar la acción');
+  return datos;
+}
 
 function esperarUsuarioFirebase() {
   return cargarFirebase().then(({ auth, authMod }) => new Promise(resolve => {
@@ -294,15 +309,7 @@ function initCompra() {
           return;
         }
 
-        const token = await usuario.getIdToken();
-        const respuesta = await fetch(PAGOS_API, {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: '{}'
-        });
-        const datos = await respuesta.json().catch(() => ({}));
-        if (!respuesta.ok) throw new Error(datos.error || ('HTTP ' + respuesta.status));
-
+        const datos = await llamarPagos('crear', usuario);
         window.location.href = datos.yaInscrito ? 'mis-cursos.html' : datos.url;
       } catch (error) {
         console.error('No se pudo iniciar el pago:', error);
@@ -519,7 +526,7 @@ async function initMisCursos() {
         ? 'Tu pago está pendiente de confirmación. Cuando se apruebe, tu curso aparecerá aquí automáticamente.'
         : 'Estamos confirmando tu pago. Tu curso aparecerá aquí en unos segundos…';
     } else if (!inscrito && retornoPago === 'ok') {
-      aviso = 'Si ya pagaste y aún no ves tu curso, escríbenos a soporte@campiper.com antes de volver a pagar.';
+      aviso = 'Si ya pagaste y aún no ves tu curso, pulsa «Ya pagué, verificar mi pago» o escríbenos a soporte@campiper.com antes de volver a pagar.';
     }
     if (cargando) { cargando.textContent = aviso; cargando.hidden = !aviso; }
     panel.hidden = !inscrito;
@@ -543,6 +550,63 @@ async function initMisCursos() {
     setTimeout(() => { esperaTerminada = true; mostrar(ultimoEstado.inscrito, ultimoEstado.progreso); }, 45000);
   }
 
+  // [CAMBIO PAGOS] Sin servidor propio: le preguntamos al Apps Script si ya hay un pago aprobado
+  // de esta cuenta. Si lo hay, él activa el curso en Firestore y onSnapshot actualiza la pantalla.
+  let verificando = false;
+  async function verificarPago() {
+    if (!PAGOS_API || !FIREBASE_ACTIVO || verificando) return null;
+    verificando = true;
+    try {
+      const usuario = await esperarUsuarioFirebase();
+      if (!usuario) return null;
+      const datos = await llamarPagos('verificar', usuario);
+      return datos.estado; // 'activo' | 'pendiente' | 'ninguno'
+    } catch (error) {
+      console.error('No se pudo verificar el pago:', error);
+      return null;
+    } finally {
+      verificando = false;
+    }
+  }
+
+  let verificacionIniciada = false;
+  function iniciarVerificacion() {
+    if (verificacionIniciada) return;
+    verificacionIniciada = true;
+    verificarPago(); // una vez al entrar sin curso
+    if (retornoPago === 'ok') { // recién pagado: reintentar mientras Mercado Pago lo registra
+      const inicio = Date.now();
+      const temporizador = setInterval(() => {
+        if (ultimoEstado.inscrito || Date.now() - inicio > 45000) { clearInterval(temporizador); return; }
+        verificarPago();
+      }, 7000);
+    }
+  }
+
+  const btnVerificar = document.getElementById('btn-verificar-pago');
+  const avisoVerificar = document.getElementById('verificar-pago-aviso');
+  function avisarVerificacion(texto) {
+    if (!avisoVerificar) return;
+    avisoVerificar.textContent = texto;
+    avisoVerificar.hidden = !texto;
+  }
+  if (btnVerificar) {
+    btnVerificar.addEventListener('click', async () => {
+      if (!PAGOS_API) {
+        avisarVerificacion('La verificación automática aún no está activa. Escríbenos a soporte@campiper.com.');
+        return;
+      }
+      btnVerificar.disabled = true;
+      avisarVerificacion('Verificando tu pago…');
+      const estado = await verificarPago();
+      btnVerificar.disabled = false;
+      if (estado === 'activo') avisarVerificacion('¡Pago confirmado! Tu curso se está activando…');
+      else if (estado === 'pendiente') avisarVerificacion('Tu pago aún está pendiente de confirmación. Cuando se apruebe, vuelve a pulsar este botón.');
+      else if (estado === 'ninguno') avisarVerificacion('No encontramos un pago aprobado en tu cuenta. Si acabas de pagar, espera un minuto e inténtalo de nuevo.');
+      else avisarVerificacion('No pudimos verificar el pago. Inténtalo de nuevo en unos segundos.');
+    });
+  }
+
   if (!FIREBASE_ACTIVO) { mostrar(true, 45); return; }
 
   try {
@@ -557,6 +621,7 @@ async function initMisCursos() {
       const datos = snap.exists() ? snap.data() : {};
       const cursos = Array.isArray(datos.cursos) ? datos.cursos : [];
       mostrar(cursos.includes(CURSO_ID), Number(datos.progreso != null ? datos.progreso : datos.progress));
+      if (!cursos.includes(CURSO_ID)) iniciarVerificacion(); // [CAMBIO PAGOS]
     }, error => {
       console.error('No se pudo leer la inscripción:', error);
       if (cargando) { cargando.textContent = 'No pudimos cargar tus cursos. Recarga la página.'; cargando.hidden = false; }
