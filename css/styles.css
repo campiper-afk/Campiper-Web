@@ -1376,6 +1376,10 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   margin-top: 22px;
 }
 
+.detail-bottom:has(.detail-price-card[hidden]) {
+  grid-template-columns: 1fr;
+}
+
 .instructor-card,
 .detail-price-card {
   background: #292a31;
