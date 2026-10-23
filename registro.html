@@ -111,29 +111,34 @@
               <small id="password-helper" style="display: none;">Mínimo 8 caracteres.</small>
             </label>
 
-            <!-- Campo Repetir Contraseña (solo en registro) -->
-            <label class="auth-field" id="field-password-repeat" style="display: none;" htmlFor="password-repeat">
-              <span>Repite la contraseña</span>
-                <div class="password-input">
-                  <input autoComplete="new-password" id="password-repeat" minlength="8" type="password" />
-                  <button id="btn-toggle-password-repeat" aria-label="Mostrar contraseña" type="button">
-                    <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16">
-                      <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
-                        <circle cx="12" cy="12" r="2.5" />
-                      </g>
-                    </svg>
-                    <span id="toggle-password-repeat-text">Mostrar</span>
-                  </button>
-                </div>
-            </label>
-<!-- Campo Repetir Contraseña (solo en registro) -->
-            <label class="auth-field" id="field-password-repeat" style="display: none;" htmlFor="password-repeat">
-              <span>Repite la contraseña</span>
-              <div class="password-input">
-                <input autoComplete="new-password" id="password-repeat" minlength="8" type="password" />
-              </div>
-            </label>
+<!-- Campo Repetir Contraseña con botón funcional (solo en registro) -->
+<label class="auth-field" id="field-password-repeat" style="display: none;" htmlFor="password-repeat">
+  <span>Repite la contraseña</span>
+  <div class="password-input">
+    <input autoComplete="new-password" id="password-repeat" minlength="8" type="password" />
+    
+    <button id="btn-toggle-password-repeat" aria-label="Mostrar contraseña" type="button" onclick="
+      const input = document.getElementById('password-repeat');
+      const texto = document.getElementById('toggle-password-repeat-text');
+      if (input.type === 'password') {
+        input.type = 'text';
+        texto.innerText = 'Ocultar';
+      } else {
+        input.type = 'password';
+        texto.innerText = 'Mostrar';
+      }
+    ">
+      <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16">
+        <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+          <circle cx="12" cy="12" r="2.5" />
+        </g>
+      </svg>
+      <span id="toggle-password-repeat-text">Mostrar</span>
+    </button>
+
+  </div>
+</label>
 
             <!-- NUEVO: Casilla de Términos y Condiciones (solo en registro) -->
             <div id="field-terms" style="display: none; margin-top: 12px; margin-bottom: 20px;">
