@@ -266,7 +266,7 @@ async function initBotonAdmin() {
    (apps-script/Codigo.gs), tipo https://script.google.com/macros/s/XXXX/exec
    Mientras esté vacía se usa el enlace fijo de data-pago-fallback
    (se puede pagar, pero el curso NO se activa solo). */
-const PAGOS_API = '';
+const PAGOS_API = 'https://script.google.com/macros/s/AKfycbyWBoY4N3z98bf6WS0uIDbR2oG3RcVbAGlOqmPVGnGyQJSVuEpebliDLtJSYuqLZQwZ6Q/exec';
 
 // El ID token va en el cuerpo (Apps Script no lee cabeceras personalizadas).
 // Sin Content-Type el navegador envía text/plain y no exige preflight CORS.
