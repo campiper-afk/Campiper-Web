@@ -207,24 +207,47 @@
     </div>
   </div>
 
-  <!-- LÓGICA JAVASCRIPT DEL CRM -->
-  <script>
-    // 1. BASE DE DATOS LOCAL (Simulada)
-    let prospectos = [
-      { id: 1, nombre: "Breiner", email: "breiner@gmail.com", curso: "DaVinci Resolve", origen: "Instagram", etapa: "nuevo", notas: [{fecha: "23 Oct 2026", canal: "Instagram DM", texto: "Preguntó por el precio del curso."}] },
-      { id: 2, nombre: "Isabella", email: "isabella@correo.com", curso: "Premiere Pro", origen: "Sitio Web", etapa: "contactado", notas: [] },
-      { id: 3, nombre: "Carlos", email: "", curso: "DaVinci Resolve", origen: "YouTube", etapa: "cliente", notas: [{fecha: "22 Oct 2026", canal: "Correo", texto: "Realizó el pago y accedió al curso."}] }
-    ];
+ <!-- LÓGICA JAVASCRIPT CONECTADA A FIREBASE -->
+  <script type="module">
+    // 1. Importar las herramientas de Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // PEGA TU CONFIGURACIÓN AQUÍ (La sacas de la consola de Firebase > Configuración del proyecto)
+    const firebaseConfig = {
+  apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+  authDomain: "campiper-7414d.firebaseapp.com",
+  projectId: "campiper-7414d",
+  storageBucket: "campiper-7414d.firebasestorage.app",
+  messagingSenderId: "984212599762",
+  appId: "1:984212599762:web:0a0299a4350edcb2818e0b",
+  measurementId: "G-JP0QHCRVM5"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let prospectos = [];
     let prospectoActivoId = null;
 
-    // 2. RENDERIZADO PRINCIPAL (Aplica Filtros y Dibuja)
-    function renderUI() {
-      // Leer filtros
+    // 2. DESCARGAR DATOS DE FIREBASE (Lectura)
+    async function cargarDatos() {
+      const querySnapshot = await getDocs(collection(db, "contactos_crm"));
+      prospectos = []; // Vaciamos el arreglo local
+      querySnapshot.forEach((documento) => {
+        // Guardamos el ID real de Firebase junto con los datos
+        prospectos.push({ id: documento.id, ...documento.data() });
+      });
+      window.renderUI(); // Dibujamos la interfaz
+    }
+
+    // 3. RENDERIZADO PRINCIPAL (Igual que antes)
+    window.renderUI = function() {
       const txt = document.getElementById('filtro-texto').value.toLowerCase();
       const curso = document.getElementById('filtro-curso').value;
       const origen = document.getElementById('filtro-origen').value;
 
-      // Filtrar la base de datos
       const filtrados = prospectos.filter(p => {
         const matchTxt = p.nombre.toLowerCase().includes(txt) || p.email.toLowerCase().includes(txt);
         const matchCurso = curso === "" || p.curso === curso;
@@ -236,50 +259,45 @@
       renderTabla(filtrados);
     }
 
-    // 3. DIBUJAR EMBUDO (Kanban)
+    // 4. DIBUJAR EMBUDO (Kanban)
     function renderKanban(datos) {
       const etapas = ['nuevo', 'contactado', 'interesado', 'cliente', 'perdido'];
       
-      // Limpiar columnas
       etapas.forEach(e => {
         document.getElementById(`col-${e}`).innerHTML = '';
         document.getElementById(`count-${e}`).innerText = '0';
       });
 
-      // Dibujar tarjetas
       datos.forEach(p => {
         const col = document.getElementById(`col-${p.etapa}`);
         if(!col) return;
         
-        // Actualizar contador
-        const counter = document.getElementById(`count-${p.etapa}`);
-        counter.innerText = parseInt(counter.innerText) + 1;
+        document.getElementById(`count-${p.etapa}`).innerText = parseInt(document.getElementById(`count-${p.etapa}`).innerText) + 1;
 
-        // Construir Tarjeta
+        // Fíjate que el ID ahora es un string (el ID alfanumérico de Firebase), por eso va entre comillas en el onclick: '${p.id}'
         col.innerHTML += `
           <div class="card-dark p-3 rounded-lg shadow-sm">
             <h3 class="font-medium text-white text-sm">${p.nombre}</h3>
             <p class="text-xs text-gray-400 mb-2">Interés: ${p.curso}</p>
             <div class="flex gap-2 mt-3">
-              <select class="input-dark text-xs rounded px-1 py-1 w-full" onchange="cambiarEtapa(${p.id}, this.value)">
+              <select class="input-dark text-xs rounded px-1 py-1 w-full" onchange="cambiarEtapa('${p.id}', this.value)">
                 <option value="nuevo" ${p.etapa === 'nuevo' ? 'selected' : ''}>Nuevo</option>
                 <option value="contactado" ${p.etapa === 'contactado' ? 'selected' : ''}>Contactado</option>
                 <option value="interesado" ${p.etapa === 'interesado' ? 'selected' : ''}>Interesado</option>
                 <option value="cliente" ${p.etapa === 'cliente' ? 'selected' : ''}>Cliente</option>
                 <option value="perdido" ${p.etapa === 'perdido' ? 'selected' : ''}>Perdido</option>
               </select>
-              <button onclick="abrirModalNotas(${p.id})" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white transition" title="Ver Notas">📝</button>
+              <button onclick="abrirModalNotas('${p.id}')" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white transition" title="Ver Notas">📝</button>
             </div>
           </div>
         `;
       });
     }
 
-    // 4. DIBUJAR TABLA
+    // 5. DIBUJAR TABLA
     function renderTabla(datos) {
       const tbody = document.getElementById('tabla-body');
       tbody.innerHTML = '';
-      
       datos.forEach(p => {
         tbody.innerHTML += `
           <tr class="hover:bg-gray-800/30 transition-colors">
@@ -291,92 +309,107 @@
             <td class="px-4 py-3 text-gray-300">${p.curso}</td>
             <td class="px-4 py-3"><span class="uppercase tracking-wider text-[10px] font-bold bg-gray-800 text-gray-300 px-2 py-1 rounded-full">${p.etapa}</span></td>
             <td class="px-4 py-3 text-right">
-              <button onclick="abrirModalNotas(${p.id})" class="text-blue-400 hover:text-blue-300 text-xs font-medium">Ver Detalles</button>
+              <button onclick="abrirModalNotas('${p.id}')" class="text-blue-400 hover:text-blue-300 text-xs font-medium">Ver Detalles</button>
             </td>
           </tr>
         `;
       });
     }
 
-    // 5. ACCIONES DIRECTAS
-    function cambiarEtapa(id, nuevaEtapa) {
-      const prospecto = prospectos.find(p => p.id === id);
-      if(prospecto) prospecto.etapa = nuevaEtapa;
-      renderUI();
+    // 6. CREAR PROSPECTO EN FIREBASE (addDoc)
+    window.guardarProspecto = async function() {
+      const nombre = document.getElementById('nuevo-nombre').value;
+      if(!nombre) return alert('El nombre es obligatorio');
+      
+      const nuevoCliente = {
+        nombre: nombre,
+        email: document.getElementById('nuevo-email').value,
+        curso: document.getElementById('nuevo-curso').value,
+        origen: document.getElementById('nuevo-origen').value,
+        etapa: 'nuevo', 
+        notas: [] // Empieza con el historial vacío
+      };
+
+      // Guardamos en Firebase
+      await addDoc(collection(db, "contactos_crm"), nuevoCliente);
+      
+      cerrarModalNuevo();
+      cargarDatos(); // Volvemos a descargar para actualizar la pantalla
     }
 
-    function cambiarVista(vista) {
+    // 7. ACTUALIZAR ETAPA EN FIREBASE (updateDoc)
+    window.cambiarEtapa = async function(id, nuevaEtapa) {
+      const clienteRef = doc(db, "contactos_crm", id);
+      
+      // Actualizamos solo el campo "etapa" de ese cliente específico
+      await updateDoc(clienteRef, {
+        etapa: nuevaEtapa
+      });
+      
+      cargarDatos(); // Recargamos para que la tarjeta salte a la otra columna
+    }
+
+    // 8. GUARDAR NUEVA NOTA EN FIREBASE (arrayUnion)
+    window.guardarNota = async function() {
+      const texto = document.getElementById('nota-texto').value;
+      if(!texto) return;
+      
+      const hoy = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+      const nuevaNota = { fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto };
+      
+      const clienteRef = doc(db, "contactos_crm", prospectoActivoId);
+      
+      // arrayUnion añade la nueva nota al final de la lista sin borrar las anteriores
+      await updateDoc(clienteRef, {
+        notas: arrayUnion(nuevaNota)
+      });
+      
+      document.getElementById('nota-texto').value = '';
+      cerrarModalNotas();
+      cargarDatos();
+    }
+
+    // Funciones de la interfaz (Toggles y Modales)
+    window.cambiarVista = function(vista) {
       document.getElementById('vista-embudo').classList.toggle('hidden', vista !== 'embudo');
       document.getElementById('vista-tabla').classList.toggle('hidden', vista !== 'tabla');
       document.getElementById('btn-embudo').className = vista === 'embudo' ? "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm" : "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
       document.getElementById('btn-tabla').className = vista === 'tabla' ? "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm" : "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
     }
 
-    // 6. MODAL: NUEVO PROSPECTO
-    function abrirModalNuevo() { document.getElementById('modal-nuevo').classList.replace('hidden', 'flex'); }
-    function cerrarModalNuevo() { 
+    window.abrirModalNuevo = function() { document.getElementById('modal-nuevo').classList.replace('hidden', 'flex'); }
+    window.cerrarModalNuevo = function() { 
       document.getElementById('modal-nuevo').classList.replace('flex', 'hidden'); 
       document.getElementById('nuevo-nombre').value = '';
       document.getElementById('nuevo-email').value = '';
     }
     
-    function guardarProspecto() {
-      const nombre = document.getElementById('nuevo-nombre').value;
-      if(!nombre) return alert('El nombre es obligatorio');
-      prospectos.push({
-        id: Date.now(), nombre: nombre,
-        email: document.getElementById('nuevo-email').value,
-        curso: document.getElementById('nuevo-curso').value,
-        origen: document.getElementById('nuevo-origen').value,
-        etapa: 'nuevo', notas: []
-      });
-      cerrarModalNuevo();
-      renderUI();
-    }
-
-    // 7. MODAL: NOTAS Y SEGUIMIENTO
-    function abrirModalNotas(id) {
+    window.abrirModalNotas = function(id) {
       prospectoActivoId = id;
       const p = prospectos.find(x => x.id === id);
       document.getElementById('modal-cliente-info').innerText = `${p.nombre} - Interesado en ${p.curso}`;
-      dibujarHistorial(p.notas);
+      
+      const contenedor = document.getElementById('historial-contenedor');
+      if(!p.notas || p.notas.length === 0) {
+        contenedor.innerHTML = '<p class="text-sm text-gray-500 italic">No hay notas registradas.</p>';
+      } else {
+        contenedor.innerHTML = p.notas.map(n => `
+          <div class="bg-gray-800/50 p-3 rounded-lg text-sm border border-gray-800">
+            <span class="text-xs text-blue-400 font-bold block mb-1">${n.fecha} - ${n.canal}</span>
+            <p class="text-gray-300">${n.texto}</p>
+          </div>
+        `).join('');
+      }
       document.getElementById('modal-notas').classList.replace('hidden', 'flex');
     }
 
-    function cerrarModalNotas() {
+    window.cerrarModalNotas = function() {
       document.getElementById('modal-notas').classList.replace('flex', 'hidden');
       prospectoActivoId = null;
     }
 
-    function dibujarHistorial(notas) {
-      const contenedor = document.getElementById('historial-contenedor');
-      if(notas.length === 0) {
-        contenedor.innerHTML = '<p class="text-sm text-gray-500 italic">No hay notas registradas.</p>';
-        return;
-      }
-      contenedor.innerHTML = notas.map(n => `
-        <div class="bg-gray-800/50 p-3 rounded-lg text-sm border border-gray-800">
-          <span class="text-xs text-blue-400 font-bold block mb-1">${n.fecha} - ${n.canal}</span>
-          <p class="text-gray-300">${n.texto}</p>
-        </div>
-      `).join('');
-    }
-
-    function guardarNota() {
-      const texto = document.getElementById('nota-texto').value;
-      if(!texto) return;
-      const p = prospectos.find(x => x.id === prospectoActivoId);
-      const hoy = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-      p.notas.push({ fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto });
-      
-      document.getElementById('nota-texto').value = ''; // Limpiar textarea
-      dibujarHistorial(p.notas); // Recargar solo el historial en el modal
-    }
-
-    // Inicializar al cargar
-    renderUI();
+    // Inicializar al abrir la página: Descarga los datos de Firebase de inmediato
+    cargarDatos();
   </script>
-</body>
-</html>
 </body>
 </html>
