@@ -320,6 +320,59 @@ function initCompra() {
   });
 }
 
+/* ---------- [CAMBIO INSCRITO] Index: qué ve quien ya pagó el curso ----------
+   Oculta la oferta (precio y cuenta regresiva) y convierte el botón
+   "Empezar el curso" en "Continuar el curso", que lleva a leccion.html. */
+const CACHE_INSCRITO = 'campiper_inscrito';
+
+function aplicarEstadoInscrito(inscrito) {
+  document.querySelectorAll('[data-oferta]').forEach(el => { el.hidden = inscrito; });
+  const boton = document.getElementById('btn-oferta');
+  if (boton) {
+    boton.dataset.inscrito = inscrito ? 'true' : 'false';
+    const texto = document.getElementById('btn-oferta-texto');
+    if (texto) texto.textContent = inscrito ? 'Continuar el curso' : 'Empezar el curso';
+  }
+}
+
+async function initAccesoCurso() {
+  if (!document.getElementById('btn-oferta') && !document.querySelector('[data-oferta]')) return;
+  if (!FIREBASE_ACTIVO) return;
+
+  // Pintado inmediato con el último resultado conocido (evita parpadeo)
+  const guardada = Sesion.obtener();
+  try {
+    const cache = JSON.parse(localStorage.getItem(CACHE_INSCRITO));
+    if (cache && guardada && cache.correo === String(guardada.correo || '').toLowerCase()) {
+      aplicarEstadoInscrito(!!cache.inscrito);
+    }
+  } catch (e) {}
+
+  try {
+    const { auth, db, authMod, fsMod } = await cargarFirebase();
+    authMod.onAuthStateChanged(auth, async usuario => {
+      if (!usuario) {
+        try { localStorage.removeItem(CACHE_INSCRITO); } catch (e) {}
+        aplicarEstadoInscrito(false);
+        return;
+      }
+      try {
+        const doc = await fsMod.getDoc(fsMod.doc(db, 'users', usuario.uid));
+        const cursos = doc.exists() && Array.isArray(doc.data().cursos) ? doc.data().cursos : [];
+        const inscrito = cursos.includes(CURSO_ID);
+        try {
+          localStorage.setItem(CACHE_INSCRITO, JSON.stringify({ correo: String(usuario.email || '').toLowerCase(), inscrito: inscrito }));
+        } catch (e) {}
+        aplicarEstadoInscrito(inscrito);
+      } catch (error) {
+        console.error('No se pudo comprobar la inscripción:', error);
+      }
+    });
+  } catch (error) {
+    console.error('No se pudo iniciar la comprobación de inscripción:', error);
+  }
+}
+
 /* ---------- Efectos Reutilizables ---------- */
 const Efectos = {
   revelar() {},
@@ -331,7 +384,7 @@ function inyectarEstilosBase() {
   const estilo = document.createElement('style');
   estilo.id = 'campiper-estilos-base';
   estilo.textContent = `
-    [data-solo][hidden], [data-admin-link][hidden] { display: none !important; }
+    [data-solo][hidden], [data-admin-link][hidden], [data-oferta][hidden] { display: none !important; }
     [data-comprar][aria-busy="true"] { opacity: 0.6; pointer-events: none; }
     .auth-status { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.4; }
     .auth-status[hidden] { display: none; }
@@ -923,6 +976,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initSesion();
   initBotonAdmin();
   initCompra(); // [CAMBIO PAGOS]
+  initAccesoCurso(); // [CAMBIO INSCRITO]
 
   // LÓGICA DE LA VENTANA MI PERFIL (MODAL)
   const btnMiPerfil = document.getElementById('btn-mi-perfil');
@@ -1093,6 +1147,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnOferta = document.getElementById('btn-oferta');
   if (btnOferta) {
     btnOferta.addEventListener('click', () => {
+      // [CAMBIO INSCRITO] Quien ya pagó va directo a la lección
+      if (btnOferta.dataset.inscrito === 'true') { window.location.href = 'leccion.html?leccion=1'; return; }
       document.querySelector('#oferta')?.scrollIntoView({ behavior: "smooth" });
     });
   }
