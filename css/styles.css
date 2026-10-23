@@ -2229,8 +2229,8 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
     font-size: 34px;
   }
   .welcome-icon {
-    left: 232px;
-    top: 35px;
+  left: 232px;
+  top: 35px;
   }
   .active-course-card {
     grid-template-columns: 1fr;
