@@ -4,23 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CRM Campiper - Gestión de Prospectos</title>
-  <!-- Tailwind CSS por CDN (como en tus otros archivos) -->
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <link rel="icon" href="img/Letra C.png" type="image/png" />
   <link rel="stylesheet" href="css/styles.css" />
   
   <style>
-    /* Estilos base para simular el tema oscuro de tu administrador */
     body { background-color: #1a1d24; color: #e5e7eb; font-family: sans-serif; }
     .sidebar { background-color: #14161a; border-right: 1px solid #2d333b; }
     .card-dark { background-color: #22262d; border: 1px solid #2d333b; }
     .input-dark { background-color: #14161a; border: 1px solid #2d333b; color: white; }
     .input-dark:focus { border-color: #3b82f6; outline: none; }
+    
+    /* Scrollbar minimalista para las columnas */
+    .col-scroll::-webkit-scrollbar { width: 4px; }
+    .col-scroll::-webkit-scrollbar-track { background: transparent; }
+    .col-scroll::-webkit-scrollbar-thumb { background: #2d333b; border-radius: 4px; }
   </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-  <!-- SIDEBAR (Menú lateral de admin) -->
+  <!-- SIDEBAR -->
   <aside class="sidebar w-64 flex flex-col justify-between p-4 hidden md:flex">
     <div>
       <div class="mb-8 px-2">
@@ -28,28 +31,24 @@
         <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Administración</span>
       </div>
       <nav class="space-y-2">
-        <a href="#" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Panel de control</a>
+        <a href="admin.html" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Panel de control</a>
         <a href="#" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Estudiantes</a>
-        <!-- Menú Activo -->
-        <a href="#" class="block px-4 py-2 bg-blue-600/10 text-blue-400 font-medium rounded-lg border border-blue-500/20">CRM Ventas</a>
+        <a href="crm.html" class="block px-4 py-2 bg-blue-600/10 text-blue-400 font-medium rounded-lg border border-blue-500/20">CRM Ventas</a>
         <a href="#" class="block px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg">Cursos</a>
       </nav>
     </div>
-    <div class="px-4 py-2 text-sm text-gray-500">
-      Admin: Jean Paul
-    </div>
+    <div class="px-4 py-2 text-sm text-gray-500">Admin: Jean Paul</div>
   </aside>
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 flex flex-col h-full relative overflow-hidden">
     
-    <!-- Header y Controles -->
+    <!-- Header y Toggle -->
     <header class="p-6 border-b border-gray-800 flex justify-between items-end">
       <div>
         <h1 class="text-2xl font-bold text-white mb-1">CRM: Seguimiento de clientes</h1>
         <p class="text-sm text-gray-400">Gestiona prospectos y aumenta tus ventas.</p>
       </div>
-      <!-- Botones para cambiar de vista -->
       <div class="flex bg-gray-800 rounded-lg p-1">
         <button id="btn-embudo" class="px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm" onclick="cambiarVista('embudo')">Embudo</button>
         <button id="btn-tabla" class="px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white" onclick="cambiarVista('tabla')">Tabla</button>
@@ -58,122 +57,87 @@
 
     <!-- Barra de Filtros -->
     <div class="p-6 pb-0 flex flex-wrap gap-4 items-center">
-      <input type="text" placeholder="Buscar por nombre..." class="input-dark px-3 py-2 rounded-lg text-sm w-full md:w-64">
+      <input type="text" id="filtro-texto" oninput="renderUI()" placeholder="Buscar por nombre..." class="input-dark px-3 py-2 rounded-lg text-sm w-full md:w-64">
       
-      <select class="input-dark px-3 py-2 rounded-lg text-sm">
+      <select id="filtro-curso" onchange="renderUI()" class="input-dark px-3 py-2 rounded-lg text-sm">
         <option value="">Curso de interés (Todos)</option>
-        <option value="davinci">DaVinci Resolve</option>
-        <option value="premiere">Premiere Pro</option>
+        <option value="DaVinci Resolve">DaVinci Resolve</option>
+        <option value="Premiere Pro">Premiere Pro</option>
       </select>
 
-      <select class="input-dark px-3 py-2 rounded-lg text-sm">
+      <select id="filtro-origen" onchange="renderUI()" class="input-dark px-3 py-2 rounded-lg text-sm">
         <option value="">Origen (Todos)</option>
-        <option value="instagram">Instagram</option>
-        <option value="web">Sitio Web</option>
-        <option value="youtube">YouTube</option>
+        <option value="Instagram">Instagram</option>
+        <option value="Sitio Web">Sitio Web</option>
+        <option value="YouTube">YouTube</option>
       </select>
 
-      <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium ml-auto">
+      <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium ml-auto transition">
         + Nuevo Prospecto
       </button>
     </div>
 
-    <!-- ÁREA DE VISTAS (Aquí el JS cargará los datos de Firebase) -->
+    <!-- ÁREA DE VISTAS -->
     <div class="flex-1 p-6 overflow-hidden flex flex-col">
       
-      <!-- 1. VISTA EMBUDO (Kanban) -->
+      <!-- VISTA EMBUDO (Kanban) -->
       <div id="vista-embudo" class="flex-1 flex gap-4 overflow-x-auto pb-4">
-        
-        <!-- Columna 1: Nuevo -->
+        <!-- Columna: Nuevo -->
         <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
           <div class="p-3 border-b border-gray-800 flex justify-between items-center">
             <span class="font-semibold text-gray-300 text-sm">Nuevo</span>
-            <span class="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded-full">1</span>
+            <span id="count-nuevo" class="bg-gray-800 text-gray-400 text-xs px-2 py-0.5 rounded-full">0</span>
           </div>
-          <!-- Tarjeta de Contacto (Ejemplo) -->
-          <div class="p-2 space-y-2 overflow-y-auto">
-            <div class="card-dark p-3 rounded-lg shadow-sm">
-              <h3 class="font-medium text-white text-sm">Breiner</h3>
-              <p class="text-xs text-gray-400 mb-2">Interés: DaVinci Resolve</p>
-              
-              <div class="flex gap-2 mt-3">
-                <select class="input-dark text-xs rounded px-1 py-1 w-full" onchange="moverContacto(this)">
-                  <option selected>Nuevo</option>
-                  <option>Contactado</option>
-                  <option>Interesado</option>
-                  <option>Cliente</option>
-                  <option>Perdido</option>
-                </select>
-                <button onclick="abrirModal()" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white" title="Ver detalles y notas">📝</button>
-              </div>
-            </div>
-          </div>
+          <div id="col-nuevo" class="p-2 space-y-2 overflow-y-auto col-scroll h-full"></div>
         </div>
-
-        <!-- Columna 2: Contactado -->
+        <!-- Columna: Contactado -->
         <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
           <div class="p-3 border-b border-gray-800 flex justify-between items-center">
             <span class="font-semibold text-blue-400 text-sm">Contactado</span>
-            <span class="bg-blue-900/30 text-blue-400 text-xs px-2 py-0.5 rounded-full">0</span>
+            <span id="count-contactado" class="bg-blue-900/30 text-blue-400 text-xs px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div class="p-2 space-y-2 overflow-y-auto"></div>
+          <div id="col-contactado" class="p-2 space-y-2 overflow-y-auto col-scroll h-full"></div>
         </div>
-
-        <!-- Columna 3: Interesado -->
+        <!-- Columna: Interesado -->
         <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
           <div class="p-3 border-b border-gray-800 flex justify-between items-center">
             <span class="font-semibold text-yellow-400 text-sm">Interesado</span>
-            <span class="bg-yellow-900/30 text-yellow-400 text-xs px-2 py-0.5 rounded-full">0</span>
+            <span id="count-interesado" class="bg-yellow-900/30 text-yellow-400 text-xs px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div class="p-2 space-y-2 overflow-y-auto"></div>
+          <div id="col-interesado" class="p-2 space-y-2 overflow-y-auto col-scroll h-full"></div>
         </div>
-
-        <!-- Columna 4: Cliente -->
+        <!-- Columna: Cliente -->
         <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
           <div class="p-3 border-b border-gray-800 flex justify-between items-center">
             <span class="font-semibold text-green-400 text-sm">Cliente</span>
-            <span class="bg-green-900/30 text-green-400 text-xs px-2 py-0.5 rounded-full">0</span>
+            <span id="count-cliente" class="bg-green-900/30 text-green-400 text-xs px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div class="p-2 space-y-2 overflow-y-auto"></div>
+          <div id="col-cliente" class="p-2 space-y-2 overflow-y-auto col-scroll h-full"></div>
         </div>
-
-        <!-- Columna 5: Perdido -->
+        <!-- Columna: Perdido -->
         <div class="w-72 flex-shrink-0 flex flex-col bg-[#14161a] rounded-xl border border-gray-800">
           <div class="p-3 border-b border-gray-800 flex justify-between items-center">
             <span class="font-semibold text-red-400 text-sm">Perdido</span>
-            <span class="bg-red-900/30 text-red-400 text-xs px-2 py-0.5 rounded-full">0</span>
+            <span id="count-perdido" class="bg-red-900/30 text-red-400 text-xs px-2 py-0.5 rounded-full">0</span>
           </div>
-          <div class="p-2 space-y-2 overflow-y-auto"></div>
+          <div id="col-perdido" class="p-2 space-y-2 overflow-y-auto col-scroll h-full"></div>
         </div>
       </div>
 
-      <!-- 2. VISTA TABLA (Oculta por defecto) -->
+      <!-- VISTA TABLA -->
       <div id="vista-tabla" class="hidden flex-1 overflow-auto rounded-xl border border-gray-800 bg-[#14161a]">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800">
+        <table class="w-full text-left text-sm whitespace-nowrap">
+          <thead class="bg-gray-800/50 text-gray-400 border-b border-gray-800 sticky top-0">
             <tr>
               <th class="px-4 py-3 font-medium">Nombre / Contacto</th>
               <th class="px-4 py-3 font-medium">Origen</th>
               <th class="px-4 py-3 font-medium">Curso Interés</th>
               <th class="px-4 py-3 font-medium">Etapa Actual</th>
-              <th class="px-4 py-3 font-medium">Próxima Acción</th>
               <th class="px-4 py-3 font-medium text-right">Detalles</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-800">
-            <tr class="hover:bg-gray-800/30 transition-colors">
-              <td class="px-4 py-3">
-                <div class="font-medium text-white">Breiner</div>
-                <div class="text-xs text-gray-500">breiner@gmail.com</div>
-              </td>
-              <td class="px-4 py-3"><span class="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300">Instagram</span></td>
-              <td class="px-4 py-3 text-gray-300">DaVinci Resolve</td>
-              <td class="px-4 py-3"><span class="bg-gray-800 text-gray-300 text-xs px-2 py-1 rounded-full">Nuevo</span></td>
-              <td class="px-4 py-3 text-gray-400">23 Oct 2026</td>
-              <td class="px-4 py-3 text-right">
-                <button onclick="abrirModal()" class="text-blue-400 hover:text-blue-300 text-xs font-medium">Historial</button>
-              </td>
-            </tr>
+          <tbody id="tabla-body" class="divide-y divide-gray-800">
+            <!-- Filas generadas por JS -->
           </tbody>
         </table>
       </div>
@@ -181,108 +145,240 @@
     </div>
   </main>
 
-  <!-- MODAL: NOTAS Y SEGUIMIENTO -->
-  <div id="modal-notas" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
-    <div class="card-dark w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      
-      <!-- Cabecera del modal -->
-      <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center">
-        <div>
-          <h2 class="text-lg font-bold text-white">Seguimiento de Cliente</h2>
-          <p class="text-sm text-gray-400">Breiner - Interesado en DaVinci</p>
-        </div>
-        <button onclick="cerrarModal()" class="text-gray-400 hover:text-white p-1">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
+  <!-- MODAL: AGREGAR PROSPECTO -->
+  <div id="modal-nuevo" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="card-dark w-full max-w-sm rounded-xl shadow-2xl p-6">
+      <h2 class="text-lg font-bold text-white mb-4">Nuevo Prospecto</h2>
+      <div class="space-y-3">
+        <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+        <input type="email" id="nuevo-email" placeholder="Correo (opcional)" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+        <select id="nuevo-curso" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+          <option value="DaVinci Resolve">DaVinci Resolve</option>
+          <option value="Premiere Pro">Premiere Pro</option>
+        </select>
+        <select id="nuevo-origen" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+          <option value="Instagram">Instagram</option>
+          <option value="Sitio Web">Sitio Web</option>
+          <option value="YouTube">YouTube</option>
+        </select>
       </div>
-
-      <!-- Cuerpo del modal -->
-      <div class="p-6 overflow-y-auto flex-1 space-y-6">
-        
-        <!-- Historial de interacción -->
-        <div>
-          <h3 class="text-xs font-bold text-gray-500 mb-3 tracking-wider">HISTORIAL DE NOTAS</h3>
-          <div class="space-y-3">
-            <div class="bg-gray-800/50 p-3 rounded-lg text-sm border border-gray-800">
-              <span class="text-xs text-blue-400 font-bold block mb-1">21 Oct 2026 - Instagram</span>
-              <p class="text-gray-300">Preguntó por el precio del curso. Le envié la información general, quedó de revisar con su tarjeta.</p>
-            </div>
-          </div>
-        </div>
-
-        <hr class="border-gray-800">
-
-        <!-- Formulario nueva nota -->
-        <div>
-          <h3 class="text-xs font-bold text-gray-500 mb-3 tracking-wider">AGREGAR INTERACCIÓN</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Canal de contacto</label>
-              <select class="input-dark w-full px-3 py-2 rounded-lg text-sm">
-                <option>WhatsApp</option>
-                <option>Instagram DM</option>
-                <option>Correo Electrónico</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Nota de la conversación</label>
-              <textarea class="input-dark w-full px-3 py-2 rounded-lg text-sm h-20 resize-none" placeholder="Escribe los detalles de la charla..."></textarea>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Fecha próxima acción (Agendar)</label>
-              <input type="date" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Pie del modal -->
-      <div class="p-4 border-t border-gray-800 flex justify-end gap-3 bg-[#14161a]">
-        <button onclick="cerrarModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white">Cancelar</button>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Guardar Interacción</button>
+      <div class="mt-5 flex justify-end gap-3">
+        <button onclick="cerrarModalNuevo()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white">Cancelar</button>
+        <button onclick="guardarProspecto()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Crear</button>
       </div>
     </div>
   </div>
 
-  <!-- SCRIPT BÁSICO PARA LA INTERFAZ -->
-  <script>
-    // Alternar entre Embudo y Tabla
-    function cambiarVista(vista) {
-      const btnEmbudo = document.getElementById('btn-embudo');
-      const btnTabla = document.getElementById('btn-tabla');
-      const divEmbudo = document.getElementById('vista-embudo');
-      const divTabla = document.getElementById('vista-tabla');
+  <!-- MODAL: NOTAS Y SEGUIMIENTO -->
+  <div id="modal-notas" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="card-dark w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white">Seguimiento de Cliente</h2>
+          <p id="modal-cliente-info" class="text-sm text-gray-400">Cargando...</p>
+        </div>
+        <button onclick="cerrarModalNotas()" class="text-gray-400 hover:text-white p-1">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
 
-      if (vista === 'embudo') {
-        divEmbudo.classList.remove('hidden');
-        divTabla.classList.add('hidden');
-        btnEmbudo.className = "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm";
-        btnTabla.className = "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
-      } else {
-        divEmbudo.classList.add('hidden');
-        divTabla.classList.remove('hidden');
-        btnTabla.className = "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm";
-        btnEmbudo.className = "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
-      }
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 mb-3 tracking-wider">HISTORIAL DE NOTAS</h3>
+          <div id="historial-contenedor" class="space-y-3">
+            <!-- Notas generadas por JS -->
+          </div>
+        </div>
+        <hr class="border-gray-800">
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 mb-3 tracking-wider">AGREGAR INTERACCIÓN</h3>
+          <div class="space-y-3">
+            <select id="nota-canal" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+              <option>WhatsApp</option>
+              <option>Instagram DM</option>
+              <option>Correo</option>
+            </select>
+            <textarea id="nota-texto" class="input-dark w-full px-3 py-2 rounded-lg text-sm h-20 resize-none" placeholder="Escribe los detalles de la charla..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 border-t border-gray-800 flex justify-end gap-3 bg-[#14161a]">
+        <button onclick="cerrarModalNotas()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white">Cerrar</button>
+        <button onclick="guardarNota()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Guardar Interacción</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LÓGICA JAVASCRIPT DEL CRM -->
+  <script>
+    // 1. BASE DE DATOS LOCAL (Simulada)
+    let prospectos = [
+      { id: 1, nombre: "Breiner", email: "breiner@gmail.com", curso: "DaVinci Resolve", origen: "Instagram", etapa: "nuevo", notas: [{fecha: "23 Oct 2026", canal: "Instagram DM", texto: "Preguntó por el precio del curso."}] },
+      { id: 2, nombre: "Isabella", email: "isabella@correo.com", curso: "Premiere Pro", origen: "Sitio Web", etapa: "contactado", notas: [] },
+      { id: 3, nombre: "Carlos", email: "", curso: "DaVinci Resolve", origen: "YouTube", etapa: "cliente", notas: [{fecha: "22 Oct 2026", canal: "Correo", texto: "Realizó el pago y accedió al curso."}] }
+    ];
+    let prospectoActivoId = null;
+
+    // 2. RENDERIZADO PRINCIPAL (Aplica Filtros y Dibuja)
+    function renderUI() {
+      // Leer filtros
+      const txt = document.getElementById('filtro-texto').value.toLowerCase();
+      const curso = document.getElementById('filtro-curso').value;
+      const origen = document.getElementById('filtro-origen').value;
+
+      // Filtrar la base de datos
+      const filtrados = prospectos.filter(p => {
+        const matchTxt = p.nombre.toLowerCase().includes(txt) || p.email.toLowerCase().includes(txt);
+        const matchCurso = curso === "" || p.curso === curso;
+        const matchOrigen = origen === "" || p.origen === origen;
+        return matchTxt && matchCurso && matchOrigen;
+      });
+
+      renderKanban(filtrados);
+      renderTabla(filtrados);
     }
 
-    // Funciones del Modal
-    function abrirModal() {
-      document.getElementById('modal-notas').classList.remove('hidden');
-      document.getElementById('modal-notas').classList.add('flex');
+    // 3. DIBUJAR EMBUDO (Kanban)
+    function renderKanban(datos) {
+      const etapas = ['nuevo', 'contactado', 'interesado', 'cliente', 'perdido'];
+      
+      // Limpiar columnas
+      etapas.forEach(e => {
+        document.getElementById(`col-${e}`).innerHTML = '';
+        document.getElementById(`count-${e}`).innerText = '0';
+      });
+
+      // Dibujar tarjetas
+      datos.forEach(p => {
+        const col = document.getElementById(`col-${p.etapa}`);
+        if(!col) return;
+        
+        // Actualizar contador
+        const counter = document.getElementById(`count-${p.etapa}`);
+        counter.innerText = parseInt(counter.innerText) + 1;
+
+        // Construir Tarjeta
+        col.innerHTML += `
+          <div class="card-dark p-3 rounded-lg shadow-sm">
+            <h3 class="font-medium text-white text-sm">${p.nombre}</h3>
+            <p class="text-xs text-gray-400 mb-2">Interés: ${p.curso}</p>
+            <div class="flex gap-2 mt-3">
+              <select class="input-dark text-xs rounded px-1 py-1 w-full" onchange="cambiarEtapa(${p.id}, this.value)">
+                <option value="nuevo" ${p.etapa === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+                <option value="contactado" ${p.etapa === 'contactado' ? 'selected' : ''}>Contactado</option>
+                <option value="interesado" ${p.etapa === 'interesado' ? 'selected' : ''}>Interesado</option>
+                <option value="cliente" ${p.etapa === 'cliente' ? 'selected' : ''}>Cliente</option>
+                <option value="perdido" ${p.etapa === 'perdido' ? 'selected' : ''}>Perdido</option>
+              </select>
+              <button onclick="abrirModalNotas(${p.id})" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-white transition" title="Ver Notas">📝</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // 4. DIBUJAR TABLA
+    function renderTabla(datos) {
+      const tbody = document.getElementById('tabla-body');
+      tbody.innerHTML = '';
+      
+      datos.forEach(p => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-800/30 transition-colors">
+            <td class="px-4 py-3">
+              <div class="font-medium text-white">${p.nombre}</div>
+              <div class="text-xs text-gray-500">${p.email || 'Sin correo'}</div>
+            </td>
+            <td class="px-4 py-3"><span class="bg-gray-800 px-2 py-1 rounded text-xs text-gray-300">${p.origen}</span></td>
+            <td class="px-4 py-3 text-gray-300">${p.curso}</td>
+            <td class="px-4 py-3"><span class="uppercase tracking-wider text-[10px] font-bold bg-gray-800 text-gray-300 px-2 py-1 rounded-full">${p.etapa}</span></td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="abrirModalNotas(${p.id})" class="text-blue-400 hover:text-blue-300 text-xs font-medium">Ver Detalles</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // 5. ACCIONES DIRECTAS
+    function cambiarEtapa(id, nuevaEtapa) {
+      const prospecto = prospectos.find(p => p.id === id);
+      if(prospecto) prospecto.etapa = nuevaEtapa;
+      renderUI();
+    }
+
+    function cambiarVista(vista) {
+      document.getElementById('vista-embudo').classList.toggle('hidden', vista !== 'embudo');
+      document.getElementById('vista-tabla').classList.toggle('hidden', vista !== 'tabla');
+      document.getElementById('btn-embudo').className = vista === 'embudo' ? "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm" : "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
+      document.getElementById('btn-tabla').className = vista === 'tabla' ? "px-4 py-1.5 text-sm font-medium rounded-md bg-gray-700 text-white shadow-sm" : "px-4 py-1.5 text-sm font-medium rounded-md text-gray-400 hover:text-white";
+    }
+
+    // 6. MODAL: NUEVO PROSPECTO
+    function abrirModalNuevo() { document.getElementById('modal-nuevo').classList.replace('hidden', 'flex'); }
+    function cerrarModalNuevo() { 
+      document.getElementById('modal-nuevo').classList.replace('flex', 'hidden'); 
+      document.getElementById('nuevo-nombre').value = '';
+      document.getElementById('nuevo-email').value = '';
     }
     
-    function cerrarModal() {
-      document.getElementById('modal-notas').classList.add('hidden');
-      document.getElementById('modal-notas').classList.remove('flex');
+    function guardarProspecto() {
+      const nombre = document.getElementById('nuevo-nombre').value;
+      if(!nombre) return alert('El nombre es obligatorio');
+      prospectos.push({
+        id: Date.now(), nombre: nombre,
+        email: document.getElementById('nuevo-email').value,
+        curso: document.getElementById('nuevo-curso').value,
+        origen: document.getElementById('nuevo-origen').value,
+        etapa: 'nuevo', notas: []
+      });
+      cerrarModalNuevo();
+      renderUI();
     }
 
-    // Simulación de mover contacto
-    function moverContacto(selectElement) {
-      console.log("El contacto cambiará a la etapa: ", selectElement.value);
-      // Aquí el JS de Firebase de Breiner actualizará el doc y recargará las columnas
+    // 7. MODAL: NOTAS Y SEGUIMIENTO
+    function abrirModalNotas(id) {
+      prospectoActivoId = id;
+      const p = prospectos.find(x => x.id === id);
+      document.getElementById('modal-cliente-info').innerText = `${p.nombre} - Interesado en ${p.curso}`;
+      dibujarHistorial(p.notas);
+      document.getElementById('modal-notas').classList.replace('hidden', 'flex');
     }
+
+    function cerrarModalNotas() {
+      document.getElementById('modal-notas').classList.replace('flex', 'hidden');
+      prospectoActivoId = null;
+    }
+
+    function dibujarHistorial(notas) {
+      const contenedor = document.getElementById('historial-contenedor');
+      if(notas.length === 0) {
+        contenedor.innerHTML = '<p class="text-sm text-gray-500 italic">No hay notas registradas.</p>';
+        return;
+      }
+      contenedor.innerHTML = notas.map(n => `
+        <div class="bg-gray-800/50 p-3 rounded-lg text-sm border border-gray-800">
+          <span class="text-xs text-blue-400 font-bold block mb-1">${n.fecha} - ${n.canal}</span>
+          <p class="text-gray-300">${n.texto}</p>
+        </div>
+      `).join('');
+    }
+
+    function guardarNota() {
+      const texto = document.getElementById('nota-texto').value;
+      if(!texto) return;
+      const p = prospectos.find(x => x.id === prospectoActivoId);
+      const hoy = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+      p.notas.push({ fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto });
+      
+      document.getElementById('nota-texto').value = ''; // Limpiar textarea
+      dibujarHistorial(p.notas); // Recargar solo el historial en el modal
+    }
+
+    // Inicializar al cargar
+    renderUI();
   </script>
+</body>
+</html>
 </body>
 </html>
