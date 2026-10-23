@@ -206,26 +206,64 @@
   </div>
 
  <!-- LÓGICA JAVASCRIPT CONECTADA A FIREBASE -->
-  <script type="module">
-    // 1. Importar las herramientas de Firebase
+<script type="module">
+    // 1. Importar herramientas de Firestore y Auth
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // PEGA TU CONFIGURACIÓN AQUÍ (La sacas de la consola de Firebase > Configuración del proyecto)
     const firebaseConfig = {
-  apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
-  authDomain: "campiper-7414d.firebaseapp.com",
-  projectId: "campiper-7414d",
-  storageBucket: "campiper-7414d.firebasestorage.app",
-  messagingSenderId: "984212599762",
-  appId: "1:984212599762:web:0a0299a4350edcb2818e0b",
-  measurementId: "G-JP0QHCRVM5"
+      apiKey: "AIzaSyDicr1FaMUZMtKT_qThtaKv_TFGdeYhFpE",
+      authDomain: "campiper-7414d.firebaseapp.com",
+      projectId: "campiper-7414d",
+      storageBucket: "campiper-7414d.firebasestorage.app",
+      messagingSenderId: "984212599762",
+      appId: "1:984212599762:web:0a0299a4350edcb2818e0b",
+      measurementId: "G-JP0QHCRVM5"
     };
 
-    // Inicializar Firebase
+    // Inicializar Firebase y Auth
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
+    let prospectos = [];
+    let prospectoActivoId = null;
+
+    // 2. VINCULACIÓN DE SESIÓN: Esperar a que Firebase Auth verifique el usuario
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // ¡Sesión detectada y válida! Ya podemos descargar los datos con seguridad
+        console.log("Admin autenticado:", user.email);
+        cargarDatos();
+      } else {
+        // Si no hay sesión activa, te redirige al login o te avisa
+        console.warn("No hay una sesión de administrador activa.");
+        alert("Debes iniciar sesión como administrador para ver el CRM.");
+        window.location.href = "registro.html"; // Cambia por tu página de login si es distinta
+      }
+    });
+
+    async function cargarDatos() {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      prospectos = []; 
+      
+      querySnapshot.forEach((documento) => {
+        const data = documento.data();
+        prospectos.push({ 
+          id: documento.id, 
+          nombre: data.nombre || 'Sin nombre',
+          email: data.correo || 'Sin correo', 
+          curso: data.curso || 'DaVinci Resolve', 
+          origen: data.origen || 'Sitio Web',
+          etapa: data.etapa || 'nuevo', 
+          notas: data.notas || []
+        });
+      });
+      window.renderUI(); 
+    }
+
+    // (El resto de tus funciones de renderUI, cambiarEtapa, guardarNota, etc. van aquí abajo igual que antes...)
     let prospectos = [];
     let prospectoActivoId = null;
 
