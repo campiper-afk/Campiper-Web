@@ -312,8 +312,7 @@
         `;
       });
     }
-
-    // 6. DIBUJAR TABLA
+// 6. DIBUJAR TABLA
     function renderTabla(datos) {
       const tbody = document.getElementById('tabla-body');
       tbody.innerHTML = '';
@@ -335,13 +334,23 @@
       });
     }
 
-    // 7. ACTUALIZAR ETAPA EN FIREBASE
+    // 7. ACTUALIZAR ETAPA EN FIREBASE Y REFRESCAR LA VISTA AL INSTANTE
     window.cambiarEtapa = async function(id, nuevaEtapa) {
       const clienteRef = doc(db, "users", id);
+      
+      // Actualizamos en Firebase
       await updateDoc(clienteRef, {
         etapa: nuevaEtapa
       });
-      cargarDatos(); 
+      
+      // Actualizamos el objeto en el arreglo local de inmediato
+      const prospecto = prospectos.find(p => p.id === id);
+      if (prospecto) {
+        prospecto.etapa = nuevaEtapa;
+      }
+
+      // Redibujamos la interfaz (actualiza tanto el Kanban como la Tabla a la vez)
+      window.renderUI();
     }
 
     // 8. GUARDAR NUEVA NOTA EN FIREBASE
