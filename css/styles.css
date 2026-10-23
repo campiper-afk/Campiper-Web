@@ -2732,7 +2732,8 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   gap: 7px;
 }
 
-.admin-sidebar nav button {
+.admin-sidebar nav button,
+.admin-sidebar nav a {
   align-items: center;
   background: transparent;
   border: 0;
@@ -2746,10 +2747,12 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   grid-template-columns: 34px 1fr auto;
   padding: 10px;
   text-align: left;
+  text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
 
-.admin-sidebar nav button > span {
+.admin-sidebar nav button > span,
+.admin-sidebar nav a > span {
   align-items: center;
   background: rgba(245, 245, 247, 0.05);
   border-radius: 9px;
@@ -2760,22 +2763,27 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   width: 34px;
 }
 
-.admin-sidebar nav button > svg {
+.admin-sidebar nav button > svg,
+.admin-sidebar nav a > svg {
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
 }
 
 .admin-sidebar nav button:hover,
-.admin-sidebar nav button.active {
+.admin-sidebar nav button.active,
+.admin-sidebar nav a:hover,
+.admin-sidebar nav a.active {
   background: rgba(74, 144, 226, 0.11);
   color: var(--white);
 }
 
-.admin-sidebar nav button.active > span {
+.admin-sidebar nav button.active > span,
+.admin-sidebar nav a.active > span {
   background: var(--blue);
 }
 
-.admin-sidebar nav button.active > svg {
+.admin-sidebar nav button.active > svg,
+.admin-sidebar nav a.active > svg {
   opacity: 1;
 }
 
