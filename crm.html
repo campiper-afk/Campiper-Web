@@ -70,9 +70,7 @@
         <option value="YouTube">YouTube</option>
       </select>
 
-      <button onclick="abrirModalNuevo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium ml-auto transition">
-        + Nuevo Prospecto
-      </button>
+      
     </div>
 
     <!-- ÁREA DE VISTAS -->
@@ -231,15 +229,56 @@
     let prospectos = [];
     let prospectoActivoId = null;
 
-    // 2. DESCARGAR DATOS DE FIREBASE (Lectura)
+  // 2. DESCARGAR DATOS DESDE TU COLECCIÓN "users"
     async function cargarDatos() {
-      const querySnapshot = await getDocs(collection(db, "contactos_crm"));
-      prospectos = []; // Vaciamos el arreglo local
+      // Apuntamos a la colección real donde caen tus registros
+      const querySnapshot = await getDocs(collection(db, "users"));
+      prospectos = []; 
+      
       querySnapshot.forEach((documento) => {
-        // Guardamos el ID real de Firebase junto con los datos
-        prospectos.push({ id: documento.id, ...documento.data() });
+        const data = documento.data();
+        
+        prospectos.push({ 
+          id: documento.id, 
+          nombre: data.nombre || 'Sin nombre',
+          email: data.correo || 'Sin correo', // Adaptado porque en tu DB se llama "correo"
+          curso: data.curso || 'DaVinci Resolve', 
+          origen: data.origen || 'Sitio Web',
+          etapa: data.etapa || 'nuevo', // AUTOMATIZACIÓN: Si no tiene etapa, va a la columna "Nuevo"
+          notas: data.notas || []
+        });
       });
-      window.renderUI(); // Dibujamos la interfaz
+      window.renderUI(); 
+    }
+
+    // 7. ACTUALIZAR ETAPA EN FIREBASE (Se guarda en el perfil del user)
+    window.cambiarEtapa = async function(id, nuevaEtapa) {
+      const clienteRef = doc(db, "users", id);
+      
+      await updateDoc(clienteRef, {
+        etapa: nuevaEtapa
+      });
+      
+      cargarDatos(); 
+    }
+
+    // 8. GUARDAR NUEVA NOTA EN FIREBASE 
+    window.guardarNota = async function() {
+      const texto = document.getElementById('nota-texto').value;
+      if(!texto) return;
+      
+      const hoy = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+      const nuevaNota = { fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto };
+      
+      const clienteRef = doc(db, "users", prospectoActivoId);
+      
+      await updateDoc(clienteRef, {
+        notas: arrayUnion(nuevaNota)
+      });
+      
+      document.getElementById('nota-texto').value = '';
+      cerrarModalNotas();
+      cargarDatos();
     }
 
     // 3. RENDERIZADO PRINCIPAL (Igual que antes)
@@ -339,7 +378,7 @@
 
     // 7. ACTUALIZAR ETAPA EN FIREBASE (updateDoc)
     window.cambiarEtapa = async function(id, nuevaEtapa) {
-      const clienteRef = doc(db, "contactos_crm", id);
+      const clienteRef = doc(db, "users", id);
       
       // Actualizamos solo el campo "etapa" de ese cliente específico
       await updateDoc(clienteRef, {
@@ -357,7 +396,7 @@
       const hoy = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
       const nuevaNota = { fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto };
       
-      const clienteRef = doc(db, "contactos_crm", prospectoActivoId);
+      const clienteRef = doc(db, "users", prospectoActivoId);
       
       // arrayUnion añade la nueva nota al final de la lista sin borrar las anteriores
       await updateDoc(clienteRef, {
