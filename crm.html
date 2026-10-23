@@ -233,17 +233,16 @@
     // 2. VINCULACIÓN DE SESIÓN: Esperar a que Firebase Auth verifique el usuario
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // ¡Sesión detectada y válida! Ya podemos descargar los datos con seguridad
         console.log("Admin autenticado:", user.email);
         cargarDatos();
       } else {
-        // Si no hay sesión activa, te redirige al login o te avisa
         console.warn("No hay una sesión de administrador activa.");
         alert("Debes iniciar sesión como administrador para ver el CRM.");
-        window.location.href = "registro.html"; // Cambia por tu página de login si es distinta
+        window.location.href = "registro.html";
       }
     });
 
+    // 3. DESCARGAR DATOS DESDE LA COLECCIÓN "users"
     async function cargarDatos() {
       const querySnapshot = await getDocs(collection(db, "users"));
       prospectos = []; 
@@ -262,57 +261,8 @@
       });
       window.renderUI(); 
     }
- 
-      // Apuntamos a la colección real donde caen tus registros
-      const querySnapshot = await getDocs(collection(db, "users"));
-      prospectos = []; 
-      
-      querySnapshot.forEach((documento) => {
-        const data = documento.data();
-        
-        prospectos.push({ 
-          id: documento.id, 
-          nombre: data.nombre || 'Sin nombre',
-          email: data.correo || 'Sin correo', // Adaptado porque en tu DB se llama "correo"
-          curso: data.curso || 'DaVinci Resolve', 
-          origen: data.origen || 'Sitio Web',
-          etapa: data.etapa || 'nuevo', // AUTOMATIZACIÓN: Si no tiene etapa, va a la columna "Nuevo"
-          notas: data.notas || []
-        });
-      });
-      window.renderUI(); 
 
-    // 7. ACTUALIZAR ETAPA EN FIREBASE (Se guarda en el perfil del user)
-    window.cambiarEtapa = async function(id, nuevaEtapa) {
-      const clienteRef = doc(db, "users", id);
-      
-      await updateDoc(clienteRef, {
-        etapa: nuevaEtapa
-      });
-      
-      cargarDatos(); 
-    }
-
-    // 8. GUARDAR NUEVA NOTA EN FIREBASE 
-    window.guardarNota = async function() {
-      const texto = document.getElementById('nota-texto').value;
-      if(!texto) return;
-      
-      const hoy = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-      const nuevaNota = { fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto };
-      
-      const clienteRef = doc(db, "users", prospectoActivoId);
-      
-      await updateDoc(clienteRef, {
-        notas: arrayUnion(nuevaNota)
-      });
-      
-      document.getElementById('nota-texto').value = '';
-      cerrarModalNotas();
-      cargarDatos();
-    }
-
-    // 3. RENDERIZADO PRINCIPAL (Igual que antes)
+    // 4. RENDERIZADO PRINCIPAL
     window.renderUI = function() {
       const txt = document.getElementById('filtro-texto').value.toLowerCase();
       const curso = document.getElementById('filtro-curso').value;
@@ -329,7 +279,7 @@
       renderTabla(filtrados);
     }
 
-    // 4. DIBUJAR EMBUDO (Kanban)
+    // 5. DIBUJAR EMBUDO (Kanban)
     function renderKanban(datos) {
       const etapas = ['nuevo', 'contactado', 'interesado', 'cliente', 'perdido'];
       
@@ -344,7 +294,6 @@
         
         document.getElementById(`count-${p.etapa}`).innerText = parseInt(document.getElementById(`count-${p.etapa}`).innerText) + 1;
 
-        // Fíjate que el ID ahora es un string (el ID alfanumérico de Firebase), por eso va entre comillas en el onclick: '${p.id}'
         col.innerHTML += `
           <div class="card-dark p-3 rounded-lg shadow-sm">
             <h3 class="font-medium text-white text-sm">${p.nombre}</h3>
@@ -364,7 +313,7 @@
       });
     }
 
-    // 5. DIBUJAR TABLA
+    // 6. DIBUJAR TABLA
     function renderTabla(datos) {
       const tbody = document.getElementById('tabla-body');
       tbody.innerHTML = '';
@@ -386,40 +335,16 @@
       });
     }
 
-    // 6. CREAR PROSPECTO EN FIREBASE (addDoc)
-    window.guardarProspecto = async function() {
-      const nombre = document.getElementById('nuevo-nombre').value;
-      if(!nombre) return alert('El nombre es obligatorio');
-      
-      const nuevoCliente = {
-        nombre: nombre,
-        email: document.getElementById('nuevo-email').value,
-        curso: document.getElementById('nuevo-curso').value,
-        origen: document.getElementById('nuevo-origen').value,
-        etapa: 'nuevo', 
-        notas: [] // Empieza con el historial vacío
-      };
-
-      // Guardamos en Firebase
-      await addDoc(collection(db, "contactos_crm"), nuevoCliente);
-      
-      cerrarModalNuevo();
-      cargarDatos(); // Volvemos a descargar para actualizar la pantalla
-    }
-
-    // 7. ACTUALIZAR ETAPA EN FIREBASE (updateDoc)
+    // 7. ACTUALIZAR ETAPA EN FIREBASE
     window.cambiarEtapa = async function(id, nuevaEtapa) {
       const clienteRef = doc(db, "users", id);
-      
-      // Actualizamos solo el campo "etapa" de ese cliente específico
       await updateDoc(clienteRef, {
         etapa: nuevaEtapa
       });
-      
-      cargarDatos(); // Recargamos para que la tarjeta salte a la otra columna
+      cargarDatos(); 
     }
 
-    // 8. GUARDAR NUEVA NOTA EN FIREBASE (arrayUnion)
+    // 8. GUARDAR NUEVA NOTA EN FIREBASE
     window.guardarNota = async function() {
       const texto = document.getElementById('nota-texto').value;
       if(!texto) return;
@@ -428,8 +353,6 @@
       const nuevaNota = { fecha: hoy, canal: document.getElementById('nota-canal').value, texto: texto };
       
       const clienteRef = doc(db, "users", prospectoActivoId);
-      
-      // arrayUnion añade la nueva nota al final de la lista sin borrar las anteriores
       await updateDoc(clienteRef, {
         notas: arrayUnion(nuevaNota)
       });
@@ -477,9 +400,6 @@
       document.getElementById('modal-notas').classList.replace('flex', 'hidden');
       prospectoActivoId = null;
     }
-
-    // Inicializar al abrir la página: Descarga los datos de Firebase de inmediato
-    cargarDatos();
   </script>
 </body>
 </html>
