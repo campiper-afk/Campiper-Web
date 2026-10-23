@@ -1376,9 +1376,9 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   margin-top: 22px;
 }
 
-/* .detail-bottom:has(.detail-price-card[hidden]) {
+.detail-bottom:has(.detail-price-card[hidden]) {
   grid-template-columns: 1fr;
-} */
+}
 
 .instructor-card,
 .detail-price-card {
@@ -1860,8 +1860,16 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
 }
 
 .welcome {
+  align-items: center;
+  column-gap: 14px;
+  display: grid;
+  grid-template-areas:
+    "titulo icono ."
+    "texto texto texto";
+  grid-template-columns: minmax(0, max-content) 42px 1fr;
   padding: 42px 0 46px;
   position: relative;
+  row-gap: 9px;
 }
 
 .welcome-icon {
@@ -1870,11 +1878,9 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   border-radius: 10px;
   color: var(--green-light);
   display: flex;
+  grid-area: icono;
   height: 42px;
   justify-content: center;
-  left: 255px;
-  position: absolute;
-  top: 36px;
   transform: rotate(5deg);
   width: 42px;
 }
@@ -1886,14 +1892,18 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
 .welcome h1 {
   font-family: var(--heading);
   font-size: 38px;
+  grid-area: titulo;
   letter-spacing: -2px;
   line-height: 1.1;
-  margin: 0 0 9px;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .welcome p {
   color: #9c9ea7;
   font-size: 13px;
+  grid-area: texto;
   margin: 0;
 }
 
