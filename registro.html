@@ -127,7 +127,24 @@
                   </button>
                 </div>
             </label>
+<!-- Campo Repetir Contraseña (solo en registro) -->
+            <label class="auth-field" id="field-password-repeat" style="display: none;" htmlFor="password-repeat">
+              <span>Repite la contraseña</span>
+              <div class="password-input">
+                <input autoComplete="new-password" id="password-repeat" minlength="8" type="password" />
+              </div>
+            </label>
 
+            <!-- NUEVO: Casilla de Términos y Condiciones (solo en registro) -->
+            <div id="field-terms" style="display: none; margin-top: 12px; margin-bottom: 20px;">
+              <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="terms-checkbox" style="margin-top: 3px; cursor: pointer; width: 16px; height: 16px;" />
+                <span style="font-size: 0.85rem; color: var(--text-muted, #9ca3af); line-height: 1.4;">
+                  <a href="politicas.html" target="_blank" style="color: var(--primary, #3b82f6); text-decoration: underline;">Aceptar Términos y Condiciones</a> (Incluye autorización de tratamiento de datos personales - Ley 1581 de 2012 y política de reembolsos).
+                </span>
+              </label>
+            </div>
+            
             <button class="auth-submit" id="auth-submit-btn" type="submit">
               Iniciar sesión
             </button>
