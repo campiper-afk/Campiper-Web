@@ -40,22 +40,17 @@
       </a>
 
       <!-- REPRODUCTOR DE VIDEO -->
-      <section class="video-player" id="video-player" aria-label="Reproductor de la lección">
-        <img alt="Línea de tiempo de un proyecto de edición de video" src="https://images.unsplash.com/photo-1614963326505-843868e1d83a?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=88&w=1600" />
-        <div class="video-shade"></div>
-        <button aria-label="Reproducir lección" class="lesson-play-button" id="btn-play">
-          <svg id="icon-play-pause" aria-hidden="true" fill="none" height="31" viewBox="0 0 24 24" width="31">
-            <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-              <path d="m9 7 8 5-8 5V7Z" id="path-play" />
-              <path d="M9 8v8M15 8v8" id="path-pause" style="display: none;" />
-            </g>
-          </svg>
-        </button>
-        <div class="video-status">
-          <span id="video-status-text">VISTA PREVIA</span>
-          <strong id="lesson-duration">--:--</strong>
-        </div>
-        <div class="video-progress"><span></span></div>
+   <!-- REPRODUCTOR DE VIDEO -->
+      <section class="video-player" id="video-player" aria-label="Reproductor de la lección" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px;">
+        
+        <!-- Reemplaza el enlace de abajo por tu video de YouTube -->
+        <iframe 
+          src="https://www.youtube.com/embed/mo3Vve7VQ-E" 
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+          allowfullscreen>
+        </iframe>
+        
       </section>
 
       <!-- CONTENIDO DE LA LECCIÓN -->
