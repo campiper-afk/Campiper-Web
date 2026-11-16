@@ -1447,10 +1447,10 @@ document.addEventListener("DOMContentLoaded", () => {
         description: "Este módulo introductorio establece las bases para comenzar a utilizar el software, guiándote a través del proceso de instalación y su configuración inicial.",
         lessons: [
           "Instalación y configuración inicial",
-          "Conociendo la interfaz: Media, Cut, Edit y Deliver",
-          "Organización de tu primer proyecto y atajos de teclado"
+          "Conociendo la interfaz de DaVinci Resolve",
+          "Organización de tu primer proyecto"
         ],
-        duration: "48 min"
+        duration: "7 min"
       },
       "02": {
         label: "Segundo módulo",
