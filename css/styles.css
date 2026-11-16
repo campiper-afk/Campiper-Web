@@ -3777,3 +3777,24 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
   .complete-button { justify-content: center; width: 100%; }
 }
 .video-player { aspect-ratio: 16 / 9; }
+
+/* =========================================================
+   Lección: botones anterior / siguiente
+   ========================================================= */
+.lesson-steps { display: flex; flex-direction: column; gap: 10px; }
+.lesson-steps .next-lesson { margin-top: 4px; order: -1; justify-content: space-between; min-width: 230px; }
+.prev-lesson { align-items: center; background: #292a31; border: 1px solid var(--line); border-radius: 13px; display: flex; font-size: 12px; font-weight: 700; gap: 18px; justify-content: flex-start; min-width: 230px; padding: 14px 18px; transition: background 0.2s, border-color 0.2s; }
+.prev-lesson:hover { background: rgba(74, 144, 226, 0.14); border-color: rgba(74, 144, 226, 0.5); }
+.prev-lesson[hidden] { display: none; }
+.prev-lesson > span { display: flex; flex-direction: column; gap: 4px; white-space: nowrap; }
+.prev-lesson small { color: var(--blue-light); font-size: 10px; letter-spacing: 1px; }
+.prev-lesson svg { stroke: currentColor; }
+@media (max-width: 760px) {
+  .lesson-steps { width: 100%; }
+  .lesson-steps .next-lesson, .lesson-steps .prev-lesson { width: 100%; }
+}
+
+/* Detalle del módulo: el ícono de play como enlace a la lección */
+a.detail-play { color: inherit; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+a.detail-play:hover { background: rgba(245, 245, 247, 0.28); transform: scale(1.1); }
+a.detail-play:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
