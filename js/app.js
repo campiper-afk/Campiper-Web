@@ -685,6 +685,275 @@ async function initMisCursos() {
   }
 }
 
+/* ---------- Lección: video de YouTube + botón "Marcar como completada" ----------
+   El botón solo se habilita cuando el estudiante vio el video hasta el final
+   (YouTube IFrame Player API). Para que no sirva adelantar la barra, se cuentan
+   los segundos realmente reproducidos y se exige un mínimo (UMBRAL_VISUALIZACION).
+   El avance se guarda en Firestore, en users/{uid}:
+     leccionesCompletadas: ["m2-l1", "m2-l2", ...]
+     progreso: 0-100  (lo que ya lee mis-cursos.html y admin.html) */
+const TOTAL_LECCIONES_CURSO = 12;   // lecciones totales del curso (4 módulos x 3 lecciones)
+const UMBRAL_VISUALIZACION = 0.9;   // fracción mínima del video que se debe haber visto (0.9 = 90 %)
+
+function extraerIdYouTube(valor) {
+  const texto = String(valor || '').trim();
+  if (/^[\w-]{11}$/.test(texto)) return texto;
+  const m = texto.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/))([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+let _apiYouTube = null;
+function cargarApiYouTube() {
+  if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+  if (!_apiYouTube) {
+    _apiYouTube = new Promise((resolve, reject) => {
+      const previo = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof previo === 'function') previo();
+        resolve(window.YT);
+      };
+      const etiqueta = document.createElement('script');
+      etiqueta.src = 'https://www.youtube.com/iframe_api';
+      etiqueta.onerror = () => { _apiYouTube = null; reject(new Error('No se pudo cargar la API de YouTube')); };
+      document.head.appendChild(etiqueta);
+    });
+  }
+  return _apiYouTube;
+}
+
+function formatearDuracion(segundos) {
+  const total = Math.max(0, Math.round(segundos));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(s).padStart(2, '0');
+}
+
+function initProgresoLeccion(numero, leccion) {
+  const leccionId = 'm2-l' + numero;
+
+  const contenedor = document.getElementById('yt-player');
+  const boton = document.getElementById('btn-complete');
+  const botonTexto = document.getElementById('btn-complete-text');
+  const aviso = document.getElementById('watch-text');
+  const barra = document.getElementById('watch-bar-fill');
+  const pctEl = document.getElementById('watch-percent');
+  const duracionEl = document.getElementById('lesson-duration');
+  if (!contenedor || !boton) return;
+
+  const estado = {
+    cargado: false,        // ya sabemos si hay sesión y si la lección ya estaba completada
+    usuario: null,
+    inscrito: false,
+    yaCompletada: false,
+    listoParaMarcar: false,
+    adelantado: false,     // llegó al final pero sin haber visto lo suficiente
+    guardando: false,
+    error: ''
+  };
+
+  const vistos = new Set(); // segundos del video realmente reproducidos
+  let duracion = 0;
+  let terminoVideo = false;
+  let temporizador = null;
+  let ultimoTiempo = null;
+  let ultimoReloj = null;
+  let player = null;
+
+  /* ----- Pintar el botón y los textos según el estado ----- */
+  function pintar() {
+    boton.classList.remove('is-ready', 'is-done', 'is-link');
+    boton.disabled = true;
+    aviso.classList.remove('is-warning');
+
+    let texto = 'Marcar lección como completada';
+    let mensaje = 'Mira el video completo para poder marcar la lección como completada.';
+    let advertencia = false;
+
+    if (estado.guardando) {
+      texto = 'Guardando…';
+      mensaje = 'Guardando tu progreso…';
+    } else if (estado.yaCompletada) {
+      boton.classList.add('is-done');
+      texto = 'Lección completada';
+      mensaje = 'Ya completaste esta lección. Puedes volver a verla cuando quieras.';
+    } else if (estado.listoParaMarcar) {
+      boton.disabled = false;
+      mensaje = '¡Terminaste el video! Ya puedes marcar la lección como completada.';
+      if (estado.cargado && !estado.usuario) {
+        boton.classList.add('is-link');
+        texto = 'Inicia sesión para guardar';
+        mensaje = '¡Terminaste el video! Inicia sesión para guardar tu progreso.';
+      } else {
+        boton.classList.add('is-ready');
+      }
+      if (estado.error) { mensaje = estado.error; advertencia = true; }
+    } else if (estado.adelantado) {
+      mensaje = 'Parece que adelantaste partes del video. Vuelve a verlas para poder completar la lección.';
+      advertencia = true;
+    }
+
+    botonTexto.textContent = texto;
+    aviso.textContent = mensaje;
+    if (advertencia) aviso.classList.add('is-warning');
+  }
+
+  function pintarProgreso() {
+    const pct = duracion > 0 ? Math.min(100, Math.round((vistos.size / duracion) * 100)) : 0;
+    if (pctEl) pctEl.textContent = pct + ' %';
+    if (barra) barra.style.width = pct + '%';
+  }
+
+  function evaluar() {
+    pintarProgreso();
+    if (estado.yaCompletada || estado.listoParaMarcar || !terminoVideo) return;
+    if (duracion > 0 && vistos.size >= duracion * UMBRAL_VISUALIZACION) {
+      estado.listoParaMarcar = true;
+      estado.adelantado = false;
+    } else {
+      estado.adelantado = true;
+    }
+    pintar();
+  }
+
+  /* ----- Conteo de segundos vistos (ignora los saltos hacia adelante) ----- */
+  function tick() {
+    if (!player || typeof player.getCurrentTime !== 'function') return;
+    const t = player.getCurrentTime();
+    const ahora = Date.now();
+    const velocidad = (player.getPlaybackRate && player.getPlaybackRate()) || 1;
+    if (!duracion && player.getDuration) {
+      duracion = player.getDuration() || 0;
+      if (duracion && duracionEl) duracionEl.textContent = formatearDuracion(duracion);
+    }
+    if (ultimoTiempo === null) {
+      vistos.add(Math.floor(t));
+    } else {
+      const avance = t - ultimoTiempo;
+      const maximo = ((ahora - ultimoReloj) / 1000) * velocidad + 1.5; // lo que pudo avanzar reproduciendo de verdad
+      if (avance >= 0 && avance <= maximo) {
+        for (let s = Math.floor(ultimoTiempo); s <= Math.floor(t); s++) vistos.add(s);
+      }
+    }
+    ultimoTiempo = t;
+    ultimoReloj = ahora;
+    if (terminoVideo) evaluar(); else pintarProgreso();
+  }
+
+  function iniciarConteo() {
+    detenerConteo();
+    ultimoTiempo = player.getCurrentTime();
+    ultimoReloj = Date.now();
+    temporizador = setInterval(tick, 500);
+  }
+
+  function detenerConteo() {
+    if (temporizador) { clearInterval(temporizador); temporizador = null; }
+    ultimoTiempo = null;
+    ultimoReloj = null;
+  }
+
+  /* ----- Reproductor de YouTube ----- */
+  function mostrarErrorReproductor(texto) {
+    const caja = document.getElementById('video-player');
+    if (caja) caja.innerHTML = '<p class="video-player-error">' + escaparHTML(texto) + '</p>';
+  }
+
+  const videoId = extraerIdYouTube(leccion.youtube);
+  if (!videoId) {
+    mostrarErrorReproductor('Esta lección aún no tiene un video de YouTube configurado.');
+  } else {
+    const opciones = { rel: 0, modestbranding: 1, playsinline: 1 };
+    if (/^https?:$/.test(window.location.protocol)) opciones.origin = window.location.origin;
+
+    cargarApiYouTube().then(YT => {
+      player = new YT.Player('yt-player', {
+        videoId: videoId,
+        width: '100%',
+        height: '100%',
+        playerVars: opciones,
+        events: {
+          onReady: () => {
+            duracion = player.getDuration() || 0;
+            if (duracion && duracionEl) duracionEl.textContent = formatearDuracion(duracion);
+          },
+          onStateChange: e => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              iniciarConteo();
+            } else {
+              if (temporizador) tick(); // captura los últimos segundos antes de pausar o terminar
+              detenerConteo();
+              if (e.data === YT.PlayerState.ENDED) { terminoVideo = true; evaluar(); }
+            }
+          },
+          onError: () => mostrarErrorReproductor('No pudimos reproducir este video. Inténtalo de nuevo en unos minutos.')
+        }
+      });
+    }).catch(() => mostrarErrorReproductor('No se pudo cargar el reproductor de YouTube. Revisa tu conexión.'));
+  }
+
+  /* ----- Estado del estudiante en Firestore ----- */
+  const carga = (async () => {
+    if (!FIREBASE_ACTIVO) return;
+    try {
+      const { db, fsMod } = await cargarFirebase();
+      const usuario = await esperarUsuarioFirebase();
+      estado.usuario = usuario;
+      if (usuario) {
+        const snap = await fsMod.getDoc(fsMod.doc(db, 'users', usuario.uid));
+        const datos = snap.exists() ? snap.data() : {};
+        const cursos = Array.isArray(datos.cursos) ? datos.cursos : [];
+        const hechas = Array.isArray(datos.leccionesCompletadas) ? datos.leccionesCompletadas : [];
+        estado.inscrito = cursos.includes(CURSO_ID);
+        estado.yaCompletada = hechas.includes(leccionId);
+      }
+    } catch (error) {
+      console.error('No se pudo leer el progreso de la lección:', error);
+    }
+    estado.cargado = true;
+    pintar();
+  })();
+
+  /* ----- Guardar la lección como completada ----- */
+  async function guardar() {
+    estado.error = '';
+    estado.guardando = true;
+    pintar();
+    try {
+      const { db, fsMod } = await cargarFirebase();
+      const ref = fsMod.doc(db, 'users', estado.usuario.uid);
+      const snap = await fsMod.getDoc(ref);
+      const datos = snap.exists() ? snap.data() : {};
+      const previas = Array.isArray(datos.leccionesCompletadas) ? datos.leccionesCompletadas : [];
+      const todas = Array.from(new Set(previas.concat(leccionId)));
+      const progreso = Math.min(100, Math.round((todas.length / TOTAL_LECCIONES_CURSO) * 100));
+      await fsMod.setDoc(ref, { leccionesCompletadas: fsMod.arrayUnion(leccionId), progreso: progreso }, { merge: true });
+      estado.yaCompletada = true;
+    } catch (error) {
+      console.error('No se pudo guardar la lección completada:', error);
+      estado.error = error && error.code === 'permission-denied'
+        ? 'Firestore rechazó el guardado: revisa las reglas de seguridad.'
+        : 'No pudimos guardar tu progreso. Inténtalo de nuevo.';
+    }
+    estado.guardando = false;
+    pintar();
+  }
+
+  boton.addEventListener('click', async () => {
+    if (boton.disabled || estado.guardando || estado.yaCompletada || !estado.listoParaMarcar) return;
+    await carga;
+    if (!estado.usuario) { window.location.href = 'registro.html'; return; }
+    if (!estado.inscrito) {
+      estado.error = 'Necesitas tener el curso activo para guardar tu progreso.';
+      pintar();
+      return;
+    }
+    guardar();
+  });
+
+  pintar();
+}
+
 /* ---------- Autenticación (Login / Registro) ---------- */
 function initAuth() {
   const PAGINA_DESTINO = 'mis-cursos.html';
@@ -1275,6 +1544,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector('.lesson-page')) {
     const lessonsData = {
       "1": {
+        youtube: "PEGA_AQUI_EL_LINK_O_ID_DE_YOUTUBE",
         title: "Cortes, transiciones y uso de la línea de tiempo",
         description: "Aprende a navegar por el panel de edición (Edit Page) de DaVinci Resolve. Veremos cómo importar tus clips, hacer los primeros cortes de precisión y añadir transiciones básicas para darle fluidez a tu video.",
         material: "Clips del ejercicio práctico",
@@ -1282,6 +1552,7 @@ document.addEventListener("DOMContentLoaded", () => {
         duration: "18:24"
       },
       "2": {
+        youtube: "PEGA_AQUI_EL_LINK_O_ID_DE_YOUTUBE",
         title: "Trabajando con múltiples pistas de video",
         description: "Organiza diferentes capas de video, imágenes y gráficos dentro del timeline. Aprenderás a controlar la visibilidad, el orden y la sincronización de cada pista.",
         material: "Proyecto multicámara de práctica",
@@ -1289,6 +1560,7 @@ document.addEventListener("DOMContentLoaded", () => {
         duration: "22:10"
       },
       "3": {
+        youtube: "PEGA_AQUI_EL_LINK_O_ID_DE_YOUTUBE",
         title: "Ajustes de velocidad y duración de clips",
         description: "Controla el ritmo de tu edición utilizando cambios de velocidad, cámara lenta y congelados. Ajusta cada clip sin perder el control de tu montaje.",
         material: "Clips para practicar velocidad",
@@ -1321,29 +1593,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('next-lesson-text').textContent = 'Siguiente módulo';
     }
 
-    let isPlaying = false;
-    const videoPlayer = document.getElementById('video-player');
-    const btnPlay = document.getElementById('btn-play');
-    const pathPlay = document.getElementById('path-play');
-    const pathPause = document.getElementById('path-pause');
-    const statusText = document.getElementById('video-status-text');
-
-    btnPlay.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      if (isPlaying) {
-        videoPlayer.classList.add('playing');
-        pathPlay.style.display = 'none';
-        pathPause.style.display = 'block';
-        statusText.textContent = 'REPRODUCIENDO';
-        btnPlay.setAttribute('aria-label', 'Pausar lección');
-      } else {
-        videoPlayer.classList.remove('playing');
-        pathPlay.style.display = 'block';
-        pathPause.style.display = 'none';
-        statusText.textContent = 'VISTA PREVIA';
-        btnPlay.setAttribute('aria-label', 'Reproducir lección');
-      }
-    });
+    // Reproductor de YouTube + botón "Marcar lección como completada"
+    initProgresoLeccion(lessonNumber, lesson);
 
     const btnDownload = document.getElementById('btn-download');
     btnDownload.addEventListener('click', () => {
