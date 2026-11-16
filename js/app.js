@@ -1544,7 +1544,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector('.lesson-page')) {
     const lessonsData = {
       "1": {
-        youtube: "PEGA_AQUI_EL_LINK_O_ID_DE_YOUTUBE",
+        youtube: "https://youtu.be/2bXOpmpTwPc",
         title: "Cortes, transiciones y uso de la línea de tiempo",
         description: "Aprende a navegar por el panel de edición (Edit Page) de DaVinci Resolve. Veremos cómo importar tus clips, hacer los primeros cortes de precisión y añadir transiciones básicas para darle fluidez a tu video.",
         material: "Clips del ejercicio práctico",
