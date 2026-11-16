@@ -29,15 +29,15 @@ const CURSO_ID = 'davinci-resolve';
 //   instructor -> clave de INSTRUCTORES (quién imparte esa lección)
 const LECCIONES_CURSO = [
   { id: 'm1-l1', modulo: '01', posicion: 1, leccion: 1, instructor: 'jean-paul' },
-  { id: 'm1-l2', modulo: '01', posicion: 2, leccion: 2, instructor: 'ignacio' },
-  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3, instructor: 'breiner' }
+  { id: 'm1-l2', modulo: '01', posicion: 2, leccion: 2, instructor: 'breiner' },
+  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3, instructor: 'ignacio' }
 ];
 
 // Instructores del curso. Ajusta nombres, iniciales y color; la lección usa la clave de aquí.
 const INSTRUCTORES = {
-  'jean-paul': { nombre: 'Jean Paul G.', iniciales: 'JP', color: '#4a90e2' },
-  'ignacio':   { nombre: 'Ignacio',      iniciales: 'IG', color: '#448f64' },
-  'breiner':   { nombre: 'Breiner',      iniciales: 'BR', color: '#8b7bd8' }
+  'jean-paul': { nombre: 'Jean Paul Gadban', iniciales: 'JP', color: '#4a90e2' },
+  'breiner':   { nombre: 'Breiner Camargo',      iniciales: 'BC', color: '#448f64' },
+  'ignacio':   { nombre: 'Ignacio Gauna',      iniciales: 'IG', color: '#8b7bd8' }
 };
 
 function urlLeccion(item) {
