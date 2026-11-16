@@ -1545,27 +1545,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const lessonsData = {
       "1": {
         youtube: "https://youtu.be/2bXOpmpTwPc",
-        title: "Cortes, transiciones y uso de la línea de tiempo",
-        description: "Aprende a navegar por el panel de edición (Edit Page) de DaVinci Resolve. Veremos cómo importar tus clips, hacer los primeros cortes de precisión y añadir transiciones básicas para darle fluidez a tu video.",
+        title: "Instalación y configuración inicial",
+        description: "Aprende a instalar DaVinci Resolve y realizar su configuración inicial. Conoceremos las versiones disponibles, configuraremos la resolución y los FPS del proyecto y activaremos el guardado automático para proteger tu trabajo.",
         material: "Clips del ejercicio práctico",
         file: "Descargar ZIP (350 MB)",
-        duration: "18:24"
+        duration: "2:25"
       },
       "2": {
-        youtube: "PEGA_AQUI_EL_LINK_O_ID_DE_YOUTUBE",
-        title: "Trabajando con múltiples pistas de video",
-        description: "Organiza diferentes capas de video, imágenes y gráficos dentro del timeline. Aprenderás a controlar la visibilidad, el orden y la sincronización de cada pista.",
+        youtube: "https://youtu.be/R1sIWypjh04",
+        title: "Conociendo la interfaz de DaVinci Resolve",
+        description: "Aprende a reconocer los siete módulos principales de DaVinci Resolve. Exploraremos las herramientas de medios, montaje, edición, efectos visuales, color, audio y exportación para comprender cómo funciona el entorno de trabajo.",
         material: "Proyecto multicámara de práctica",
         file: "Descargar ZIP (420 MB)",
-        duration: "22:10"
+        duration: "2:01"
       },
       "3": {
-        youtube: "PEGA_AQUI_EL_LINK_O_ID_DE_YOUTUBE",
-        title: "Ajustes de velocidad y duración de clips",
-        description: "Controla el ritmo de tu edición utilizando cambios de velocidad, cámara lenta y congelados. Ajusta cada clip sin perder el control de tu montaje.",
+        youtube: "https://youtu.be/g2r1Az-Wank",
+        title: "Organización de tu primer proyecto",
+        description: "Aprende a importar y organizar tus archivos multimedia dentro de DaVinci Resolve. Crearemos carpetas (Bins), asignaremos colores a los clips y conoceremos cómo exportar y respaldar un proyecto para mantener tu trabajo seguro.",
         material: "Clips para practicar velocidad",
         file: "Descargar ZIP (280 MB)",
-        duration: "16:42"
+        duration: "2:13"
       }
     };
 
