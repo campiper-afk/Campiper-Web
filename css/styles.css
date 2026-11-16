@@ -3798,3 +3798,23 @@ footer { background: var(--charcoal-deep); padding: 55px max(6vw, 32px) 90px; }
 a.detail-play { color: inherit; cursor: pointer; transition: background 0.2s, transform 0.2s; }
 a.detail-play:hover { background: rgba(245, 245, 247, 0.28); transform: scale(1.1); }
 a.detail-play:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
+
+/* =========================================================
+   Instructores: detalle del módulo y lección
+   ========================================================= */
+/* Detalle: instructor de cada lección (dentro del panel azul) */
+.lesson-by { align-items: center; color: #dcecff; display: flex; font-size: 11px; font-weight: 500; gap: 7px; margin-top: 6px; }
+.lesson-by i { align-items: center; background: rgba(245, 245, 247, 0.22); border-radius: 50%; display: inline-flex; font-size: 8px; font-style: normal; font-weight: 700; height: 20px; justify-content: center; letter-spacing: 0.3px; width: 20px; }
+
+/* Detalle: tarjeta con uno o varios instructores */
+.instructor-list { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.instructor-avatar { flex-shrink: 0; }
+.instructor-profile p { line-height: 1.5; }
+
+/* Lección: nombre del instructor bajo el título */
+.lesson-instructor { align-items: center; display: flex; gap: 12px; margin: 0 0 18px; }
+.lesson-instructor[hidden] { display: none; }
+.lesson-instructor-avatar { align-items: center; background: var(--blue); border-radius: 50%; display: flex; flex-shrink: 0; font-family: var(--heading); font-size: 11px; font-weight: 700; height: 38px; justify-content: center; width: 38px; }
+.lesson-instructor > span:last-child { display: flex; flex-direction: column; gap: 3px; }
+.lesson-instructor small { color: var(--blue-light); font-size: 10px; font-weight: 800; letter-spacing: 1.2px; }
+.lesson-instructor b { font-size: 13px; }
