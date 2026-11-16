@@ -20,6 +20,28 @@ const FIREBASE_ACTIVO = !String(FIREBASE_CONFIG.apiKey).startsWith('PEGA');
 // Curso al que se inscribe automáticamente o manualmente.
 const CURSO_ID = 'davinci-resolve';
 
+// Lecciones con video, en el orden en que se estudian.
+//   id       -> lo que se guarda en Firestore (users/{uid}.leccionesCompletadas)
+//   modulo   -> módulo al que pertenece ("01".."04")
+//   posicion -> número de la lección dentro de su módulo
+//   leccion  -> valor de ?leccion= en leccion.html (clave de lessonsData)
+// Cuando subas los videos de otro módulo, agrega sus lecciones aquí (y en lessonsData).
+const LECCIONES_CURSO = [
+  { id: 'm1-l1', modulo: '01', posicion: 1, leccion: 1 },
+  { id: 'm1-l2', modulo: '01', posicion: 2, leccion: 2 },
+  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3 }
+];
+
+function urlLeccion(item) {
+  return 'leccion.html?leccion=' + item.leccion;
+}
+
+// Primera lección que todavía no está completada (null si ya completó todas)
+function siguienteLeccionPendiente(completadas) {
+  const hechas = new Set(Array.isArray(completadas) ? completadas : []);
+  return LECCIONES_CURSO.find(item => !hechas.has(item.id)) || null;
+}
+
 // Carga Firebase dinámicamente cuando hace falta
 let _firebase = null;
 function cargarFirebase() {
@@ -568,10 +590,10 @@ async function initMisCursos() {
   // [CAMBIO PAGOS] Al volver de Mercado Pago (?pago=ok | pendiente) esperamos a que el servidor active el curso
   const retornoPago = new URLSearchParams(window.location.search).get('pago');
   let esperaTerminada = false;
-  let ultimoEstado = { inscrito: false, progreso: 0 };
+  let ultimoEstado = { inscrito: false, progreso: 0, completadas: [] };
 
-  function mostrar(inscrito, progreso) {
-    ultimoEstado = { inscrito: inscrito, progreso: progreso };
+  function mostrar(inscrito, progreso, completadas) {
+    ultimoEstado = { inscrito: inscrito, progreso: progreso, completadas: completadas };
     const esperandoPago = !inscrito && !esperaTerminada && (retornoPago === 'ok' || retornoPago === 'pendiente');
     let aviso = '';
     if (esperandoPago) {
@@ -597,10 +619,25 @@ async function initMisCursos() {
     if (barraInterna) barraInterna.style.width = pct + '%';
     if (certTexto) certTexto.textContent = pct + ' % COMPLETADO';
     if (certBarra) certBarra.style.width = pct + '%';
+
+    // El botón siempre apunta a la primera lección que aún no has completado
+    const botonContinuar = document.getElementById('btn-continuar');
+    const textoContinuar = document.getElementById('btn-continuar-texto');
+    if (botonContinuar && textoContinuar) {
+      const proxima = siguienteLeccionPendiente(completadas);
+      if (proxima) {
+        botonContinuar.href = urlLeccion(proxima);
+        textoContinuar.textContent = 'Continuar aprendizaje';
+      } else {
+        botonContinuar.href = 'catalogo.html';
+        textoContinuar.textContent = 'Ver contenido del curso';
+        if (estado) estado.textContent = 'Completaste todas las lecciones disponibles';
+      }
+    }
   }
 
   if (retornoPago === 'ok') { // [CAMBIO PAGOS]
-    setTimeout(() => { esperaTerminada = true; mostrar(ultimoEstado.inscrito, ultimoEstado.progreso); }, 45000);
+    setTimeout(() => { esperaTerminada = true; mostrar(ultimoEstado.inscrito, ultimoEstado.progreso, ultimoEstado.completadas); }, 45000);
   }
 
   // [CAMBIO PAGOS] Sin servidor propio: le preguntamos al Apps Script si ya hay un pago aprobado
@@ -660,7 +697,7 @@ async function initMisCursos() {
     });
   }
 
-  if (!FIREBASE_ACTIVO) { mostrar(true, 45); return; }
+  if (!FIREBASE_ACTIVO) { mostrar(true, 45, []); return; }
 
   try {
     const { auth, db, authMod, fsMod } = await cargarFirebase();
@@ -673,7 +710,7 @@ async function initMisCursos() {
     fsMod.onSnapshot(fsMod.doc(db, 'users', usuario.uid), snap => {
       const datos = snap.exists() ? snap.data() : {};
       const cursos = Array.isArray(datos.cursos) ? datos.cursos : [];
-      mostrar(cursos.includes(CURSO_ID), Number(datos.progreso != null ? datos.progreso : datos.progress));
+      mostrar(cursos.includes(CURSO_ID), Number(datos.progreso != null ? datos.progreso : datos.progress), datos.leccionesCompletadas);
       if (!cursos.includes(CURSO_ID)) iniciarVerificacion(); // [CAMBIO PAGOS]
     }, error => {
       console.error('No se pudo leer la inscripción:', error);
@@ -729,8 +766,7 @@ function formatearDuracion(segundos) {
   return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(s).padStart(2, '0');
 }
 
-function initProgresoLeccion(numero, leccion) {
-  const leccionId = 'm2-l' + numero;
+function initProgresoLeccion(leccionId, leccion) {
 
   const contenedor = document.getElementById('yt-player');
   const boton = document.getElementById('btn-complete');
@@ -1506,14 +1542,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const num = String(index + 1).padStart(2, "0");
       const li = document.createElement('li');
       
+      // Solo las lecciones con video (LECCIONES_CURSO) son enlaces: el título y el ícono de play
+      const iconoPlay = `<svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 7 8 5-8 5V7Z" /></svg>`;
+      const disponible = LECCIONES_CURSO.find(item => item.modulo === currentKey && item.posicion === index + 1);
       let lessonTitleHTML = `<strong>${lesson}</strong>`;
-      if (currentKey === "02") {
-        lessonTitleHTML = `<strong><a href="leccion.html?leccion=${index + 1}">${lesson}</a></strong>`;
+      let playHTML = `<span class="detail-play">${iconoPlay}</span>`;
+      if (disponible) {
+        const href = urlLeccion(disponible);
+        lessonTitleHTML = `<strong><a href="${href}">${lesson}</a></strong>`;
+        playHTML = `<a class="detail-play" href="${href}" aria-label="Ver la lección: ${escaparHTML(lesson)}">${iconoPlay}</a>`;
       }
 
       li.innerHTML = `
         <span class="lesson-number">${num}</span>
-        <span class="detail-play"><svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 7 8 5-8 5V7Z" /></svg></span>
+        ${playHTML}
         ${lessonTitleHTML}
         <span class="lesson-status"><svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" /></svg> Incluida</span>
       `;
@@ -1574,27 +1616,49 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!lessonsData[currentLessonKey]) currentLessonKey = "1";
 
     const lesson = lessonsData[currentLessonKey];
-    const lessonNumber = Number(currentLessonKey);
+    const posicionActual = Math.max(0, LECCIONES_CURSO.findIndex(item => String(item.leccion) === currentLessonKey));
+    const actual = LECCIONES_CURSO[posicionActual];
+    const anterior = LECCIONES_CURSO[posicionActual - 1] || null;
+    const siguiente = LECCIONES_CURSO[posicionActual + 1] || null;
 
     document.title = `${lesson.title} - Campiper`;
-    document.getElementById('lesson-eyebrow').textContent = `MÓDULO 2 · LECCIÓN ${lessonNumber}`;
+    document.getElementById('lesson-eyebrow').textContent = `MÓDULO ${Number(actual.modulo)} · LECCIÓN ${actual.posicion}`;
     document.getElementById('lesson-title').textContent = lesson.title;
     document.getElementById('lesson-desc').textContent = lesson.description;
     document.getElementById('lesson-duration').textContent = lesson.duration;
     document.getElementById('material-title').textContent = lesson.material;
     document.getElementById('material-file').textContent = lesson.file;
 
+    // Botón "Lección anterior" (se oculta en la primera lección)
+    const btnPrevLesson = document.getElementById('btn-prev-lesson');
+    if (btnPrevLesson) {
+      if (anterior) {
+        btnPrevLesson.href = urlLeccion(anterior);
+        btnPrevLesson.hidden = false;
+      } else {
+        btnPrevLesson.hidden = true;
+      }
+    }
+
+    // Botón "Siguiente lección" (al terminar el módulo lleva al detalle del siguiente)
     const btnNextLesson = document.getElementById('btn-next-lesson');
-    if (lessonNumber < 3) {
-      btnNextLesson.href = `leccion.html?leccion=${lessonNumber + 1}`;
-      document.getElementById('next-lesson-text').textContent = 'Siguiente lección';
+    const textoSiguiente = document.getElementById('next-lesson-text');
+    if (siguiente) {
+      btnNextLesson.href = urlLeccion(siguiente);
+      textoSiguiente.textContent = siguiente.modulo === actual.modulo ? 'Siguiente lección' : 'Siguiente módulo';
     } else {
-      btnNextLesson.href = `detalle.html?modulo=03`;
-      document.getElementById('next-lesson-text').textContent = 'Siguiente módulo';
+      const moduloSiguiente = Number(actual.modulo) + 1;
+      if (moduloSiguiente <= 4) {
+        btnNextLesson.href = `detalle.html?modulo=${String(moduloSiguiente).padStart(2, '0')}`;
+        textoSiguiente.textContent = 'Siguiente módulo';
+      } else {
+        btnNextLesson.href = 'catalogo.html';
+        textoSiguiente.textContent = 'Volver al catálogo';
+      }
     }
 
     // Reproductor de YouTube + botón "Marcar lección como completada"
-    initProgresoLeccion(lessonNumber, lesson);
+    initProgresoLeccion(actual.id, lesson);
 
     const btnDownload = document.getElementById('btn-download');
     btnDownload.addEventListener('click', () => {
