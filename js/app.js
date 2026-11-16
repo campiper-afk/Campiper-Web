@@ -28,9 +28,9 @@ const CURSO_ID = 'davinci-resolve';
 // Cuando subas los videos de otro módulo, agrega sus lecciones aquí (y en lessonsData).
 //   instructor -> clave de INSTRUCTORES (quién imparte esa lección)
 const LECCIONES_CURSO = [
-  { id: 'm1-l1', modulo: '01', posicion: 1, leccion: 1, instructor: 'jean-paul' },
+  { id: 'm1-l1', modulo: '01', posicion: 1, leccion: 1, instructor: 'ignacio' },
   { id: 'm1-l2', modulo: '01', posicion: 2, leccion: 2, instructor: 'breiner' },
-  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3, instructor: 'ignacio' }
+  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3, instructor: 'jean-paul' }
 ];
 
 // Instructores del curso. Ajusta nombres, iniciales y color; la lección usa la clave de aquí.
