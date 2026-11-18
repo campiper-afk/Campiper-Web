@@ -20,22 +20,7 @@
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <link rel="icon" href="img/Letra C.png" type="image/png" />
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- Google Analytics (GA4) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=TU_ID_DE_MEDICION"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-JP0QHCRVM5');
-</script>
-  <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "zfq7z5p9fs");
-</script>
+  <!-- GA4 y Microsoft Clarity se cargan desde js/cookies.js, solo con consentimiento -->
 </head>
 <body>
   <div class="site-shell">
@@ -421,6 +406,10 @@
        <a href="politicas.html" style="color: var(--text-muted, #9ca3af); text-decoration: none;">
          Términos, Condiciones y Política de Tratamiento de Datos (Ley 1581 de 2012)
        </a>
+       <span style="margin: 0 8px; color: var(--text-muted, #9ca3af);">·</span>
+       <a href="cookies.html" style="color: var(--text-muted, #9ca3af); text-decoration: none;">Política de Cookies</a>
+       <span style="margin: 0 8px; color: var(--text-muted, #9ca3af);">·</span>
+       <a href="#" data-cookie-settings style="color: var(--text-muted, #9ca3af); text-decoration: none;">Configurar cookies</a>
       </div>
     </footer>
 
@@ -449,6 +438,7 @@
     </div>
 
   <!-- Vinculamos tu archivo JS -->
+  <script src="js/cookies.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
