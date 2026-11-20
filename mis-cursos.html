@@ -3,130 +3,204 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lección - Campiper</title>
+  <title>Mis Cursos - Campiper</title>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <link rel="icon" href="img/Letra C.png" type="image/png" />
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- La lección se muestra solo después de comprobar el acceso (ver app.js) -->
-  <style>.lesson-page { visibility: hidden; }</style>
 </head>
-<body>
-  <div class="lesson-page">
+<body data-requiere-sesion>
+  <div class="courses-page">
     
-    <!-- HEADER -->
-    <header class="lesson-nav">
+    <!-- HEADER ESTUDIANTE -->
+    <header class="courses-nav">
       <a class="brand" href="index.html" aria-label="Campiper, ir al inicio">
         <img alt="Campiper Logo" aria-hidden="true" class="brand-logo" src="img/campiper-logo.png" />
       </a>
-      <nav aria-label="Navegación principal">
-        <a href="index.html#requisitos">Requisitos</a>
-        <a href="catalogo.html">Contenido</a>
-        <a href="index.html#oferta">Precio</a>
+      <nav aria-label="Área de estudiante">
+        <a class="active" href="mis-cursos.html">Mis Cursos</a>
+        <a href="catalogo.html">Comunidad</a>
+        <a href="mailto:soporte@campiper.com">Soporte</a>
       </nav>
-      <a class="lesson-login" data-solo="visitante" href="registro.html">Iniciar Sesión</a>
-      <div class="student-menu" data-solo="usuario" hidden>
-        <a href="mis-cursos.html">Mis cursos</a>
+      <div class="student-menu">
         <a href="index.html" data-salir>Salir</a>
-        <span aria-hidden="true" data-usuario-inicial></span>
+        <span id="btn-mi-perfil" aria-label="Tu perfil" data-usuario-inicial style="cursor: pointer;" title="Ver mi perfil"></span>
       </div>
     </header>
 
-    <main class="lesson-main">
-      <a class="lesson-back" href="catalogo.html">
-        <span>
-          <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m14 6-6 6 6 6M8 12h11" />
-          </svg>
-        </span>
-        Volver al Catálogo
+    <main class="courses-main">
+      <a class="courses-back" href="index.html">
+        <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19">
+          <path d="m14 6-6 6 6 6M8 12h11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+        </svg>
+        Volver al inicio
       </a>
 
-      <!-- REPRODUCTOR DE VIDEO (YouTube) -->
-      <section class="video-player" id="video-player" aria-label="Reproductor de la lección">
-        <div id="yt-player"></div>
-      </section>
-
-      <!-- PROGRESO DE VISUALIZACIÓN + BOTÓN DE COMPLETADO -->
-      <section class="lesson-complete" id="lesson-complete" aria-live="polite">
-        <div class="lesson-complete-info">
-          <div class="watch-meta">
-            <span>VISTO</span>
-            <strong id="watch-percent">0 %</strong>
-            <i aria-hidden="true"></i>
-            <span>DURACIÓN</span>
-            <strong id="lesson-duration">--:--</strong>
-          </div>
-          <div class="watch-bar" aria-hidden="true"><span id="watch-bar-fill"></span></div>
-          <small id="watch-text">Mira el video completo para poder marcar la lección como completada.</small>
-        </div>
-        <button class="complete-button" id="btn-complete" type="button" disabled>
-          <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" />
+      <!-- SALUDO Y BIENVENIDA -->
+      <section class="welcome">
+        <span class="welcome-icon">
+          <svg aria-hidden="true" fill="none" height="25" viewBox="0 0 24 24" width="25">
+            <path d="m12 2 1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2Zm7 14 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
           </svg>
-          <span id="btn-complete-text">Marcar lección como completada</span>
-        </button>
+        </span>
+        <h1>Hola, <span data-usuario-nombre>Estudiante</span></h1>
+        <p>Aquí tienes tu progreso. Sigue así.</p>
       </section>
 
-      <!-- CONTENIDO DE LA LECCIÓN -->
-      <section class="lesson-content">
-        <div class="lesson-copy">
-          <span class="lesson-eyebrow" id="lesson-eyebrow">MÓDULO 1 · LECCIÓN --</span>
-          <h1 id="lesson-title">Cargando...</h1>
-          <div class="lesson-instructor" id="lesson-instructor" hidden>
-            <span class="lesson-instructor-avatar" id="lesson-instructor-avatar" aria-hidden="true">--</span>
-            <span><small>INSTRUCTOR</small><b id="lesson-instructor-name">--</b></span>
-          </div>
-          <p id="lesson-desc"></p>
-        </div>
-        <div class="lesson-steps">
-          <a class="next-lesson" id="btn-next-lesson" href="#">
-            <span><small>CONTINUAR CON</small><b id="next-lesson-text">Siguiente lección</b></span>
-            <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-6-6 6 6-6 6" />
-            </svg>
-          </a>
-          <a class="prev-lesson" id="btn-prev-lesson" href="#" hidden>
-            <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m14 6-6 6 6 6M8 12h11" />
-            </svg>
-            <span><small>VOLVER A</small><b>Lección anterior</b></span>
-          </a>
-        </div>
-      </section>
+      <p class="courses-loading" id="courses-loading">Cargando tus cursos…</p>
 
-      <!-- MATERIAL DE DESCARGA -->
-      <section class="class-material">
-        <div class="material-heading">
-          <span class="material-icon">
-            <svg aria-hidden="true" fill="none" height="21" viewBox="0 0 24 24" width="21">
-              <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-                <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
-              </g>
-            </svg>
-          </span>
-          <div>
-            <span>RECURSOS</span>
-            <h2>Material de la clase</h2>
-          </div>
-        </div>
-        <button class="download-card" id="btn-download">
-          <span>
-            <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
-              <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-                <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
-              </g>
-            </svg>
-          </span>
-          <span>
-            <strong id="material-title">Cargando recursos...</strong>
-            <small id="material-file">---</small>
-          </span>
-          <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-6-6 6 6-6 6" />
+      <!-- SIN CURSOS: se muestra si no hay inscripción -->
+      <section class="empty-courses" id="empty-courses" hidden>
+        <span>
+          <svg aria-hidden="true" fill="none" height="26" viewBox="0 0 24 24" width="26">
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H13v16h4.5A2.5 2.5 0 0 1 20 21V5.5Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
           </svg>
-        </button>
+        </span>
+        <h2>Aún no tienes cursos</h2>
+        <p>Para desbloquear tu aprendizaje y comenzar el curso "DaVinci Resolve desde cero", debes completar la compra.</p>
+        
+        <!-- BOTÓN CONECTADO A MERCADO PAGO -->
+        <a class="continue-button" href="https://mpago.li/1VHkJ1o" data-comprar data-pago-fallback="https://mpago.li/1VHkJ1o" target="_blank" style="margin-top: 15px;">
+          Pagar con Mercado Pago
+        </a>
+
+        <button class="continue-button" id="btn-verificar-pago" type="button" style="margin-top: 10px; cursor: pointer;">Ya pagué, verificar mi pago</button>
+        <p id="verificar-pago-aviso" role="status" hidden style="margin-top: 12px; font-size: 14px;"></p>
       </section>
+
+      <div class="dashboard-grid" id="courses-dashboard" hidden>
+        
+        <!-- COLUMNA PRINCIPAL: CURSOS EN PROGRESO -->
+        <section class="progress-section">
+          <div class="dashboard-title">
+            <div>
+              <span>APRENDIZAJE</span>
+              <h2>En progreso</h2>
+            </div>
+            <small id="courses-count">1 curso activo</small>
+          </div>
+
+          <article class="active-course-card">
+            <div class="active-course-image">
+              <img alt="Línea de tiempo de edición de video" src="https://images.unsplash.com/photo-1614963326505-843868e1d83a?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=86&w=900" />
+              <span>
+                <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17">
+                  <path d="m9 7 8 5-8 5V7Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </span>
+            </div>
+            <div class="active-course-content">
+              <span class="course-category">EDICIÓN DE VIDEO</span>
+              <h3>Domina DaVinci Resolve</h3>
+              <p id="course-status">Listo para empezar</p>
+              <div class="progress-meta">
+                <span>Tu progreso</span>
+                <strong id="course-progress-text">0%</strong>
+              </div>
+              <div aria-label="0 por ciento completado" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar" id="course-progress-bar" role="progressbar">
+                <span></span>
+              </div>
+              <a class="continue-button" id="btn-continuar" href="leccion.html?leccion=1">
+                <span id="btn-continuar-texto">Continuar aprendizaje</span>
+                <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16">
+                  <path d="m9 7 8 5-8 5V7Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+                </svg>
+              </a>
+            </div>
+          </article>
+        </section>
+
+        <!-- COLUMNA LATERAL: RECURSOS Y CERTIFICADO -->
+        <aside class="resources-section">
+          <div class="dashboard-title">
+            <div>
+              <span>DESCARGAS</span>
+              <h2>Recursos del curso</h2>
+            </div>
+            <small>2 archivos</small>
+          </div>
+
+          <div class="resources-card">
+            <button class="btn-resource-dl" data-title="Clips de práctica">
+              <span class="resource-type">
+                <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
+                  </g>
+                </svg>
+              </span>
+              <span>
+                <strong>Clips de práctica</strong>
+                <small>ZIP · 1.2 GB</small>
+              </span>
+              <span class="resource-download">
+                <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
+                  </g>
+                </svg>
+              </span>
+            </button>
+
+            <button class="btn-resource-dl" data-title="Atajos de teclado">
+              <span class="resource-type">
+                <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M7 3h7l4 4v14H7V3Z" /><path d="M14 3v5h5M10 12h5M10 16h5" />
+                  </g>
+                </svg>
+              </span>
+              <span>
+                <strong>Atajos de teclado</strong>
+                <small>PDF · 2 MB</small>
+              </span>
+              <span class="resource-download">
+                <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+                  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" /><path d="M5 19h14" />
+                  </g>
+                </svg>
+              </span>
+            </button>
+          </div>
+
+          <div class="certificate-card">
+            <span>
+              <svg aria-hidden="true" fill="none" height="24" viewBox="0 0 24 24" width="24">
+                <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+                  <rect height="10" rx="2" width="14" x="5" y="10" /><path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                </g>
+              </svg>
+            </span>
+            <strong>Certificado de finalización</strong>
+            <p>Completa el 100 % del curso para desbloquear tu certificado oficial.</p>
+            <div><span id="certificate-progress-bar"></span></div>
+            <small id="certificate-progress-text">0 % COMPLETADO</small>
+          </div>
+        </aside>
+
+      </div>
     </main>
+
+    <!-- MODAL MI PERFIL -->
+    <div class="admin-modal-backdrop" id="profile-modal-backdrop" style="display: none;">
+      <section aria-labelledby="profile-modal-title" aria-modal="true" class="admin-modal profile-modal" role="dialog" style="max-width: 420px;">
+        <button class="modal-close" id="btn-close-profile-modal" aria-label="Cerrar">
+          <svg aria-hidden="true" fill="none" height="19" viewBox="0 0 24 24" width="19"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" /></svg>
+        </button>
+        <div class="modal-avatar" id="profile-avatar">--</div>
+        <span>MI PERFIL</span>
+        <h2 id="profile-modal-title" style="margin-bottom: 2px;">Cargando...</h2>
+        <p id="profile-modal-email">cargando@correo.com</p>
+        
+        <div class="student-modal-grid">
+          <div class="student-modal-wide">
+            <small>HISTORIAL DE COMPRAS</small>
+            <strong id="profile-modal-courses">DaVinci Resolve desde cero</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+
   </div>
 
   <script src="js/cookies.js"></script>
