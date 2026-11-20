@@ -25,12 +25,20 @@ const CURSO_ID = 'davinci-resolve';
 //   modulo   -> módulo al que pertenece ("01".."04")
 //   posicion -> número de la lección dentro de su módulo
 //   leccion  -> valor de ?leccion= en leccion.html (clave de lessonsData)
+//   instructor -> clave de INSTRUCTORES (quién imparte esa lección)
 // Cuando subas los videos de otro módulo, agrega sus lecciones aquí (y en lessonsData).
 const LECCIONES_CURSO = [
-  { id: 'm1-l1', modulo: '01', posicion: 1, leccion: 1 },
-  { id: 'm1-l2', modulo: '01', posicion: 2, leccion: 2 },
-  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3 }
+  { id: 'm1-l1', modulo: '01', posicion: 1, leccion: 1, instructor: 'ignacio' },
+  { id: 'm1-l2', modulo: '01', posicion: 2, leccion: 2, instructor: 'breiner' },
+  { id: 'm1-l3', modulo: '01', posicion: 3, leccion: 3, instructor: 'jean-paul' }
 ];
+
+// Instructores del curso. Ajusta nombres, iniciales y color; la lección usa la clave de aquí.
+const INSTRUCTORES = {
+  'jean-paul': { nombre: 'Jean Paul G.', iniciales: 'JP', color: '#4a90e2' },
+  'ignacio':   { nombre: 'Ignacio',      iniciales: 'IG', color: '#448f64' },
+  'breiner':   { nombre: 'Breiner',      iniciales: 'BR', color: '#8b7bd8' }
+};
 
 function urlLeccion(item) {
   return 'leccion.html?leccion=' + item.leccion;
@@ -1632,11 +1640,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const abierta = !!disponible && tieneCurso && leccionDesbloqueada(disponible, acceso);
         const bloqueada = !!disponible && tieneCurso && !abierta;
 
-        let lessonTitleHTML = `<strong>${lesson}</strong>`;
+        const personaFila = disponible ? INSTRUCTORES[disponible.instructor] : null;
+        const instructorLinea = personaFila
+          ? `<span class="lesson-by"><i aria-hidden="true">${escaparHTML(personaFila.iniciales)}</i>${escaparHTML(personaFila.nombre)}</span>`
+          : '';
+
+        let lessonTitleHTML = `<strong>${lesson}${instructorLinea}</strong>`;
         let playHTML = `<span class="detail-play">${iconoPlay}</span>`;
         if (abierta) {
           const href = urlLeccion(disponible);
-          lessonTitleHTML = `<strong><a href="${href}">${lesson}</a></strong>`;
+          lessonTitleHTML = `<strong><a href="${href}">${lesson}</a>${instructorLinea}</strong>`;
           playHTML = `<a class="detail-play" href="${href}" aria-label="Ver la lección: ${escaparHTML(lesson)}">${iconoPlay}</a>`;
         }
 
@@ -1650,6 +1663,35 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
     pintarLecciones(null);
+
+    // Tarjeta de instructores: si las lecciones del módulo tienen instructor propio, se listan todos
+    const conInstructor = LECCIONES_CURSO.filter(item => item.modulo === currentKey && INSTRUCTORES[item.instructor]);
+    const listaInstructores = document.getElementById('instructor-list');
+    if (listaInstructores && conInstructor.length) {
+      const grupos = new Map();
+      conInstructor.forEach(item => {
+        if (!grupos.has(item.instructor)) grupos.set(item.instructor, []);
+        grupos.get(item.instructor).push(item);
+      });
+      listaInstructores.innerHTML = Array.from(grupos.entries()).map(([clave, items]) => {
+        const persona = INSTRUCTORES[clave];
+        const detalleLeccion = items.length === 1
+          ? `Lección ${items[0].posicion} · ${mod.lessons[items[0].posicion - 1] || ''}`
+          : `Lecciones ${items.map(item => item.posicion).join(', ')}`;
+        return `
+          <div class="instructor-profile">
+            <span class="instructor-avatar" style="background: ${escaparHTML(persona.color)};">${escaparHTML(persona.iniciales)}</span>
+            <div>
+              <h2>${escaparHTML(persona.nombre)}</h2>
+              <p>${escaparHTML(detalleLeccion)}</p>
+            </div>
+          </div>`;
+      }).join('');
+      if (grupos.size > 1) {
+        document.getElementById('instructor-kicker').textContent = 'TUS INSTRUCTORES';
+        document.getElementById('instructor-copy').textContent = 'Cada lección la imparte un instructor distinto, con un método claro y práctico pensado para empezar desde cero.';
+      }
+    }
 
     const keys = Object.keys(modulesData);
     const currentIndex = keys.indexOf(currentKey);
@@ -1750,6 +1792,22 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('lesson-eyebrow').textContent = `MÓDULO ${Number(actual.modulo)} · LECCIÓN ${actual.posicion}`;
     document.getElementById('lesson-title').textContent = lesson.title;
     document.getElementById('lesson-desc').textContent = lesson.description;
+
+    // Instructor de esta lección
+    const instructorLeccion = INSTRUCTORES[actual.instructor];
+    const cajaInstructor = document.getElementById('lesson-instructor');
+    if (cajaInstructor) {
+      if (instructorLeccion) {
+        const avatar = document.getElementById('lesson-instructor-avatar');
+        avatar.textContent = instructorLeccion.iniciales;
+        avatar.style.background = instructorLeccion.color;
+        document.getElementById('lesson-instructor-name').textContent = instructorLeccion.nombre;
+        cajaInstructor.hidden = false;
+      } else {
+        cajaInstructor.hidden = true;
+      }
+    }
+
     document.getElementById('lesson-duration').textContent = lesson.duration;
     document.getElementById('material-title').textContent = lesson.material;
     document.getElementById('material-file').textContent = lesson.file;
