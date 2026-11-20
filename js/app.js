@@ -42,6 +42,42 @@ function siguienteLeccionPendiente(completadas) {
   return LECCIONES_CURSO.find(item => !hechas.has(item.id)) || null;
 }
 
+/* ---------- [CAMBIO ACCESO] Reglas de acceso a módulos y lecciones ----------
+   - Solo entra a las lecciones quien compró el curso (users/{uid}.cursos incluye CURSO_ID).
+   - Un módulo se abre cuando están completas todas las lecciones de los módulos anteriores.
+   - Una lección se abre cuando está completa la lección anterior.
+   Los administradores (acceso.libre) lo ven todo. */
+const LECCIONES_POR_MODULO = { '01': 3, '02': 3, '03': 3, '04': 3 };
+
+function idLeccionModulo(modulo, posicion) {
+  return 'm' + Number(modulo) + '-l' + posicion;
+}
+
+function moduloCompleto(modulo, completadas) {
+  const hechas = new Set(Array.isArray(completadas) ? completadas : []);
+  for (let p = 1; p <= LECCIONES_POR_MODULO[modulo]; p++) {
+    if (!hechas.has(idLeccionModulo(modulo, p))) return false;
+  }
+  return true;
+}
+
+// Primer módulo que todavía no está completo (null si ya completó todos)
+function primerModuloPendiente(completadas) {
+  return Object.keys(LECCIONES_POR_MODULO).find(m => !moduloCompleto(m, completadas)) || null;
+}
+
+function moduloDesbloqueado(modulo, acceso) {
+  if (acceso.libre) return true;
+  const claves = Object.keys(LECCIONES_POR_MODULO);
+  return claves.slice(0, claves.indexOf(modulo)).every(m => moduloCompleto(m, acceso.completadas));
+}
+
+function leccionDesbloqueada(item, acceso) {
+  if (acceso.libre) return true;
+  const hechas = new Set(acceso.completadas);
+  return LECCIONES_CURSO.slice(0, LECCIONES_CURSO.indexOf(item)).every(x => hechas.has(x.id));
+}
+
 // Carga Firebase dinámicamente cuando hace falta
 let _firebase = null;
 function cargarFirebase() {
@@ -413,6 +449,10 @@ function inyectarEstilosBase() {
     .dashboard-grid[hidden], .empty-courses[hidden], .courses-loading[hidden], .enroll-feedback[hidden] { display: none !important; }
     .auth-status--error { color: #ff8a8a; }
     input[aria-invalid="true"] { border-color: #ff8a8a !important; }
+    .next-lesson.is-locked { opacity: 0.55; cursor: not-allowed; }
+    .next-lesson.is-locked:hover { background: #292a31; border-color: var(--line); }
+    .module-lock-notice { margin: 16px 0 0; text-align: center; font-size: 0.9rem; color: var(--blue-light); }
+    .module-lock-notice[hidden] { display: none; }
     .catalog-empty { grid-column: 1 / -1; text-align: center; opacity: 0.85; }
     .catalog-empty--error { color: #ff8a8a; opacity: 1; }
   `;
@@ -766,7 +806,43 @@ function formatearDuracion(segundos) {
   return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(s).padStart(2, '0');
 }
 
-function initProgresoLeccion(leccionId, leccion) {
+/* [CAMBIO ACCESO] Estado del usuario frente al curso: se consulta una sola vez por página.
+   Nunca rechaza la promesa: si algo falla devuelve error:true y sin acceso (falla cerrado). */
+let _accesoCurso = null;
+function obtenerAccesoCurso() {
+  if (_accesoCurso) return _accesoCurso;
+  _accesoCurso = (async () => {
+    const acceso = { usuario: null, inscrito: false, libre: false, completadas: [], error: false };
+    if (!FIREBASE_ACTIVO) { // modo demo sin Firebase: todo abierto
+      acceso.usuario = Sesion.obtener();
+      acceso.inscrito = true;
+      acceso.libre = true;
+      return acceso;
+    }
+    try {
+      const { db, fsMod } = await cargarFirebase();
+      const usuario = await esperarUsuarioFirebase();
+      if (!usuario) return acceso;
+      const snap = await fsMod.getDoc(fsMod.doc(db, 'users', usuario.uid));
+      const datos = snap.exists() ? snap.data() : {};
+      acceso.usuario = usuario;
+      acceso.inscrito = Array.isArray(datos.cursos) && datos.cursos.includes(CURSO_ID);
+      acceso.completadas = Array.isArray(datos.leccionesCompletadas) ? datos.leccionesCompletadas : [];
+      if (!acceso.inscrito) {
+        let cache = null;
+        try { cache = JSON.parse(sessionStorage.getItem(CACHE_ADMIN)); } catch (e) {}
+        acceso.libre = cache && cache.uid === usuario.uid ? !!cache.admin : await consultarEsAdmin(usuario.uid).catch(() => false);
+      }
+    } catch (error) {
+      console.error('No se pudo comprobar el acceso al curso:', error);
+      acceso.error = true;
+    }
+    return acceso;
+  })();
+  return _accesoCurso;
+}
+
+function initProgresoLeccion(leccionId, leccion, alCompletar) {
 
   const contenedor = document.getElementById('yt-player');
   const boton = document.getElementById('btn-complete');
@@ -966,6 +1042,7 @@ function initProgresoLeccion(leccionId, leccion) {
       const progreso = Math.min(100, Math.round((todas.length / TOTAL_LECCIONES_CURSO) * 100));
       await fsMod.setDoc(ref, { leccionesCompletadas: fsMod.arrayUnion(leccionId), progreso: progreso }, { merge: true });
       estado.yaCompletada = true;
+      if (typeof alCompletar === 'function') alCompletar(); // [CAMBIO ACCESO] desbloquea "Siguiente lección"
     } catch (error) {
       console.error('No se pudo guardar la lección completada:', error);
       estado.error = error && error.code === 'permission-denied'
@@ -1539,29 +1616,40 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('mod-duration').textContent = mod.duration;
 
     const lessonsList = document.getElementById('mod-lessons');
-    mod.lessons.forEach((lesson, index) => {
-      const num = String(index + 1).padStart(2, "0");
-      const li = document.createElement('li');
-      
-      // Solo las lecciones con video (LECCIONES_CURSO) son enlaces: el título y el ícono de play
-      const iconoPlay = `<svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 7 8 5-8 5V7Z" /></svg>`;
-      const disponible = LECCIONES_CURSO.find(item => item.modulo === currentKey && item.posicion === index + 1);
-      let lessonTitleHTML = `<strong>${lesson}</strong>`;
-      let playHTML = `<span class="detail-play">${iconoPlay}</span>`;
-      if (disponible) {
-        const href = urlLeccion(disponible);
-        lessonTitleHTML = `<strong><a href="${href}">${lesson}</a></strong>`;
-        playHTML = `<a class="detail-play" href="${href}" aria-label="Ver la lección: ${escaparHTML(lesson)}">${iconoPlay}</a>`;
-      }
+    const iconoPlay = `<svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 7 8 5-8 5V7Z" /></svg>`;
+    const iconoCheck = `<svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" /></svg>`;
+    const iconoCandado = `<svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><rect height="10" rx="2" width="14" x="5" y="10" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></g></svg>`;
 
-      li.innerHTML = `
+    // [CAMBIO ACCESO] Las lecciones solo son enlaces para quien compró el curso y ya desbloqueó esa lección.
+    // Sin acceso (visitante, sin compra, o mientras se comprueba) se muestran sin enlace.
+    function pintarLecciones(acceso) {
+      lessonsList.innerHTML = '';
+      const tieneCurso = !!acceso && (acceso.inscrito || acceso.libre);
+      mod.lessons.forEach((lesson, index) => {
+        const num = String(index + 1).padStart(2, "0");
+        const li = document.createElement('li');
+        const disponible = LECCIONES_CURSO.find(item => item.modulo === currentKey && item.posicion === index + 1);
+        const abierta = !!disponible && tieneCurso && leccionDesbloqueada(disponible, acceso);
+        const bloqueada = !!disponible && tieneCurso && !abierta;
+
+        let lessonTitleHTML = `<strong>${lesson}</strong>`;
+        let playHTML = `<span class="detail-play">${iconoPlay}</span>`;
+        if (abierta) {
+          const href = urlLeccion(disponible);
+          lessonTitleHTML = `<strong><a href="${href}">${lesson}</a></strong>`;
+          playHTML = `<a class="detail-play" href="${href}" aria-label="Ver la lección: ${escaparHTML(lesson)}">${iconoPlay}</a>`;
+        }
+
+        li.innerHTML = `
         <span class="lesson-number">${num}</span>
         ${playHTML}
         ${lessonTitleHTML}
-        <span class="lesson-status"><svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12 4 4L19 6" /></svg> Incluida</span>
+        <span class="lesson-status">${bloqueada ? iconoCandado + ' Bloqueada' : iconoCheck + ' Incluida'}</span>
       `;
-      lessonsList.appendChild(li);
-    });
+        lessonsList.appendChild(li);
+      });
+    }
+    pintarLecciones(null);
 
     const keys = Object.keys(modulesData);
     const currentIndex = keys.indexOf(currentKey);
@@ -1574,13 +1662,49 @@ document.addEventListener("DOMContentLoaded", () => {
       btnPrev.style.visibility = 'visible';
     }
 
+    // [CAMBIO ACCESO] Aviso cuando se intenta saltar a un módulo que aún no está desbloqueado
+    const paginacion = document.querySelector('.module-pagination');
+    const aviso = document.createElement('p');
+    aviso.className = 'module-lock-notice';
+    aviso.setAttribute('role', 'status');
+    aviso.hidden = true;
+    if (paginacion) paginacion.insertAdjacentElement('afterend', aviso);
+
     const btnNext = document.getElementById('btn-next');
     if (currentIndex < keys.length - 1) {
       const nextKey = keys[currentIndex + 1];
       btnNext.href = `detalle.html?modulo=${nextKey}`;
       document.getElementById('next-title').textContent = modulesData[nextKey].title;
       btnNext.style.visibility = 'visible';
+
+      // Quien compró el curso solo pasa al módulo siguiente si completó los anteriores;
+      // si no, va al primer módulo pendiente (o se queda aquí con un aviso).
+      btnNext.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const acceso = await obtenerAccesoCurso();
+        if (!(acceso.inscrito || acceso.libre) || moduloDesbloqueado(nextKey, acceso)) {
+          window.location.href = `detalle.html?modulo=${nextKey}`;
+          return;
+        }
+        const pendiente = primerModuloPendiente(acceso.completadas) || '01';
+        if (pendiente === currentKey) {
+          aviso.textContent = `Completa todas las lecciones del módulo ${Number(pendiente)} para pasar al módulo ${Number(nextKey)}.`;
+          aviso.hidden = false;
+          lessonsList.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          window.location.href = `detalle.html?modulo=${pendiente}`;
+        }
+      });
     }
+
+    // [CAMBIO ACCESO] Con el estado del usuario: habilita los enlaces y bloquea módulos no desbloqueados (también por URL directa)
+    obtenerAccesoCurso().then(acceso => {
+      if ((acceso.inscrito || acceso.libre) && !moduloDesbloqueado(currentKey, acceso)) {
+        window.location.replace(`detalle.html?modulo=${primerModuloPendiente(acceso.completadas) || '01'}`);
+        return;
+      }
+      pintarLecciones(acceso);
+    });
   }
 
   // 8. LÓGICA DE LA PÁGINA DE LECCIÓN (leccion.html)
@@ -1658,8 +1782,49 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Reproductor de YouTube + botón "Marcar lección como completada"
-    initProgresoLeccion(actual.id, lesson);
+    // [CAMBIO ACCESO] La página queda oculta (ver estilo en leccion.html) hasta comprobar que la persona
+    // compró el curso y que ya completó las lecciones anteriores. Si no, se redirige.
+    const paginaLeccion = document.querySelector('.lesson-page');
+    const pequenoSiguiente = btnNextLesson.querySelector('small');
+    const hrefSiguiente = btnNextLesson.getAttribute('href');
+    const textoSiguienteOriginal = textoSiguiente.textContent;
+    const pequenoSiguienteOriginal = pequenoSiguiente ? pequenoSiguiente.textContent : '';
+
+    function pintarSiguiente(abierto) {
+      btnNextLesson.classList.toggle('is-locked', !abierto);
+      if (abierto) {
+        btnNextLesson.setAttribute('href', hrefSiguiente);
+        btnNextLesson.removeAttribute('aria-disabled');
+        textoSiguiente.textContent = textoSiguienteOriginal;
+        if (pequenoSiguiente) pequenoSiguiente.textContent = pequenoSiguienteOriginal;
+      } else {
+        btnNextLesson.removeAttribute('href');
+        btnNextLesson.setAttribute('aria-disabled', 'true');
+        textoSiguiente.textContent = 'Completa esta lección para continuar';
+        if (pequenoSiguiente) pequenoSiguiente.textContent = 'BLOQUEADO';
+      }
+    }
+    pintarSiguiente(false);
+
+    obtenerAccesoCurso().then(acceso => {
+      if (acceso.error) { window.location.replace('mis-cursos.html'); return; }
+      if (!acceso.usuario) { window.location.replace('registro.html'); return; }
+      if (!acceso.inscrito && !acceso.libre) { window.location.replace('mis-cursos.html'); return; }
+      if (!leccionDesbloqueada(actual, acceso)) {
+        const pendiente = siguienteLeccionPendiente(acceso.completadas);
+        window.location.replace(pendiente ? urlLeccion(pendiente) : 'mis-cursos.html');
+        return;
+      }
+
+      paginaLeccion.style.visibility = 'visible';
+      pintarSiguiente(acceso.libre || acceso.completadas.includes(actual.id));
+
+      // Reproductor de YouTube + botón "Marcar lección como completada"
+      initProgresoLeccion(actual.id, lesson, () => {
+        if (!acceso.completadas.includes(actual.id)) acceso.completadas.push(actual.id);
+        pintarSiguiente(true);
+      });
+    });
 
     const btnDownload = document.getElementById('btn-download');
     btnDownload.addEventListener('click', () => {
